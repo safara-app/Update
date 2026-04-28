@@ -3924,7 +3924,7 @@
 
             <div class="fitur-card" onclick="showPage('pengingatwa')"><div class="fitur-icon">📲</div><div class="fitur-title">Pengingat WA</div><div class="fitur-desc">Kirim pengingat otomatis</div></div>
 
-            <div class="fitur-card" onclick="showPage('etikettiket')"><div class="fitur-icon">??</div><div class="fitur-title">E-Tiket & QR</div><div class="fitur-desc">Tiket digital dengan QR</div></div>
+            <div class="fitur-card" onclick="showPage('etikettiket')"><div class="fitur-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="48" height="48"><rect x="4" y="14" width="56" height="36" rx="6" fill="#f5a623"/><rect x="4" y="14" width="56" height="10" rx="4" fill="#e08000"/><circle cx="20" cy="38" r="4" fill="white"/><rect x="28" y="30" width="20" height="3" rx="2" fill="white"/><rect x="28" y="36" width="14" height="3" rx="2" fill="white"/><rect x="28" y="42" width="17" height="3" rx="2" fill="white"/></svg></div><div class="fitur-title">E-Tiket & QR</div><div class="fitur-desc">Tiket digital dengan QR</div></div>
 
             <div class="fitur-card" onclick="showPage('cetaklabel')"><div class="fitur-icon">🏷️</div><div class="fitur-title">Cetak Label</div><div class="fitur-desc">Name tag / stiker koper</div></div>
 
@@ -10202,13 +10202,13 @@ async function applyPDFConfig(doc, options = {}) {
 
         let kontakInfo = [];
 
-        if (cfg.instansi1.telp) kontakInfo.push(`📞 Telp: ${cfg.instansi1.telp}`);
+        if (cfg.instansi1.telp) kontakInfo.push(`Telp: ${cfg.instansi1.telp}`);
 
-        if (cfg.instansi1.email) kontakInfo.push(`✉️ Email: ${cfg.instansi1.email}`);
+        if (cfg.instansi1.email) kontakInfo.push(`Email: ${cfg.instansi1.email}`);
 
-        if (cfg.instansi1.npwp) kontakInfo.push(`📄 NPWP: ${cfg.instansi1.npwp}`);
+        if (cfg.instansi1.npwp) kontakInfo.push(`NPWP: ${cfg.instansi1.npwp}`);
 
-        if (cfg.instansi1.web) kontakInfo.push(`🌐 Web: ${cfg.instansi1.web}`);
+        if (cfg.instansi1.web) kontakInfo.push(`Web: ${cfg.instansi1.web}`);
 
         if (kontakInfo.length > 0) doc.text(kontakInfo.join(' | '), pageWidth/2, currentY, { align: 'center' });
 
@@ -10512,11 +10512,9 @@ function cetakTiketLangsung() {
 
             }
 
-            .btn, .no-print {
+            .btn { display: none !important; }
 
-                display: none !important;
-
-            }
+            .no-print { display: block; }
 
             @media print {
 
