@@ -1733,7 +1733,7 @@
     <div class="header-premium header-premium-small"><div class="back-header"><i class="fas fa-arrow-left" onclick="showPage('home')"></i><h2>Cuan Plan Umroh</h2><div style="width:30px;"></div></div></div>
     <div class="card-premium">
         <div class="logo-box text-center"><img src="https://img.icons8.com/color/96/kaaba.png" style="width:50px;"></div>
-        <p class="text-center" style="color:var(--gray); font-size:0.8rem;">Safara</p>
+        <p class="text-center" style="color:var(--gray); font-size:0.8rem;" id="dashFooterNama">Safara</p>
         <div class="section-title" style="margin-top:15px;"><span>DATA ROMBONGAN</span></div>
         <div class="input-group"><label>Nama Paket / Lokasi</label><input type="text" id="lokasiPaket" value="Program 9 HARI"></div>
         <div class="row"><div class="input-group"><label>Total Pax</label><input type="number" id="totJam" value="21"></div><div class="input-group"><label>Gratis</label><input type="number" id="jamGratis" value="1"></div><div class="input-group"><label>Jumlah TL</label><input type="number" id="numTL" value="1"></div></div>
@@ -1797,13 +1797,13 @@
         <div class="section-title"><span>TAMBAH DATABASE KITA</span></div>
         <div class="input-group"><label>Pilih Jamaah dari database</label><select id="pilihJamaahKita"></select></div>
         <div id="jamaahKitaDynamicFields"></div>
-        <button class="btn btn-accent" onclick="tambahJamaahKita()"><i class="fas fa-plus-circle"></i> TAMBAHKAN KE Jamaah on proses</button>
+        <button class="btn btn-accent" onclick="tambahJamaahKita()" style="margin-top:16px;"><i class="fas fa-plus-circle"></i> TAMBAHKAN KE Jamaah on proses</button>
         <div class="section-title"><span>DAFTAR JAMAAH ON PROSES</span></div>
         <div class="search-box"><input type="text" id="searchJamaahKitaInput" placeholder=" Cari nama jamaah on proses..." onkeyup="filterJamaahKitaList()"><button onclick="resetJamaahKitaFilter()">Reset</button></div>
         <div id="jamaahKitaListContainer"></div>
         <button class="btn btn-wa" onclick="shareAllJamaahKitaToWA()"><i class="fab fa-whatsapp"></i> SHARE SEMUA Jamaah on proses KE WA</button>
-        <button class="btn btn-purple mt-2" onclick="printGroupedPDF()"><i class="fas fa-print"></i>  CETAK PDF PER KELOMPOK (KAMAR/BUS/KELAS)</button>
-        <div class="row"><button class="btn btn-blue btn-small" onclick="backupJamaahKitaData()" style="flex:1"><i class="fas fa-download"></i> BACKUP Jamaah on proses</button><button class="btn btn-orange btn-small" onclick="document.getElementById('restoreJamaahKitaFile').click()" style="flex:1"><i class="fas fa-upload"></i> RESTORE Jamaah on proses</button></div>
+        <button class="btn btn-purple" onclick="printGroupedPDF()" style="margin-top:16px;"><i class="fas fa-print"></i>  CETAK PDF PER KELOMPOK (KAMAR/BUS/KELAS)</button>
+        <div class="row" style="margin-top:16px;"><button class="btn btn-blue btn-small" onclick="backupJamaahKitaData()" style="flex:1"><i class="fas fa-download"></i> BACKUP Jamaah on proses</button><button class="btn btn-orange btn-small" onclick="document.getElementById('restoreJamaahKitaFile').click()" style="flex:1"><i class="fas fa-upload"></i> RESTORE Jamaah on proses</button></div>
         <input type="file" id="restoreJamaahKitaFile" accept=".json" style="display:none" onchange="restoreJamaahKitaData(this)">
     </div>
 </div>
@@ -1819,7 +1819,7 @@
     <div class="header-premium header-premium-small"><div class="back-header"><i class="fas fa-arrow-left" onclick="showPage('home')"></i><h2>Kalkulator Zakat</h2><div style="width:30px;"></div></div></div>
     <div class="card-premium">
         <div class="logo-box text-center"><div style="font-size:40px;"></div></div>
-        <p class="text-center" style="color:var(--gray);">Safara</p>
+        <p class="text-center" style="color:var(--gray);" id="zakatNama">Safara</p>
         <div class="row"><div class="input-group"><label>Jenis Zakat</label><select id="jenisZakat" onchange="toggleZakatInput()"><option value="mal">Zakat Mal (Harta/Uang)</option><option value="pertanian">Zakat Pertanian</option><option value="perdagangan">Zakat Perdagangan</option></select></div></div>
         <div id="zakatGlobalInput"><div class="input-group"><label>Harga Emas per Gram (Rp)</label><input type="text" id="hargaEmas" class="money-input" value="1.200.000"></div></div>
         <div class="section-title"><span>Sumber Harta</span></div>
@@ -2452,6 +2452,10 @@ function updateHeaderFromConfig() {
     const instansi2 = (cfg.instansi2.aktif && cfg.instansi2.nama) ? cfg.instansi2.nama : 'Safara';
     document.getElementById('headerInstansi1').innerText = instansi1;
     document.getElementById('headerInstansi2').innerText = instansi2;
+    const dashFooter = document.getElementById('dashFooterNama');
+    if(dashFooter) dashFooter.innerText = instansi1;
+    const zakatNama = document.getElementById('zakatNama');
+    if(zakatNama) zakatNama.innerText = instansi1;
     
     const logoIcon = document.getElementById('headerLogo');
     if (logoIcon) {
@@ -2612,21 +2616,35 @@ function printDashboard() {
     const kasData = JSON.parse(localStorage.getItem('safara_kas_data') || '[]');
     const totalKas = kasData.reduce((s,i) => s + (i.tipe === 'masuk' ? i.nom : -i.nom), 0);
     const jamaahData = JSON.parse(localStorage.getItem('safara_jamaah_list') || '[]');
-    const pembayaranData = JSON.parse(localStorage.getItem('safara_pembayaran_data') || '{}');
+    const paymentData = JSON.parse(localStorage.getItem('safara_pembayaran_transaksi') || '[]');
     const totalJamaah = jamaahData.length;
     let totalLunas = 0, totalPiutang = 0;
     jamaahData.forEach(j => {
-        const paket = parseFloat((j.hargaPaket || '0').toString().replace(/\./g,'')) || 0;
-        const bayar = (pembayaranData[j.id] || []).reduce((s,p) => s + (parseFloat(p.nominal) || 0), 0);
-        const sisa = paket - bayar;
-        if (sisa <= 0) totalLunas++;
-        totalPiutang += Math.max(0, sisa);
+        const totalBayar = paymentData.filter(t => t.id_jamaah == j.id).reduce((s,t) => s + t.nominal, 0);
+        let hargaPaket = 0;
+        if (j.additional_fields) {
+            for (const key in j.additional_fields) {
+                if (key.toLowerCase().includes('harga') || key.toLowerCase().includes('paket')) {
+                    const val = j.additional_fields[key];
+                    if (val) { const cleaned = parseInt(val.toString().replace(/\./g,'').replace(/[^0-9]/g,'')); if(!isNaN(cleaned)) { hargaPaket = cleaned; break; } }
+                }
+            }
+        }
+        if (hargaPaket > 0) { if (totalBayar >= hargaPaket) totalLunas++; else totalPiutang += (hargaPaket - totalBayar); }
     });
     // Top 5 piutang terbesar
     const topPiutang = jamaahData.map(j => {
-        const paket = parseFloat((j.hargaPaket || '0').toString().replace(/\./g,'')) || 0;
-        const bayar = (pembayaranData[j.id] || []).reduce((s,p) => s + (parseFloat(p.nominal) || 0), 0);
-        return { nama: j.nama, paket, sisa: Math.max(0, paket - bayar) };
+        const totalBayar = paymentData.filter(t => t.id_jamaah == j.id).reduce((s,t) => s + t.nominal, 0);
+        let hargaPaket = 0;
+        if (j.additional_fields) {
+            for (const key in j.additional_fields) {
+                if (key.toLowerCase().includes('harga') || key.toLowerCase().includes('paket')) {
+                    const val = j.additional_fields[key];
+                    if (val) { const cleaned = parseInt(val.toString().replace(/\./g,'').replace(/[^0-9]/g,'')); if(!isNaN(cleaned)) { hargaPaket = cleaned; break; } }
+                }
+            }
+        }
+        return { nama: j.nama_lengkap, paket: hargaPaket, sisa: Math.max(0, hargaPaket - totalBayar) };
     }).sort((a,b) => b.sisa - a.sisa).slice(0,5);
 
     const cfg = JSON.parse(localStorage.getItem('safara_config') || '{}');
@@ -2667,7 +2685,7 @@ function printDashboard() {
     </style>
 </head>
 <body>
-    <h1>📊 Dashboard - ${escapeHtml(namaInstansi)}</h1>
+    <h1>Dashboard - ${escapeHtml(namaInstansi)}</h1>
     <div class="sub">Dicetak: ${tanggal}</div>
     <div class="stats">
         <div class="stat-box"><div class="label">TOTAL KAS</div><div class="value">Rp ${formatRupiah(totalKas)}</div></div>
@@ -2682,7 +2700,7 @@ function printDashboard() {
     </table>
     <div class="footer">${escapeHtml(namaInstansi)} | ${tanggal}</div>
     <div class="no-print" style="text-align:center; margin-top:24px;">
-        <button onclick="window.print()" style="padding:10px 30px; background:#0D5C4A; color:white; border:none; border-radius:8px; cursor:pointer; margin-right:10px;">🖨️ PRINT</button>
+        <button onclick="window.print()" style="padding:10px 30px; background:#0D5C4A; color:white; border:none; border-radius:8px; cursor:pointer; margin-right:10px;">PRINT</button>
         <button onclick="window.close()" style="padding:10px 30px; background:#ccc; border:none; border-radius:8px; cursor:pointer;">TUTUP</button>
     </div>
 </body>
@@ -2793,7 +2811,7 @@ function hitungUmroh() {
     lastCalculatedPaket=lokasi; 
     lastCalculatedTotalJam=nJam; 
     let hasil=document.getElementById('hasilEstimasi'); 
-    hasil.innerHTML=`<div class="res-item"><span>Modal Pokok / Pax</span><b>${f(sub)}</b></div><div class="res-item"><span>Total Omzet Grup</span><b>${f(totalOmzet)}</b></div><div class="res-item"><span>Profit Kotor Grup</span><span>${f(profitKotor)}</span></div><div class="res-item"><span>Biaya TL</span><span>${f(biayaTL)}</span></div><div class="res-item"><span>Profit Per Pax</span><span>${f(profitPerPax)}</span></div><div class="res-item" style="color:#2ecc71"><span>PROFIT BERSIH</span><b>${f(bersih)}</b></div><div class="res-item" style="border-top:2px solid var(--accent); margin-top:10px; padding-top:10px; flex-direction:column; align-items:center;"><span style="font-weight:bold">HARGA BROSUR</span><span class="highlight">${f(jual)}</span><p style="font-size:10px; margin-top:5px;">*Berdasarkan ${nJam-nFoc} jamaah bayar dan ${nFoc} gratis</p></div><div class="action-buttons" style="display:flex; gap:10px; margin-top:15px;"><button class="btn" onclick="salinRingkasan()" style="background:#34495e; margin-top:0; flex:1;">SALIN RINGKASAN HARGA</button><button class="btn" onclick="cetakEstimasiPDF()" style="background:var(--orange); margin-top:0; flex:1;"><i class="fas fa-file-pdf"></i> CETAK PDF</button></div>`; 
+    hasil.innerHTML=`<div class="res-item"><span>Modal Pokok / Pax</span><b>${f(sub)}</b></div><div class="res-item"><span>Total Omzet Grup</span><b>${f(totalOmzet)}</b></div><div class="res-item"><span>Profit Kotor Grup</span><span>${f(profitKotor)}</span></div><div class="res-item"><span>Biaya TL</span><span>${f(biayaTL)}</span></div><div class="res-item"><span>Profit Per Pax</span><span>${f(profitPerPax)}</span></div><div class="res-item" style="color:#2ecc71"><span>PROFIT BERSIH</span><b>${f(bersih)}</b></div><div class="res-item" style="border-top:2px solid var(--accent); margin-top:10px; padding-top:10px; flex-direction:column; align-items:center;"><span style="font-weight:bold">HARGA BROSUR</span><span class="highlight">${f(jual)}</span><p style="font-size:10px; margin-top:5px;">*Berdasarkan ${nJam-nFoc} jamaah bayar dan ${nFoc} gratis</p></div><div class="action-buttons" style="display:flex; gap:10px; margin-top:15px;"><button class="btn" onclick="salinRingkasan()" style="background:#34495e; margin-top:0; flex:1;">SALIN</button><button class="btn" onclick="cetakEstimasiPDFJamaah()" style="background:#2980b9; margin-top:0; flex:1; font-size:11px;">📄 PDF JAMAAH</button><button class="btn" onclick="cetakEstimasiPDFInternal()" style="background:var(--orange); margin-top:0; flex:1; font-size:11px;">📊 PDF INTERNAL</button></div>`; 
     hasil.style.display='block'; 
     hasil.scrollIntoView({behavior:"smooth"}); 
 }
@@ -2806,32 +2824,142 @@ function salinRingkasan() {
     } 
 }
 
-async function cetakEstimasiPDF() { 
-    if(!lastCalculatedPrice) { 
-        showToast('Silakan hitung estimasi dulu!'); 
-        return; 
-    } 
-    showToast('Membuat PDF...'); 
-    try { 
-        const { jsPDF } = window.jspdf; 
-        const doc = new jsPDF(); 
-        await applyPDFConfig(doc, { landscape: false }); 
-        const f=n=>"Rp "+Math.round(n).toLocaleString('id-ID'); 
-        doc.setFontSize(16); 
-        doc.setTextColor(26,93,74); 
-        doc.text('RINCIAN HARGA PAKET', 105, 65, { align: 'center' }); 
-        doc.setFontSize(11); 
-        doc.setTextColor(0,0,0); 
-        doc.text(`Paket: ${lastCalculatedPaket}`, 20, 85); 
-        doc.text(`Total Jamaah: ${lastCalculatedTotalJam} orang`, 20, 95); 
-        doc.setFontSize(16); 
-        doc.setTextColor(26,93,74); 
-        doc.text(`HARGA PER PAX: ${f(lastCalculatedPrice)}`, 20, 115); 
-        doc.save(`Estimasi_Harga_${new Date().toLocaleDateString('id-ID').replace(/\//g,'-')}.pdf`); 
-        showToast('PDF berhasil dibuat'); 
-    } catch(e){ 
-        showToast('Gagal PDF: '+e.message); 
-    } 
+// PDF JAMAAH - hanya harga per pax
+async function cetakEstimasiPDFJamaah() {
+    if(!lastCalculatedPrice) { showToast('Silakan hitung estimasi dulu!'); return; }
+    showToast('Membuat PDF Jamaah...');
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        await applyPDFConfig(doc, { landscape: false });
+        const f=n=>"Rp "+Math.round(n).toLocaleString('id-ID');
+        const tgl = new Date().toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
+        doc.setFontSize(16);
+        doc.setTextColor(26,93,74);
+        doc.text('INFORMASI HARGA PAKET', 105, 65, { align: 'center' });
+        doc.setFontSize(12);
+        doc.setTextColor(0,0,0);
+        doc.text(`Paket      : ${lastCalculatedPaket}`, 20, 85);
+        doc.text(`Jamaah     : ${lastCalculatedTotalJam} orang`, 20, 95);
+        doc.text(`Tanggal    : ${tgl}`, 20, 105);
+        doc.setDrawColor(26,93,74);
+        doc.setLineWidth(0.5);
+        doc.line(20, 115, 190, 115);
+        doc.setFontSize(18);
+        doc.setTextColor(26,93,74);
+        doc.text(`HARGA PER PAX: ${f(lastCalculatedPrice)}`, 105, 130, { align: 'center' });
+        doc.setFontSize(10);
+        doc.setTextColor(120,120,120);
+        doc.text('*Harga sudah termasuk semua komponen paket', 105, 145, { align: 'center' });
+        doc.text('*Hubungi admin untuk informasi lebih lanjut', 105, 153, { align: 'center' });
+        doc.save(`Harga_Jamaah_${lastCalculatedPaket}_${new Date().toLocaleDateString('id-ID').replace(/\//g,'-')}.pdf`);
+        showToast('✅ PDF Jamaah berhasil dibuat');
+    } catch(e) { showToast('Gagal PDF: '+e.message); }
+}
+
+// PDF INTERNAL - rincian lengkap untuk bos
+async function cetakEstimasiPDFInternal() {
+    if(!lastCalculatedPrice) { showToast('Silakan hitung estimasi dulu!'); return; }
+    showToast('Membuat PDF Internal...');
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        await applyPDFConfig(doc, { landscape: false });
+        const f=n=>"Rp "+Math.round(n).toLocaleString('id-ID');
+        const tgl = new Date().toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
+        // Ambil data komponen dari localStorage
+        const est = JSON.parse(localStorage.getItem('safara_estimasi_data') || '{}');
+        const pr = v => parseInt((v||'0').toString().replace(/\./g,'').replace(/[^0-9]/g,'')) || 0;
+        const nJam = lastCalculatedTotalJam;
+        const nFoc = parseInt(est.jamGratis)||0;
+        const nTL = parseInt(est.numTL)||0;
+        const sub = pr(est.cTiket)+pr(est.cLA)+pr(est.cAsuransi)+pr(est.cHandling)+pr(est.cPIC)+pr(est.cAlat)+pr(est.cAplikasi)+pr(est.cLain);
+        const pPct = (parseFloat(est.profitPct)||0)/100;
+        const profitKotor = (sub*nJam)*pPct;
+        const biayaTL = sub*nTL;
+        const profitBersih = profitKotor-biayaTL;
+        const profitPerPax = profitBersih/(nJam-nFoc);
+
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(26,93,74);
+        doc.text('RINCIAN ESTIMASI INTERNAL', 105, 65, { align: 'center' });
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(231,76,60);
+        doc.setFont(undefined, 'italic');
+        doc.text('Hanya Untuk Internal', 105, 73, { align: 'center' });
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(11);
+        doc.setTextColor(0,0,0);
+        doc.text(`Paket    : ${lastCalculatedPaket}`, 20, 85);
+        doc.text(`Jamaah   : ${nJam} orang (${nFoc} gratis, ${nTL} TL)`, 20, 93);
+        doc.text(`Tanggal  : ${tgl}`, 20, 101);
+
+        doc.setDrawColor(26,93,74);
+        doc.setLineWidth(0.5);
+        doc.line(20, 107, 190, 107);
+
+        // Komponen biaya
+        let y = 115;
+        doc.setFontSize(12);
+        doc.setTextColor(26,93,74);
+        doc.text('KOMPONEN BIAYA PER PAX', 20, y); y+=8;
+        doc.setFontSize(10);
+        doc.setTextColor(0,0,0);
+        const items = [
+            ['Tiket', pr(est.cTiket)],
+            ['Land Arrangement (LA)', pr(est.cLA)],
+            ['Asuransi', pr(est.cAsuransi)],
+            ['Handling', pr(est.cHandling)],
+            ['PIC/Guide', pr(est.cPIC)],
+            ['Perlengkapan/Alat', pr(est.cAlat)],
+            ['Biaya Aplikasi', pr(est.cAplikasi)],
+            ['Lain-lain', pr(est.cLain)],
+        ];
+        items.forEach(([label, val]) => {
+            if(val > 0) {
+                doc.text(`${label}`, 25, y);
+                doc.text(f(val), 190, y, { align: 'right' });
+                y += 7;
+            }
+        });
+        doc.setLineWidth(0.3);
+        doc.line(20, y, 190, y); y+=6;
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        doc.text('Modal Pokok / Pax', 25, y);
+        doc.text(f(sub), 190, y, { align: 'right' }); y+=10;
+        doc.setFont(undefined, 'normal');
+
+        doc.setFontSize(12);
+        doc.setTextColor(26,93,74);
+        doc.text('KALKULASI PROFIT', 20, y); y+=8;
+        doc.setFontSize(10);
+        doc.setTextColor(0,0,0);
+        doc.text(`Profit (${est.profitPct||0}% dari total modal)`, 25, y);
+        doc.text(f(profitKotor), 190, y, { align: 'right' }); y+=7;
+        doc.text(`Biaya TL (${nTL} orang)`, 25, y);
+        doc.text(`- ${f(biayaTL)}`, 190, y, { align: 'right' }); y+=7;
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(46,204,113);
+        doc.text('PROFIT BERSIH', 25, y);
+        doc.text(f(profitBersih), 190, y, { align: 'right' }); y+=7;
+        doc.text('PROFIT PER PAX', 25, y);
+        doc.text(f(profitPerPax), 190, y, { align: 'right' }); y+=12;
+
+        doc.setLineWidth(0.5);
+        doc.setDrawColor(26,93,74);
+        doc.line(20, y, 190, y); y+=8;
+        doc.setFontSize(14);
+        doc.setTextColor(26,93,74);
+        doc.setFont(undefined, 'bold');
+        doc.text('HARGA JUAL PER PAX', 20, y);
+        doc.text(f(lastCalculatedPrice), 190, y, { align: 'right' });
+
+        doc.save(`Estimasi_Internal_${lastCalculatedPaket}_${new Date().toLocaleDateString('id-ID').replace(/\//g,'-')}.pdf`);
+        showToast('✅ PDF Internal berhasil dibuat');
+    } catch(e) { showToast('Gagal PDF: '+e.message); }
 }
 
 function resetEstimasiToDefault() { 
@@ -4154,7 +4282,7 @@ async function cetakInvoicePDF(jamaahId) {
         doc.text(`Total Dibayar: ${formatRupiah(totalBayar)}`, 20, finalY); 
         doc.text(`Sisa Tagihan: ${formatRupiah(sisa > 0 ? sisa : 0)}`, 20, finalY+10); 
         doc.setTextColor(sisa <= 0 ? '#2ecc71' : '#e74c3c'); 
-        doc.text(`Status: ${sisa <= 0 ? '✅ LUNAS' : '⏳ BELUM LUNAS'}`, 20, finalY+20); 
+        doc.text(`Status: ${sisa <= 0 ? 'LUNAS' : 'BELUM LUNAS'}`, 20, finalY+20); 
         doc.save(`Invoice_${jamaah.nama_lengkap.replace(/\s/g, '_')}.pdf`); 
         showToast('PDF Invoice berhasil dibuat'); 
     } catch(e) { showToast('Gagal PDF: ' + e.message); } 
@@ -4413,7 +4541,7 @@ function tambahFolder() {
     const nama = document.getElementById('newFolderName')?.value.trim(); 
     if(!nama) return showToast('Isi nama folder!'); 
     if(folderList.some(f => f.nama === nama)) return showToast('Folder sudah ada!'); 
-    folderList.push({ id: Date.now(), nama, jamaahIds: [], created_at: new Date().toLocaleDateString('id-ID') }); 
+    folderList.push({ id: Date.now(), nama, jamaahIds: [], fields: [], created_at: new Date().toLocaleDateString('id-ID') }); 
     saveFolderData(); 
     document.getElementById('newFolderName').value = ''; 
     showToast('Folder berhasil dibuat'); 
@@ -4444,7 +4572,15 @@ function openFolderDetail(folderId) {
     else jamaahInFolder.forEach(j => { 
         html += `<div class="jamaah-card"><div class="jamaah-header"><div class="jamaah-nama">👤 ${escapeHtml(j.nama_lengkap)}</div><button class="btn-delete-jamaah" onclick="removeJamaahFromFolder('${folderId}', ${j.id})">🗑️ Hapus dari folder</button></div></div>`; 
     }); 
-    html += `</div><button class="btn btn-purple btn-small mt-2" onclick="exportFolderToPDF('${folderId}')"><i class="fas fa-file-pdf"></i> Export Folder ke PDF</button><button class="btn btn-teal btn-small mt-2" onclick="exportFolderToExcel('${folderId}')"><i class="fas fa-file-excel"></i> Export Folder ke Excel</button></div>`; 
+    html += `</div>`;
+    // FIELD DINAMIS
+    const fields = folder.fields || [];
+    html += `<div class="section-title">📝 Informasi Folder</div><div id="folderFieldList" style="margin-bottom:10px;">`;
+    if(fields.length === 0) html += `<p class="text-center" style="color:#999;font-size:13px;">Belum ada field. Tambahkan informasi di bawah.</p>`;
+    fields.forEach((fd, i) => {
+        html += `<div class="jamaah-card" style="padding:10px 14px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;align-items:center;"><div><span style="font-weight:bold;color:#0D5C4A;">${escapeHtml(fd.label)}:</span> <span>${escapeHtml(fd.value)}</span></div><div style="display:flex;gap:6px;"><button class="btn-edit-jamaah" onclick="editFolderField('${folderId}',${i})" style="padding:4px 8px;font-size:11px;"><i class="fas fa-edit"></i></button><button class="btn-delete-jamaah" onclick="deleteFolderField('${folderId}',${i})" style="padding:4px 8px;font-size:11px;"><i class="fas fa-trash"></i></button></div></div></div>`;
+    });
+    html += `</div><div class="card-premium" style="padding:12px;margin-bottom:12px;"><div style="font-weight:bold;margin-bottom:8px;color:#0D5C4A;">+ Tambah Field Baru</div><input type="text" id="newFieldLabel" placeholder="Nama field (contoh: Hotel, Maskapai)" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-bottom:8px;"><input type="text" id="newFieldValue" placeholder="Isi/nilai field" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-bottom:8px;"><button class="btn btn-primary btn-small" onclick="addFolderField('${folderId}')">+ Tambah Field</button></div><button class="btn btn-purple btn-small mt-2" onclick="exportFolderToPDF('${folderId}')"><i class="fas fa-file-pdf"></i> Export Folder ke PDF</button><button class="btn btn-teal btn-small mt-2" onclick="exportFolderToExcel('${folderId}')"><i class="fas fa-file-excel"></i> Export Folder ke Excel</button></div>`; 
     document.getElementById('folderListContainer').innerHTML = html; 
 }
 
@@ -4494,6 +4630,44 @@ function confirmDeleteFolder(folderId) {
     } 
 }
 
+function addFolderField(folderId) {
+    const label = document.getElementById('newFieldLabel')?.value.trim();
+    const value = document.getElementById('newFieldValue')?.value.trim();
+    if(!label) return showToast('Isi nama field!');
+    if(!value) return showToast('Isi nilai field!');
+    const folder = folderList.find(f => f.id == folderId);
+    if(!folder) return;
+    if(!folder.fields) folder.fields = [];
+    folder.fields.push({ label, value });
+    saveFolderData();
+    openFolderDetail(folderId);
+    showToast('Field berhasil ditambahkan');
+}
+
+function editFolderField(folderId, index) {
+    const folder = folderList.find(f => f.id == folderId);
+    if(!folder || !folder.fields[index]) return;
+    const fd = folder.fields[index];
+    const newLabel = prompt('Nama field:', fd.label);
+    if(!newLabel) return;
+    const newValue = prompt('Isi/nilai field:', fd.value);
+    if(newValue === null) return;
+    folder.fields[index] = { label: newLabel.trim(), value: newValue.trim() };
+    saveFolderData();
+    openFolderDetail(folderId);
+    showToast('Field diupdate');
+}
+
+function deleteFolderField(folderId, index) {
+    if(!confirm('Hapus field ini?')) return;
+    const folder = folderList.find(f => f.id == folderId);
+    if(!folder) return;
+    folder.fields.splice(index, 1);
+    saveFolderData();
+    openFolderDetail(folderId);
+    showToast('Field dihapus');
+}
+
 async function exportFolderToPDF(folderId) { 
     const folder = folderList.find(f => f.id == folderId); 
     if(!folder) return; 
@@ -4507,9 +4681,24 @@ async function exportFolderToPDF(folderId) {
         doc.setTextColor(26,93,74); 
         doc.text(`Folder: ${folder.nama}`, 105, 65, { align: 'center' }); 
         doc.setFontSize(10); 
-        doc.text(`Total Jamaah: ${jamaahInFolder.length} orang`, 105, 75, { align: 'center' }); 
+        doc.setTextColor(0,0,0);
+        doc.text(`Total Jamaah: ${jamaahInFolder.length} orang`, 105, 73, { align: 'center' });
+        // Tampilkan field dinamis
+        let startY = 82;
+        const fields = folder.fields || [];
+        if(fields.length > 0) {
+            doc.setFontSize(11);
+            doc.setTextColor(26,93,74);
+            doc.text('Informasi Folder:', 20, startY); startY += 7;
+            doc.setFontSize(10);
+            doc.setTextColor(0,0,0);
+            fields.forEach(fd => {
+                doc.text(`${fd.label}: ${fd.value}`, 25, startY); startY += 6;
+            });
+            startY += 4;
+        }
         const tableData = jamaahInFolder.map((j, i) => [i+1, j.nama_lengkap, j.created_at || '-']); 
-        doc.autoTable({ startY: 90, head: [['No', 'Nama Lengkap', 'Tanggal Input']], body: tableData, theme: 'striped', headStyles: { fillColor: [26,93,74] }, styles: { fontSize: 9, lineWidth: 0.1 } }); 
+        doc.autoTable({ startY, head: [['No', 'Nama Lengkap', 'Tanggal Input']], body: tableData, theme: 'striped', headStyles: { fillColor: [26,93,74] }, styles: { fontSize: 9, lineWidth: 0.1 } }); 
         doc.save(`Folder_${folder.nama.replace(/\s+/g,'_')}.pdf`); 
         showToast('PDF berhasil dibuat'); 
     } catch(e) { showToast('Gagal PDF: ' + e.message); } 
@@ -4520,9 +4709,19 @@ function exportFolderToExcel(folderId) {
     if(!folder) return; 
     const jamaahInFolder = folder.jamaahIds.map(id => jamaahList.find(j => j.id == id)).filter(j => j); 
     if(jamaahInFolder.length === 0) { showToast('Tidak ada jamaah dalam folder ini'); return; } 
-    const wsData = jamaahInFolder.map((j, i) => ({ No: i+1, Nama: j.nama_lengkap, 'Tanggal Input': j.created_at || '-' })); 
+    const fields = folder.fields || [];
+    // Baris info folder dulu
+    const wsData = [];
+    wsData.push({ 'Folder': folder.nama, '': '' });
+    if(fields.length > 0) {
+        wsData.push({ 'Folder': 'Informasi Folder', '': '' });
+        fields.forEach(fd => wsData.push({ 'Folder': fd.label, '': fd.value }));
+        wsData.push({ 'Folder': '', '': '' });
+    }
+    wsData.push({ 'Folder': 'No', '': 'Nama Lengkap', 'Tanggal Input': 'Tanggal Input' });
+    jamaahInFolder.forEach((j, i) => wsData.push({ 'Folder': i+1, '': j.nama_lengkap, 'Tanggal Input': j.created_at || '-' }));
     const wb = XLSX.utils.book_new(); 
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(wsData), folder.nama); 
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(wsData), folder.nama.substring(0,31)); 
     XLSX.writeFile(wb, `Folder_${folder.nama.replace(/\s+/g,'_')}.xlsx`); 
     showToast('Excel berhasil di-export'); 
 }
@@ -5355,7 +5554,7 @@ function cetakTiketLangsung() {
     printContent.classList.add('tiket-card-print');
     printContent.classList.remove('tiket-card');
     const printWindow = window.open('', '_blank');
-    printWindow.document.write(`<!DOCTYPE html><html><head><title>Cetak Tiket - Safara</title>${style}</head><body>${printContent.outerHTML}<div class="no-print" style="text-align:center; margin-top:20px;"><button onclick="window.print()" style="padding:10px 20px; background:#0D5C4A; color:white; border:none; border-radius:8px; cursor:pointer;">🖨️ PRINT</button><button onclick="window.close()" style="padding:10px 20px; background:#ccc; border:none; border-radius:8px; cursor:pointer; margin-left:10px;">TUTUP</button></div></body></html>`);
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>Cetak Tiket - Safara</title>${style}</head><body>${printContent.outerHTML}<div class="no-print" style="text-align:center; margin-top:20px;"><button onclick="window.print()" style="padding:10px 20px; background:#0D5C4A; color:white; border:none; border-radius:8px; cursor:pointer;">PRINT</button><button onclick="window.close()" style="padding:10px 20px; background:#ccc; border:none; border-radius:8px; cursor:pointer; margin-left:10px;">TUTUP</button></div></body></html>`);
     printWindow.document.close();
 }
 
