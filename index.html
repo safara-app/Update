@@ -2647,7 +2647,7 @@ function printDashboard() {
         return { nama: j.nama_lengkap, paket: hargaPaket, sisa: Math.max(0, hargaPaket - totalBayar) };
     }).sort((a,b) => b.sisa - a.sisa).slice(0,5);
 
-    const cfg = getKonfigurasiProData();
+    const cfg = JSON.parse(localStorage.getItem('safara_config') || '{}');
     const namaInstansi = cfg.instansi1?.nama || 'Safara';
     const tanggal = new Date().toLocaleDateString('id-ID', { day:'2-digit', month:'long', year:'numeric' });
 
@@ -4697,24 +4697,8 @@ async function exportFolderToPDF(folderId) {
             });
             startY += 4;
         }
-        // Ambil semua field dinamis jamaah yang ada
-        const allFieldKeys = [];
-        jamaahInFolder.forEach(j => {
-            if(j.additional_fields) {
-                Object.keys(j.additional_fields).forEach(k => {
-                    if(!allFieldKeys.includes(k)) allFieldKeys.push(k);
-                });
-            }
-        });
-        // Buat header dan data tabel
-        const tHead = ['No', 'Nama Lengkap', ...allFieldKeys, 'Tanggal Input'];
-        const tableData = jamaahInFolder.map((j, i) => {
-            const row = [i+1, j.nama_lengkap];
-            allFieldKeys.forEach(k => row.push((j.additional_fields && j.additional_fields[k]) ? j.additional_fields[k] : '-'));
-            row.push(j.created_at || '-');
-            return row;
-        });
-        doc.autoTable({ startY, head: [tHead], body: tableData, theme: 'striped', headStyles: { fillColor: [26,93,74] }, styles: { fontSize: 8, lineWidth: 0.1 }, columnStyles: { 0: { cellWidth: 8 } } }); 
+        const tableData = jamaahInFolder.map((j, i) => [i+1, j.nama_lengkap, j.created_at || '-']); 
+        doc.autoTable({ startY, head: [['No', 'Nama Lengkap', 'Tanggal Input']], body: tableData, theme: 'striped', headStyles: { fillColor: [26,93,74] }, styles: { fontSize: 9, lineWidth: 0.1 } }); 
         doc.save(`Folder_${folder.nama.replace(/\s+/g,'_')}.pdf`); 
         showToast('PDF berhasil dibuat'); 
     } catch(e) { showToast('Gagal PDF: ' + e.message); } 
@@ -4734,27 +4718,10 @@ function exportFolderToExcel(folderId) {
         fields.forEach(fd => wsData.push({ 'Folder': fd.label, '': fd.value }));
         wsData.push({ 'Folder': '', '': '' });
     }
-    // Ambil semua field dinamis jamaah
-    const allFieldKeys = [];
-    jamaahInFolder.forEach(j => {
-        if(j.additional_fields) {
-            Object.keys(j.additional_fields).forEach(k => { if(!allFieldKeys.includes(k)) allFieldKeys.push(k); });
-        }
-    });
-    // Buat header row
-    const headerRow = { 'No': 'No', 'Nama Lengkap': 'Nama Lengkap' };
-    allFieldKeys.forEach(k => headerRow[k] = k);
-    headerRow['Tanggal Input'] = 'Tanggal Input';
-    wsData.push(headerRow);
-    // Buat data rows
-    jamaahInFolder.forEach((j, i) => {
-        const row = { 'No': i+1, 'Nama Lengkap': j.nama_lengkap };
-        allFieldKeys.forEach(k => row[k] = (j.additional_fields && j.additional_fields[k]) ? j.additional_fields[k] : '-');
-        row['Tanggal Input'] = j.created_at || '-';
-        wsData.push(row);
-    });
+    wsData.push({ 'Folder': 'No', '': 'Nama Lengkap', 'Tanggal Input': 'Tanggal Input' });
+    jamaahInFolder.forEach((j, i) => wsData.push({ 'Folder': i+1, '': j.nama_lengkap, 'Tanggal Input': j.created_at || '-' }));
     const wb = XLSX.utils.book_new(); 
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(wsData, {skipHeader: true}), folder.nama.substring(0,31)); 
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(wsData), folder.nama.substring(0,31)); 
     XLSX.writeFile(wb, `Folder_${folder.nama.replace(/\s+/g,'_')}.xlsx`); 
     showToast('Excel berhasil di-export'); 
 }
