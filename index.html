@@ -2055,7 +2055,7 @@
 
 <!-- MODALS -->
 <div id="jamaahModal" class="modal"><div class="modal-content"><h3 id="jamaahModalTitle">Tambah database</h3><div id="jamaahFormContainer"></div><button class="btn btn-primary" onclick="saveJamaah()"> SIMPAN</button><button class="btn btn-danger mt-2" onclick="closeJamaahModal()">BATAL</button></div></div>
-<div id="fieldModal" class="modal"><div class="modal-content"><h3>Tambah Field Dinamis</h3><div class="dynamic-field"><label>Nama Field</label><input type="text" id="newFieldName" placeholder="Contoh: tanggal_lahir"><div class="error-message">Hanya huruf kecil, angka, underscore</div></div><div class="dynamic-field"><label>Label Field</label><input type="text" id="newFieldLabel" placeholder="Contoh: Tanggal Lahir"></div><div class="dynamic-field"><label>Tipe Field</label><select id="newFieldType"><option value="text">Text</option><option value="date">Tanggal</option><option value="tel">Telepon</option><option value="textarea">Text Area</option></select></div><button class="btn btn-primary" onclick="addDynamicFieldJamaah()"> TAMBAH FIELD</button><button class="btn btn-danger mt-2" onclick="closeFieldModal()">BATAL</button></div></div>
+<div id="fieldModal" class="modal"><div class="modal-content"><h3>Tambah Field Dinamis</h3><div class="dynamic-field"><label>Nama Field</label><input type="text" id="newFieldName" placeholder="Contoh: tanggal_lahir"><div class="error-message">Hanya huruf kecil, angka, underscore</div></div><div class="dynamic-field"><label>Label Field</label><input type="text" id="newFieldLabel" placeholder="Contoh: Tanggal Lahir"></div><div class="dynamic-field"><label>Tipe Field</label><select id="newFieldType"><option value="text">Text</option><option value="date">Tanggal</option><option value="tel">Telepon</option><option value="textarea">Text Area</option></select></div><div class="dynamic-field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="newFieldRahasia" style="width:18px;height:18px;"><label style="margin:0;">Sembunyikan di PDF Folder (Rahasia)</label></div><button class="btn btn-primary" onclick="addDynamicFieldJamaah()"> TAMBAH FIELD</button><button class="btn btn-danger mt-2" onclick="closeFieldModal()">BATAL</button></div></div>
 <div id="manageFieldsModal" class="modal"><div class="modal-content"><h3>Kelola Field Dinamis</h3><button class="btn btn-primary btn-small" style="margin-bottom:15px;" onclick="closeManageFieldsModal(); openFieldModal();">+ Tambah Field Baru</button><div id="fieldsListContainer"></div><button class="btn btn-primary mt-2" onclick="closeManageFieldsModal()">TUTUP</button></div></div>
 <div id="jamaahKitaFieldModal" class="modal"><div class="modal-content"><h3>Kelola Field Dinamis (Jamaah on proses)</h3><div class="dynamic-field"><label>Nama Field</label><input type="text" id="jamaahKitaNewFieldName" placeholder="Contoh: kamar, bus, makanan"><div class="error-message">Hanya huruf kecil, angka, underscore</div></div><div class="dynamic-field"><label>Label Field</label><input type="text" id="jamaahKitaNewFieldLabel" placeholder="Contoh: Kamar, Bus, Makanan"></div><div class="dynamic-field"><label>Tipe Field</label><select id="jamaahKitaNewFieldType"><option value="text">Text</option><option value="number">Number</option><option value="tel">Telepon</option><option value="textarea">Text Area</option></select></div><button class="btn btn-primary" onclick="addJamaahKitaDynamicField()"> TAMBAH FIELD</button><div id="jamaahKitaFieldsListContainer" style="margin-top:20px;"></div><button class="btn btn-primary mt-2" onclick="closeJamaahKitaFieldModal()">TUTUP</button></div></div>
 <div id="paymentModal" class="modal"><div class="modal-content"><h3> Input Pembayaran</h3><div class="input-group"><label> Tanggal</label><input type="date" id="paymentTanggal"></div><div class="input-group"><label> Nama Jamaah *</label><select id="paymentJamaahSelect"><option value="">-- Pilih Jamaah --</option></select></div><div class="input-group"><label> Nominal (Rp)</label><input type="number" id="paymentNominal" placeholder="Contoh: 5000000"></div><div class="input-group"><label> Metode</label><select id="paymentMetode"><option value="Transfer">Transfer</option><option value="Cash">Cash</option><option value="QRIS">QRIS</option></select></div><div class="input-group"><label> Keterangan</label><input type="text" id="paymentKeterangan" placeholder="DP / Cicilan / Pelunasan"></div><div class="row"><button class="btn btn-danger" onclick="closePaymentModal()" style="flex:1">Batal</button><button class="btn btn-primary" onclick="simpanPembayaran()" style="flex:1">Simpan</button></div></div></div>
@@ -2647,7 +2647,7 @@ function printDashboard() {
         return { nama: j.nama_lengkap, paket: hargaPaket, sisa: Math.max(0, hargaPaket - totalBayar) };
     }).sort((a,b) => b.sisa - a.sisa).slice(0,5);
 
-    const cfg = JSON.parse(localStorage.getItem('safara_config') || '{}');
+    const cfg = getKonfigurasiProData();
     const namaInstansi = cfg.instansi1?.nama || 'Safara';
     const tanggal = new Date().toLocaleDateString('id-ID', { day:'2-digit', month:'long', year:'numeric' });
 
@@ -2725,7 +2725,7 @@ function exportDashboardPDF() {
             doc.setTextColor(0,0,0);
             doc.text(`Total Kas: Rp ${formatRupiah(totalKas)}`, 20, 80);
             doc.text(`Total Jamaah: ${jamaahData.length} orang`, 20, 90);
-            doc.save('Dashboard_Safara.pdf');
+            doc.save(`Dashboard_${getKonfigurasiProData().instansi1?.nama || 'Dashboard'}.pdf`);
             showToast('PDF Dashboard berhasil dibuat');
         } catch(e) { showToast('Gagal PDF: ' + e.message); }
     }, 100);
@@ -2742,7 +2742,7 @@ function exportDashboardExcel() {
     XLSX.utils.book_append_sheet(wb, wsJamaah, 'Jamaah');
     XLSX.utils.book_append_sheet(wb, wsKas, 'Kas');
     XLSX.utils.book_append_sheet(wb, wsPayment, 'Pembayaran');
-    XLSX.writeFile(wb, `Dashboard_Safara_${new Date().toLocaleDateString('id-ID').replace(/\//g,'-')}.xlsx`);
+    XLSX.writeFile(wb, `Dashboard_${getKonfigurasiProData().instansi1?.nama || 'Dashboard'}_${new Date().toLocaleDateString('id-ID').replace(/\//g,'-')}.xlsx`);
     showToast('Excel Dashboard berhasil di-export');
 }
 
@@ -3463,9 +3463,52 @@ function renderFieldsList(){
     } 
     let html=''; 
     dynamicFieldsJamaah.forEach((f,idx)=>{ 
-        html+=`<div class="field-item"><div><strong>${escapeHtml(f.label)}</strong><br><small style="font-size:11px;">${f.name} (${f.type})</small></div><button class="btn-danger-small" onclick="confirmDeleteDynamicField(${idx})">Hapus</button></div>`; 
+        const rahasiaLabel = f.rahasia === true ? '<span style="color:#e74c3c;font-size:10px;"> 🔒 Rahasia</span>' : '';
+        html+=`<div class="field-item"><div><strong>${escapeHtml(f.label)}</strong>${rahasiaLabel}<br><small style="font-size:11px;">${f.name} (${f.type})</small></div><div style="display:flex;gap:6px;"><button class="btn-edit-jamaah" onclick="editDynamicFieldJamaah(${idx})" style="padding:4px 10px;font-size:11px;">Edit</button><button class="btn-danger-small" onclick="confirmDeleteDynamicField(${idx})">Hapus</button></div></div>`; 
     }); 
     container.innerHTML=html; 
+}
+
+function editDynamicFieldJamaah(idx){
+    const f = dynamicFieldsJamaah[idx];
+    if(!f) return;
+    // Buat modal edit inline
+    const modal = document.createElement('div');
+    modal.id = 'editFieldModalInline';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    modal.innerHTML = `
+        <div style="background:white;border-radius:16px;padding:24px;width:90%;max-width:400px;">
+            <h3 style="margin-bottom:16px;">Edit Field Dinamis</h3>
+            <div style="margin-bottom:10px;"><label>Label Field</label><input type="text" id="editFieldLabel" value="${escapeHtml(f.label)}" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px;"></div>
+            <div style="margin-bottom:10px;"><label>Tipe Field</label>
+            <select id="editFieldType" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px;">
+                <option value="text" ${f.type==='text'?'selected':''}>Text</option>
+                <option value="date" ${f.type==='date'?'selected':''}>Tanggal</option>
+                <option value="tel" ${f.type==='tel'?'selected':''}>Telepon</option>
+                <option value="textarea" ${f.type==='textarea'?'selected':''}>Text Area</option>
+            </select></div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+                <input type="checkbox" id="editFieldRahasia" ${f.rahasia===true?'checked':''} style="width:18px;height:18px;">
+                <label style="margin:0;">Sembunyikan di PDF Folder (Rahasia)</label>
+            </div>
+            <button onclick="saveEditDynamicField(${idx})" style="width:100%;padding:10px;background:#0D5C4A;color:white;border:none;border-radius:8px;margin-bottom:8px;cursor:pointer;">SIMPAN</button>
+            <button onclick="document.getElementById('editFieldModalInline').remove()" style="width:100%;padding:10px;background:#ccc;border:none;border-radius:8px;cursor:pointer;">BATAL</button>
+        </div>`;
+    document.body.appendChild(modal);
+}
+
+function saveEditDynamicField(idx){
+    const label = document.getElementById('editFieldLabel')?.value.trim();
+    const type = document.getElementById('editFieldType')?.value;
+    const rahasia = document.getElementById('editFieldRahasia')?.checked || false;
+    if(!label) return showToast('Label harus diisi!');
+    dynamicFieldsJamaah[idx].label = label;
+    dynamicFieldsJamaah[idx].type = type;
+    dynamicFieldsJamaah[idx].rahasia = rahasia;
+    saveDynamicFieldsJamaah();
+    renderFieldsList();
+    document.getElementById('editFieldModalInline')?.remove();
+    showToast('Field berhasil diupdate!');
 }
 
 function openFieldModal(){ 
@@ -3486,7 +3529,8 @@ function addDynamicFieldJamaah(){
     if(!/^[a-z0-9_]+$/.test(name)) return showToast('Nama field: huruf kecil, angka, underscore!'); 
     if(!label) return showToast('Label harus diisi!'); 
     if(dynamicFieldsJamaah.some(f=>f.name===name)) return showToast('Field sudah ada!'); 
-    dynamicFieldsJamaah.push({name,label,type}); 
+    const rahasia = document.getElementById('newFieldRahasia')?.checked || false;
+    dynamicFieldsJamaah.push({name,label,type,rahasia}); 
     saveDynamicFieldsJamaah(); 
     closeFieldModal(); 
     renderFieldsList(); 
@@ -4580,7 +4624,20 @@ function openFolderDetail(folderId) {
     fields.forEach((fd, i) => {
         html += `<div class="jamaah-card" style="padding:10px 14px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;align-items:center;"><div><span style="font-weight:bold;color:#0D5C4A;">${escapeHtml(fd.label)}:</span> <span>${escapeHtml(fd.value)}</span></div><div style="display:flex;gap:6px;"><button class="btn-edit-jamaah" onclick="editFolderField('${folderId}',${i})" style="padding:4px 8px;font-size:11px;"><i class="fas fa-edit"></i></button><button class="btn-delete-jamaah" onclick="deleteFolderField('${folderId}',${i})" style="padding:4px 8px;font-size:11px;"><i class="fas fa-trash"></i></button></div></div></div>`;
     });
-    html += `</div><div class="card-premium" style="padding:12px;margin-bottom:12px;"><div style="font-weight:bold;margin-bottom:8px;color:#0D5C4A;">+ Tambah Field Baru</div><input type="text" id="newFieldLabel" placeholder="Nama field (contoh: Hotel, Maskapai)" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-bottom:8px;"><input type="text" id="newFieldValue" placeholder="Isi/nilai field" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-bottom:8px;"><button class="btn btn-primary btn-small" onclick="addFolderField('${folderId}')">+ Tambah Field</button></div><button class="btn btn-purple btn-small mt-2" onclick="exportFolderToPDF('${folderId}')"><i class="fas fa-file-pdf"></i> Export Folder ke PDF</button><button class="btn btn-teal btn-small mt-2" onclick="exportFolderToExcel('${folderId}')"><i class="fas fa-file-excel"></i> Export Folder ke Excel</button></div>`; 
+    html += `</div><div class="card-premium" style="padding:12px;margin-bottom:12px;"><div style="font-weight:bold;margin-bottom:8px;color:#0D5C4A;">+ Tambah Field Baru</div><input type="text" id="newFieldLabel" placeholder="Nama field (contoh: Hotel, Maskapai)" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-bottom:8px;"><input type="text" id="newFieldValue" placeholder="Isi/nilai field" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-bottom:8px;"><button class="btn btn-primary btn-small" onclick="addFolderField('${folderId}')">+ Tambah Field</button></div>`;
+    // Section pilih field untuk PDF/Excel
+    const allDynFields = JSON.parse(localStorage.getItem('safara_jamaah_fields') || '[]');
+    const selectedFields = folder.selectedFields || [];
+    html += `<div class="card-premium" style="padding:12px;margin-bottom:12px;"><div style="font-weight:bold;margin-bottom:10px;color:#0D5C4A;">📋 Pilih Field untuk PDF/Excel</div>`;
+    if(allDynFields.length === 0) {
+        html += `<p style="color:#999;font-size:13px;">Belum ada field dinamis jamaah.</p>`;
+    } else {
+        allDynFields.forEach(fd => {
+            const checked = selectedFields.includes(fd.name) ? 'checked' : '';
+            html += `<label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;"><input type="checkbox" value="${fd.name}" ${checked} onchange="toggleFolderField('${folderId}', '${fd.name}', this.checked)" style="width:18px;height:18px;cursor:pointer;accent-color:#0D5C4A;"><span style="font-weight:bold;">${escapeHtml(fd.label)}</span></label>`;
+        });
+    }
+    html += `</div><button class="btn btn-purple btn-small mt-2" onclick="exportFolderToPDF('${folderId}')"><i class="fas fa-file-pdf"></i> Export Folder ke PDF</button><button class="btn btn-teal btn-small mt-2" onclick="exportFolderToExcel('${folderId}')"><i class="fas fa-file-excel"></i> Export Folder ke Excel</button></div>`; 
     document.getElementById('folderListContainer').innerHTML = html; 
 }
 
@@ -4628,6 +4685,19 @@ function confirmDeleteFolder(folderId) {
         saveFolderData(); 
         showToast('Folder dihapus'); 
     } 
+}
+
+function toggleFolderField(folderId, fieldKey, checked) {
+    const folder = folderList.find(f => f.id == folderId);
+    if(!folder) return;
+    if(!folder.selectedFields) folder.selectedFields = [];
+    if(checked) {
+        if(!folder.selectedFields.includes(fieldKey)) folder.selectedFields.push(fieldKey);
+    } else {
+        folder.selectedFields = folder.selectedFields.filter(k => k !== fieldKey);
+    }
+    saveFolderData();
+    showToast(checked ? 'Field ditambahkan ke PDF/Excel' : 'Field dihapus dari PDF/Excel');
 }
 
 function addFolderField(folderId) {
@@ -4697,8 +4767,18 @@ async function exportFolderToPDF(folderId) {
             });
             startY += 4;
         }
-        const tableData = jamaahInFolder.map((j, i) => [i+1, j.nama_lengkap, j.created_at || '-']); 
-        doc.autoTable({ startY, head: [['No', 'Nama Lengkap', 'Tanggal Input']], body: tableData, theme: 'striped', headStyles: { fillColor: [26,93,74] }, styles: { fontSize: 9, lineWidth: 0.1 } }); 
+        // Pakai selectedFields dari folder
+        const allDynFieldsPDF = JSON.parse(localStorage.getItem('safara_jamaah_fields') || '[]');
+        const selectedFieldsPDF = folder.selectedFields || [];
+        const chosenFields = allDynFieldsPDF.filter(fd => selectedFieldsPDF.includes(fd.name));
+        const tHead = ['No', 'Nama Lengkap', ...chosenFields.map(fd => fd.label), 'Tanggal Input'];
+        const tableData = jamaahInFolder.map((j, i) => {
+            const row = [i+1, j.nama_lengkap];
+            chosenFields.forEach(fd => row.push((j.additional_fields && j.additional_fields[fd.name]) ? j.additional_fields[fd.key] : '-'));
+            row.push(j.created_at || '-');
+            return row;
+        });
+        doc.autoTable({ startY, head: [tHead], body: tableData, theme: 'striped', headStyles: { fillColor: [26,93,74] }, styles: { fontSize: 8, lineWidth: 0.1 }, columnStyles: { 0: { cellWidth: 8 } } }); 
         doc.save(`Folder_${folder.nama.replace(/\s+/g,'_')}.pdf`); 
         showToast('PDF berhasil dibuat'); 
     } catch(e) { showToast('Gagal PDF: ' + e.message); } 
@@ -4718,10 +4798,24 @@ function exportFolderToExcel(folderId) {
         fields.forEach(fd => wsData.push({ 'Folder': fd.label, '': fd.value }));
         wsData.push({ 'Folder': '', '': '' });
     }
-    wsData.push({ 'Folder': 'No', '': 'Nama Lengkap', 'Tanggal Input': 'Tanggal Input' });
-    jamaahInFolder.forEach((j, i) => wsData.push({ 'Folder': i+1, '': j.nama_lengkap, 'Tanggal Input': j.created_at || '-' }));
+    // Pakai selectedFields dari folder
+    const allDynFieldsXLS = JSON.parse(localStorage.getItem('safara_jamaah_fields') || '[]');
+    const selectedFieldsXLS = folder.selectedFields || [];
+    const chosenFieldsXLS = allDynFieldsXLS.filter(fd => selectedFieldsXLS.includes(fd.name));
+    // Buat header row pakai label
+    const headerRow = { 'No': 'No', 'Nama Lengkap': 'Nama Lengkap' };
+    chosenFieldsXLS.forEach(fd => headerRow[fd.label] = fd.label);
+    headerRow['Tanggal Input'] = 'Tanggal Input';
+    wsData.push(headerRow);
+    // Buat data rows
+    jamaahInFolder.forEach((j, i) => {
+        const row = { 'No': i+1, 'Nama Lengkap': j.nama_lengkap };
+        chosenFieldsXLS.forEach(fd => row[fd.label] = (j.additional_fields && j.additional_fields[fd.name]) ? j.additional_fields[fd.key] : '-');
+        row['Tanggal Input'] = j.created_at || '-';
+        wsData.push(row);
+    });
     const wb = XLSX.utils.book_new(); 
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(wsData), folder.nama.substring(0,31)); 
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(wsData, {skipHeader: true}), folder.nama.substring(0,31)); 
     XLSX.writeFile(wb, `Folder_${folder.nama.replace(/\s+/g,'_')}.xlsx`); 
     showToast('Excel berhasil di-export'); 
 }
@@ -6085,7 +6179,7 @@ function saveModes() {
 let konfigurasiPro = {
     instansi1: { nama: '', alamat: '', telp: '', email: '', npwp: '', web: '', pimpinan: '', jabatan: '', logo: '' },
     instansi2: { aktif: false, nama: '', alamat: '', telp: '', email: '', izin: '', pimpinan: '', jabatan: '', logo: '' },
-    watermark: { enabled: true, text: 'Safara', opacity: 0.15, fontsize: 60, position: 'diagonal' },
+    watermark: { enabled: true, text: getKonfigurasiProData().instansi1?.nama || 'Safara', opacity: 0.15, fontsize: 60, position: 'diagonal' },
     qr: { enabled: true, text: 'Dokumen Resmi - Divalidasi oleh Sistem Safara', size: 80 },
     settings: { header_mode: 'both', ttd_mode: 'both', invoice_prefix: 'INV/SAFARA' },
     wa_template: { laporan: '📊 *LAPORAN KAS KANTOR*\n\n💰 Saldo: [saldo]\n📈 Pemasukan: [masuk]\n📉 Pengeluaran: [keluar]\n\nTerima kasih.' }
@@ -6461,4 +6555,4 @@ document.addEventListener('DOMContentLoaded', initPremium);
 </script>
 
 </body>
-                                                                                                           </html>
+                    </html>
