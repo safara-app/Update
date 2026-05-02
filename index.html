@@ -1852,7 +1852,7 @@
     <div class="header-premium header-premium-small"><div class="back-header"><i class="fas fa-arrow-left" onclick="showPage('home')"></i><h2 id="masterJudulHeader">Multi Event</h2><i class="fas fa-cog" onclick="openMasterSetting()" style="color:white; font-size:18px; cursor:pointer;"></i></div></div>
     <div class="card-premium">
         <div id="masterAdminPanel" style="display:none; background:var(--gray-light); padding:15px; border-radius:20px; margin-bottom:15px;">
-            <div class="input-group"><label> Judul Halaman / Laporan</label><input type="text" id="masterJudul" placeholder="Contoh: BADAL HAJI 2026"></div>
+            <div class="input-group"><label> Judul Halaman / Laporan</label><input type="text" id="masterJudul" placeholder="Contoh: HAJI 2026"></div>
             <div class="row"><button class="btn btn-blue btn-small" onclick="openMasterFieldModal()" style="flex:1"> Kelola Field Dinamis</button><button class="btn btn-teal btn-small" onclick="openMasterItemModal()" style="flex:1"> Kelola Item</button></div>
             <div class="row mt-2"><button class="btn btn-purple btn-small" onclick="copyFromJamaah()" style="flex:1"> Copy dari database</button><button class="btn btn-orange btn-small" onclick="openModeManager()" style="flex:1"><i class="fas fa-sliders-h"></i>  Kelola Mode</button></div>
             <div class="row mt-2"><button class="btn btn-danger btn-small" onclick="confirmDeleteAllMasterData()" style="flex:1"><i class="fas fa-trash-alt"></i>  HAPUS SEMUA</button><button class="btn btn-orange btn-small" onclick="deleteSelectedMasterData()" style="flex:1"><i class="fas fa-trash-alt"></i>  HAPUS TERPILIH</button></div>
@@ -4774,7 +4774,7 @@ async function exportFolderToPDF(folderId) {
         const tHead = ['No', 'Nama Lengkap', ...chosenFields.map(fd => fd.label), 'Tanggal Input'];
         const tableData = jamaahInFolder.map((j, i) => {
             const row = [i+1, j.nama_lengkap];
-            chosenFields.forEach(fd => row.push((j.additional_fields && j.additional_fields[fd.name]) ? j.additional_fields[fd.key] : '-'));
+            chosenFields.forEach(fd => row.push((j.additional_fields && j.additional_fields[fd.name]) ? j.additional_fields[fd.name] : '-'));
             row.push(j.created_at || '-');
             return row;
         });
@@ -4810,7 +4810,7 @@ function exportFolderToExcel(folderId) {
     // Buat data rows
     jamaahInFolder.forEach((j, i) => {
         const row = { 'No': i+1, 'Nama Lengkap': j.nama_lengkap };
-        chosenFieldsXLS.forEach(fd => row[fd.label] = (j.additional_fields && j.additional_fields[fd.name]) ? j.additional_fields[fd.key] : '-');
+        chosenFieldsXLS.forEach(fd => row[fd.label] = (j.additional_fields && j.additional_fields[fd.name]) ? j.additional_fields[fd.name] : '-');
         row['Tanggal Input'] = j.created_at || '-';
         wsData.push(row);
     });
@@ -6555,4 +6555,4 @@ document.addEventListener('DOMContentLoaded', initPremium);
 </script>
 
 </body>
-                    </html>
+                </html>
