@@ -1852,7 +1852,7 @@
     <div class="header-premium header-premium-small"><div class="back-header"><i class="fas fa-arrow-left" onclick="showPage('home')"></i><h2 id="masterJudulHeader">Multi Event</h2><i class="fas fa-cog" onclick="openMasterSetting()" style="color:white; font-size:18px; cursor:pointer;"></i></div></div>
     <div class="card-premium">
         <div id="masterAdminPanel" style="display:none; background:var(--gray-light); padding:15px; border-radius:20px; margin-bottom:15px;">
-            <div class="input-group"><label> Judul Halaman / Laporan</label><input type="text" id="masterJudul" placeholder="Contoh: HAJI 2026"></div>
+            <div class="input-group"><label> Judul Halaman / Laporan</label><input type="text" id="masterJudul" placeholder="Contoh: BADAL HAJI 2026"></div>
             <div class="row"><button class="btn btn-blue btn-small" onclick="openMasterFieldModal()" style="flex:1"> Kelola Field Dinamis</button><button class="btn btn-teal btn-small" onclick="openMasterItemModal()" style="flex:1"> Kelola Item</button></div>
             <div class="row mt-2"><button class="btn btn-purple btn-small" onclick="copyFromJamaah()" style="flex:1"> Copy dari database</button><button class="btn btn-orange btn-small" onclick="openModeManager()" style="flex:1"><i class="fas fa-sliders-h"></i>  Kelola Mode</button></div>
             <div class="row mt-2"><button class="btn btn-danger btn-small" onclick="confirmDeleteAllMasterData()" style="flex:1"><i class="fas fa-trash-alt"></i>  HAPUS SEMUA</button><button class="btn btn-orange btn-small" onclick="deleteSelectedMasterData()" style="flex:1"><i class="fas fa-trash-alt"></i>  HAPUS TERPILIH</button></div>
@@ -4609,8 +4609,9 @@ function renderFolderList() {
 function openFolderDetail(folderId) { 
     const folder = folderList.find(f => f.id == folderId); 
     if(!folder) return; 
-    let jamaahInFolder = folder.jamaahIds.map(id => jamaahList.find(j => j.id == id)).filter(j => j); 
-    let availableJamaah = jamaahList.filter(j => !folder.jamaahIds.includes(j.id)); 
+    const allJamaahFolder = JSON.parse(localStorage.getItem('safara_jamaah_list') || '[]');
+    let jamaahInFolder = folder.jamaahIds.map(id => allJamaahFolder.find(j => j.id == id)).filter(j => j); 
+    let availableJamaah = allJamaahFolder.filter(j => !folder.jamaahIds.includes(j.id)); 
     let html = `<div class="card-premium"><div class="back-header" style="margin-bottom:15px;"><i class="fas fa-arrow-left" onclick="renderFolderList()" style="cursor:pointer;"></i><h3 style="flex:1; text-align:center;">📁 ${escapeHtml(folder.nama)}</h3><div style="width:30px;"></div></div><div class="input-group"><label>➕ Tambah Jamaah ke Folder</label><select id="addJamaahToFolderSelect"><option value="">-- Pilih Jamaah --</option>${availableJamaah.map(j => `<option value="${j.id}">${escapeHtml(j.nama_lengkap)}</option>`).join('')}</select><button class="btn btn-primary btn-small mt-2" onclick="addJamaahToFolder('${folderId}')">Tambah</button></div><div class="section-title">📋 Daftar Jamaah dalam Folder</div><div id="folderJamaahList">`; 
     if(jamaahInFolder.length === 0) html += '<p class="text-center">Belum ada jamaah</p>'; 
     else jamaahInFolder.forEach(j => { 
@@ -4741,7 +4742,9 @@ function deleteFolderField(folderId, index) {
 async function exportFolderToPDF(folderId) { 
     const folder = folderList.find(f => f.id == folderId); 
     if(!folder) return; 
-    const jamaahInFolder = folder.jamaahIds.map(id => jamaahList.find(j => j.id == id)).filter(j => j); 
+    // Ambil langsung dari localStorage supaya data selalu fresh
+    const allJamaah = JSON.parse(localStorage.getItem('safara_jamaah_list') || '[]');
+    const jamaahInFolder = folder.jamaahIds.map(id => allJamaah.find(j => j.id == id)).filter(j => j); 
     if(jamaahInFolder.length === 0) { showToast('Tidak ada jamaah dalam folder ini'); return; } 
     try { 
         const { jsPDF } = window.jspdf; 
@@ -4774,7 +4777,7 @@ async function exportFolderToPDF(folderId) {
         const tHead = ['No', 'Nama Lengkap', ...chosenFields.map(fd => fd.label), 'Tanggal Input'];
         const tableData = jamaahInFolder.map((j, i) => {
             const row = [i+1, j.nama_lengkap];
-            chosenFields.forEach(fd => row.push((j.additional_fields && j.additional_fields[fd.name]) ? j.additional_fields[fd.name] : '-'));
+            chosenFields.forEach(fd => row.push((j.additional_fields && j.additional_fields[fd.name]) ? j.additional_fields[fd.key] : '-'));
             row.push(j.created_at || '-');
             return row;
         });
@@ -4787,7 +4790,9 @@ async function exportFolderToPDF(folderId) {
 function exportFolderToExcel(folderId) { 
     const folder = folderList.find(f => f.id == folderId); 
     if(!folder) return; 
-    const jamaahInFolder = folder.jamaahIds.map(id => jamaahList.find(j => j.id == id)).filter(j => j); 
+    // Ambil langsung dari localStorage supaya data selalu fresh
+    const allJamaah = JSON.parse(localStorage.getItem('safara_jamaah_list') || '[]');
+    const jamaahInFolder = folder.jamaahIds.map(id => allJamaah.find(j => j.id == id)).filter(j => j); 
     if(jamaahInFolder.length === 0) { showToast('Tidak ada jamaah dalam folder ini'); return; } 
     const fields = folder.fields || [];
     // Baris info folder dulu
@@ -4810,7 +4815,7 @@ function exportFolderToExcel(folderId) {
     // Buat data rows
     jamaahInFolder.forEach((j, i) => {
         const row = { 'No': i+1, 'Nama Lengkap': j.nama_lengkap };
-        chosenFieldsXLS.forEach(fd => row[fd.label] = (j.additional_fields && j.additional_fields[fd.name]) ? j.additional_fields[fd.name] : '-');
+        chosenFieldsXLS.forEach(fd => row[fd.label] = (j.additional_fields && j.additional_fields[fd.name]) ? j.additional_fields[fd.key] : '-');
         row['Tanggal Input'] = j.created_at || '-';
         wsData.push(row);
     });
