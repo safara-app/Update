@@ -1638,70 +1638,7 @@
                 display: none !important;
             }
         }
-    
-.batch-action-bar {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: white;
-    padding: 10px 20px;
-    border-radius: 50px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    display: none;
-    z-index: 1000;
-    gap: 15px;
-    align-items: center;
-    border: 2px solid #0D5C4A;
-    opacity: 0;
-    transition: 0.25s ease;
-}
-.batch-action-bar.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-}
-.btn-action {
-    background: #0D5C4A;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 38px;
-    height: 38px;
-    font-size: 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.jamaah-card.selected-card {
-    border: 2px solid #0D5C4A;
-    background: #f0f7f4;
-}
-
-/* ===== JAMAAH ON PROSES ===== */
-.jamaah-kita-checkbox { width:22px; height:22px; margin:0; accent-color:var(--primary); flex-shrink:0; margin-top:2px; cursor:pointer; }
-.jamaah-kita-item { background:white; border-radius:20px; padding:16px; margin-bottom:12px; border-left:4px solid var(--primary); box-shadow:0 2px 8px rgba(0,0,0,0.04); display:flex; align-items:flex-start; gap:12px; transition:all 0.2s; }
-.jamaah-kita-item:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,0.08); }
-.jamaah-kita-info { flex:1; }
-.jamaah-kita-nama { font-weight:bold; font-size:1rem; color:var(--primary); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
-.jamaah-kita-actions { display:flex; gap:6px; }
-.jamaah-kita-actions button { width:auto; padding:4px 10px; font-size:11px; border-radius:20px; border:none; cursor:pointer; color:white; font-weight:600; }
-.jamaah-kita-detail { font-size:0.75rem; color:var(--gray); margin-top:8px; line-height:1.6; }
-.jamaah-kita-detail-item { margin-bottom:2px; }
-.batch-floating-bar { position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:white; padding:12px 20px; border-radius:50px; box-shadow:0 4px 20px rgba(0,0,0,0.2); display:none; gap:15px; align-items:center; z-index:9999; border:2px solid var(--wa); }
-.batch-floating-bar.show { display:flex; }
-.btn-batch-wa { background:var(--wa) !important; color:white !important; padding:8px 16px !important; width:auto !important; font-size:13px !important; }
-.btn-batch-cancel { background:var(--red) !important; color:white !important; padding:8px 14px !important; width:auto !important; font-size:13px !important; }
-.jamaahkita-modal { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center; padding:20px; }
-.jamaahkita-modal.show { display:flex; }
-.jamaahkita-modal-content { background:white; border-radius:28px; padding:24px; width:90%; max-width:400px; max-height:80vh; overflow-y:auto; }
-.jamaahkita-modal-content h3 { color:var(--primary); margin-bottom:16px; }
-.jamaahkita-edit-field { margin-bottom:12px; }
-.jamaahkita-edit-field label { font-size:12px; font-weight:bold; color:var(--primary); display:block; margin-bottom:4px; }
-.jamaahkita-edit-field input { width:100%; padding:10px 14px; border-radius:12px; border:1.5px solid #E2E8F0; font-size:14px; }
-.admin-field-item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--gray-light); }
-.default-badge { background:var(--accent); color:var(--primary-dark); padding:2px 8px; border-radius:20px; font-size:10px; font-weight:bold; }
-</style>
+    </style>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&family=Amiri&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -1854,71 +1791,23 @@
 
 <!-- JAMAAH KITA PAGE -->
 <div id="page-jamaahkita" class="page">
-    <div class="header-premium header-premium-small">
-        <div class="back-header">
-            <i class="fas fa-arrow-left" onclick="showPage('home')"></i>
-            <h2>⏳ Jamaah On Proses</h2>
-            <div style="width:30px;"></div>
-        </div>
-    </div>
+    <div class="header-premium header-premium-small"><div class="back-header"><i class="fas fa-arrow-left" onclick="showPage('home')"></i><h2>Jamaah on proses</h2><div style="width:30px;"></div></div></div>
     <div class="card-premium">
-        <div id="jamaahKitaAdminPanel" class="setting-card" style="display:none">
-            <h3 style="color:var(--primary);">⚙️ ADMIN - Kelola Field Dinamis</h3>
-            <div class="row">
-                <input type="text" id="jamaahKitaNewFieldName" placeholder="Nama field (contoh: maskapai)" style="flex:2;">
-                <input type="text" id="jamaahKitaNewFieldLabel" placeholder="Label (contoh: Maskapai)" style="flex:2;">
-                <button class="btn btn-primary btn-small" onclick="addJamaahKitaDynamicField()" style="width:auto; padding:0 16px;">+ Tambah</button>
-            </div>
-            <div id="jamaahKitaFieldsListContainer" style="margin-top:12px;"></div>
-            <p style="font-size: 11px; color: var(--gray); margin-top: 12px;">
-                💡 Tips: Field WhatsApp tidak bisa dihapus. Yang lain bisa ditambah/dihapus.
-            </p>
-            <button class="btn btn-danger btn-small mt-2" onclick="confirmDeleteAllJamaahKita()">🗑️ HAPUS SEMUA JAMAAH ON PROSES</button>
-        </div>
-        <div class="section-title"><span>📋 TAMBAH DATA</span></div>
-        <div class="input-group">
-            <label>Pilih Jamaah dari database</label>
-            <select id="pilihJamaahKita"></select>
-        </div>
+        <div id="jamaahKitaAdminPanel" class="setting-card" style="display:none"><h3> Pengaturan Jamaah on proses</h3><button class="btn btn-primary btn-small" onclick="openJamaahKitaFieldModal()"> Kelola Field Dinamis (Kamar/Bus/dll)</button><button class="btn btn-danger btn-small mt-2" onclick="confirmDeleteAllJamaahKita()"> HAPUS SEMUA Jamaah on proses</button></div>
+        <div class="section-title"><span>TAMBAH DATABASE KITA</span></div>
+        <div class="input-group"><label>Pilih Jamaah dari database</label><select id="pilihJamaahKita"></select></div>
         <div id="jamaahKitaDynamicFields"></div>
-        <button class="btn btn-accent" onclick="tambahJamaahKita()" style="margin-top:16px;">
-            <i class="fas fa-plus-circle"></i> TAMBAHKAN KE ON PROSES
-        </button>
-        <div class="section-title" style="margin-top:24px;"><span>📋 DAFTAR JAMAAH ON PROSES</span></div>
-        <div class="search-box">
-            <input type="text" id="searchJamaahKitaInput" placeholder="Cari nama jamaah..." onkeyup="filterJamaahKitaList()">
-            <button onclick="resetJamaahKitaFilter()" style="width:auto; padding:0 16px; background:var(--gray);">Reset</button>
-        </div>
+        <button class="btn btn-accent" onclick="tambahJamaahKita()" style="margin-top:16px;"><i class="fas fa-plus-circle"></i> TAMBAHKAN KE Jamaah on proses</button>
+        <div class="section-title"><span>DAFTAR JAMAAH ON PROSES</span></div>
+        <div class="search-box"><input type="text" id="searchJamaahKitaInput" placeholder=" Cari nama jamaah on proses..." onkeyup="filterJamaahKitaList()"><button onclick="resetJamaahKitaFilter()">Reset</button></div>
         <div id="jamaahKitaListContainer"></div>
-        <div class="action-buttons" style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap;">
-            <button class="btn btn-wa" onclick="shareAllJamaahKitaToWA()"><i class="fab fa-whatsapp"></i> SHARE SEMUA KE WA</button>
-            <button class="btn btn-accent" onclick="cetakLabelJamaahKita()">🏷️ CETAK LABEL</button>
-            <button class="btn btn-accent" onclick="showGroupDialogJamaahKita()">🖨️ CETAK PDF PER KELOMPOK</button>
-        </div>
-        <div class="row" style="margin-top:12px;">
-            <button class="btn btn-blue btn-small" onclick="backupJamaahKitaData()" style="flex:1;"><i class="fas fa-download"></i> BACKUP</button>
-            <button class="btn btn-orange btn-small" onclick="document.getElementById('restoreJamaahKitaFile').click()" style="flex:1;"><i class="fas fa-upload"></i> RESTORE</button>
-        </div>
+        <button class="btn btn-wa" onclick="shareAllJamaahKitaToWA()"><i class="fab fa-whatsapp"></i> SHARE SEMUA Jamaah on proses KE WA</button>
+        <button class="btn btn-purple" onclick="printGroupedPDF()" style="margin-top:16px;"><i class="fas fa-print"></i>  CETAK PDF PER KELOMPOK (KAMAR/BUS/KELAS)</button>
+        <div class="row" style="margin-top:16px;"><button class="btn btn-blue btn-small" onclick="backupJamaahKitaData()" style="flex:1"><i class="fas fa-download"></i> BACKUP Jamaah on proses</button><button class="btn btn-orange btn-small" onclick="document.getElementById('restoreJamaahKitaFile').click()" style="flex:1"><i class="fas fa-upload"></i> RESTORE Jamaah on proses</button></div>
         <input type="file" id="restoreJamaahKitaFile" accept=".json" style="display:none" onchange="restoreJamaahKitaData(this)">
     </div>
 </div>
 
-<div id="jamaahKitaEditModal" class="jamaahkita-modal">
-    <div class="jamaahkita-modal-content">
-        <h3 id="jamaahKitaEditModalTitle">✏️ Edit Data Jamaah</h3>
-        <div id="jamaahKitaEditFormContainer"></div>
-        <div class="row" style="margin-top:16px;">
-            <button onclick="closeJamaahKitaEditModal()" style="background:#ccc; color:#333;">Batal</button>
-            <button onclick="saveEditJamaahKita()" style="background:var(--primary);">Simpan</button>
-        </div>
-    </div>
-</div>
-
-<div id="jamaahKitaBatchBar" class="batch-floating-bar">
-    <span id="jamaahKitaSelectedCount">0 dipilih</span>
-    <button class="btn-batch-wa" onclick="sendBatchWA()"><i class="fab fa-whatsapp"></i> WA Massal</button>
-    <button class="btn-batch-cancel" onclick="clearJamaahKitaSelection()">✕</button>
-</div>
 <!-- CATATAN PAGE -->
 <div id="page-catatan" class="page">
     <div class="header-premium header-premium-small"><div class="back-header"><i class="fas fa-arrow-left" onclick="showPage('home')"></i><h2>Catatan</h2><i class="fas fa-plus" onclick="openTambahCatatan()" style="color:white; font-size:20px; cursor:pointer;"></i></div></div>
@@ -2168,7 +2057,7 @@
 <div id="jamaahModal" class="modal"><div class="modal-content"><h3 id="jamaahModalTitle">Tambah database</h3><div id="jamaahFormContainer"></div><button class="btn btn-primary" onclick="saveJamaah()"> SIMPAN</button><button class="btn btn-danger mt-2" onclick="closeJamaahModal()">BATAL</button></div></div>
 <div id="fieldModal" class="modal"><div class="modal-content"><h3>Tambah Field Dinamis</h3><div class="dynamic-field"><label>Nama Field</label><input type="text" id="newFieldName" placeholder="Contoh: tanggal_lahir"><div class="error-message">Hanya huruf kecil, angka, underscore</div></div><div class="dynamic-field"><label>Label Field</label><input type="text" id="newFieldLabel" placeholder="Contoh: Tanggal Lahir"></div><div class="dynamic-field"><label>Tipe Field</label><select id="newFieldType"><option value="text">Text</option><option value="date">Tanggal</option><option value="tel">Telepon</option><option value="textarea">Text Area</option></select></div><div class="dynamic-field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="newFieldRahasia" style="width:18px;height:18px;"><label style="margin:0;">Sembunyikan di PDF Folder (Rahasia)</label></div><button class="btn btn-primary" onclick="addDynamicFieldJamaah()"> TAMBAH FIELD</button><button class="btn btn-danger mt-2" onclick="closeFieldModal()">BATAL</button></div></div>
 <div id="manageFieldsModal" class="modal"><div class="modal-content"><h3>Kelola Field Dinamis</h3><button class="btn btn-primary btn-small" style="margin-bottom:15px;" onclick="closeManageFieldsModal(); openFieldModal();">+ Tambah Field Baru</button><div id="fieldsListContainer"></div><button class="btn btn-primary mt-2" onclick="closeManageFieldsModal()">TUTUP</button></div></div>
-
+<div id="jamaahKitaFieldModal" class="modal"><div class="modal-content"><h3>Kelola Field Dinamis (Jamaah on proses)</h3><div class="dynamic-field"><label>Nama Field</label><input type="text" id="jamaahKitaNewFieldName" placeholder="Contoh: kamar, bus, makanan"><div class="error-message">Hanya huruf kecil, angka, underscore</div></div><div class="dynamic-field"><label>Label Field</label><input type="text" id="jamaahKitaNewFieldLabel" placeholder="Contoh: Kamar, Bus, Makanan"></div><div class="dynamic-field"><label>Tipe Field</label><select id="jamaahKitaNewFieldType"><option value="text">Text</option><option value="number">Number</option><option value="tel">Telepon</option><option value="textarea">Text Area</option></select></div><button class="btn btn-primary" onclick="addJamaahKitaDynamicField()"> TAMBAH FIELD</button><div id="jamaahKitaFieldsListContainer" style="margin-top:20px;"></div><button class="btn btn-primary mt-2" onclick="closeJamaahKitaFieldModal()">TUTUP</button></div></div>
 <div id="paymentModal" class="modal"><div class="modal-content"><h3> Input Pembayaran</h3><div class="input-group"><label> Tanggal</label><input type="date" id="paymentTanggal"></div><div class="input-group"><label> Nama Jamaah *</label><select id="paymentJamaahSelect"><option value="">-- Pilih Jamaah --</option></select></div><div class="input-group"><label> Nominal (Rp)</label><input type="number" id="paymentNominal" placeholder="Contoh: 5000000"></div><div class="input-group"><label> Metode</label><select id="paymentMetode"><option value="Transfer">Transfer</option><option value="Cash">Cash</option><option value="QRIS">QRIS</option></select></div><div class="input-group"><label> Keterangan</label><input type="text" id="paymentKeterangan" placeholder="DP / Cicilan / Pelunasan"></div><div class="row"><button class="btn btn-danger" onclick="closePaymentModal()" style="flex:1">Batal</button><button class="btn btn-primary" onclick="simpanPembayaran()" style="flex:1">Simpan</button></div></div></div>
 <div id="invoiceConfirmModal" class="modal"><div class="modal-content"><h3> Konfirmasi Kirim Invoice</h3><p>Akan dikirim ke nomor WhatsApp:</p><p id="invoiceWANumber" style="font-weight:bold; font-size:18px; background:#f0f0f0; padding:10px; border-radius:10px;"></p><p id="invoiceWAName" style="color:#666;"></p><div class="row" style="margin-top:20px;"><button class="btn btn-danger" onclick="closeInvoiceConfirmModal()" style="flex:1">Batal</button><button class="btn btn-wa" onclick="sendInvoiceWA()" style="flex:1">Kirim via WA</button><button class="btn btn-orange" onclick="copyInvoiceText()" style="flex:1">Salin Teks</button></div></div></div>
 <div id="editHargaModal" class="modal"><div class="modal-content"><h3> Edit Harga Paket</h3><p id="editHargaNama" style="font-weight:bold;"></p><div class="input-group"><label> Total Harga Paket (Rp)</label><input type="number" id="editHargaValue" placeholder="Contoh: 35000000"></div><div class="row"><button class="btn btn-danger" onclick="closeEditHargaModal()" style="flex:1">Batal</button><button class="btn btn-primary" onclick="saveEditHarga()" style="flex:1">Simpan</button></div></div></div>
@@ -2357,7 +2246,7 @@ function internalShowPage(pageId) {
     });
     if (pageId === 'kas') { if(window.renderKasTable) window.renderKasTable(); if(window.updateSaldoKas) window.updateSaldoKas(); }
     if (pageId === 'jamaah') { if(window.loadJamaahData) window.loadJamaahData(); if(window.renderJamaahListWithPagination) window.renderJamaahListWithPagination(); }
-    if (pageId === 'jamaahkita') { selectedJamaahKitaIds = []; updateJamaahKitaBatchBar(); renderPilihJamaahKita(); renderJamaahKitaList(); renderJamaahKitaDynamicFieldsForm(); if(isAdminModePremium) renderJamaahKitaFieldsList(); }
+    if (pageId === 'jamaahkita') { if(window.renderPilihJamaahKita) window.renderPilihJamaahKita(); if(window.renderJamaahKitaList) window.renderJamaahKitaList(); if(window.renderJamaahKitaDynamicFieldsForm) window.renderJamaahKitaDynamicFieldsForm(); }
     if (pageId === 'zakat') { if(window.renderSumberHartaList) window.renderSumberHartaList(); }
     if (pageId === 'pembayaran') { if(window.renderPaymentDashboard) window.renderPaymentDashboard(); if(window.renderPaymentJamaahList) window.renderPaymentJamaahList(); if(window.populatePaymentJamaahDropdown) window.populatePaymentJamaahDropdown(); }
     if (pageId === 'datamaster') { if(window.loadMasterData) window.loadMasterData(); if(window.renderDynamicModeSwitcher) window.renderDynamicModeSwitcher(); }
@@ -3719,430 +3608,364 @@ function importJamaahFromExcel(input){
 }
 
 // ==================== JAMAAH KITA ====================
-let jamaahKitaList = [], dynamicFieldsJamaahKita = [], selectedJamaahKitaIds = [], editingJamaahKitaId = null;
+let jamaahKitaList=[], dynamicFieldsJamaahKita=[];
 
-const defaultJamaahKitaFields = [
-    { name: "kamar", label: "Kamar", type: "text", icon: "🛏️", isRequired: false },
-    { name: "bus", label: "Bus", type: "text", icon: "🚌", isRequired: false },
-    { name: "hotel", label: "Hotel", type: "text", icon: "🏨", isRequired: false },
-    { name: "paspor", label: "No. Paspor", type: "text", icon: "📘", isRequired: false },
-    { name: "whatsapp", label: "WhatsApp", type: "tel", icon: "📞", isRequired: true }
-];
-
-function loadJamaahKitaData() {
-    const saved = localStorage.getItem('safara_jamaah_kita_list');
-    const savedFields = localStorage.getItem('safara_jamaah_kita_fields');
-    jamaahKitaList = saved ? JSON.parse(saved) : [];
-    dynamicFieldsJamaahKita = savedFields ? JSON.parse(savedFields) : defaultJamaahKitaFields;
+function loadJamaahKitaData(){ 
+    const saved=localStorage.getItem('safara_jamaah_kita_list'); 
+    jamaahKitaList=saved?JSON.parse(saved):[]; 
 }
 
-// ===== STUB FUNGSI JAMAAH KITA COMPAT =====
-function loadDynamicFieldsJamaahKita() { loadJamaahKitaData(); }
-
-
-function saveJamaahKitaData() {
-    localStorage.setItem('safara_jamaah_kita_list', JSON.stringify(jamaahKitaList));
-    localStorage.setItem('safara_jamaah_kita_fields', JSON.stringify(dynamicFieldsJamaahKita));
-    renderJamaahKitaList();
+function saveJamaahKitaData(){ 
+    localStorage.setItem('safara_jamaah_kita_list',JSON.stringify(jamaahKitaList)); 
+    renderJamaahKitaList(); 
 }
 
-function saveDynamicFieldsJamaahKita() {
-    localStorage.setItem('safara_jamaah_kita_fields', JSON.stringify(dynamicFieldsJamaahKita));
+function loadDynamicFieldsJamaahKita(){ 
+    const saved=localStorage.getItem('safara_jamaah_kita_fields'); 
+    dynamicFieldsJamaahKita=saved?JSON.parse(saved):[]; 
 }
 
-function renderPilihJamaahKita() {
-    const select = document.getElementById('pilihJamaahKita');
-    if (!select) return;
-    let html = '<option value="">-- Pilih Jamaah dari database --</option>';
-    jamaahList.forEach((j, idx) => {
-        html += `<option value="${idx}">${escapeHtml(j.nama_lengkap)}</option>`;
-    });
-    select.innerHTML = html;
+function saveDynamicFieldsJamaahKita(){ 
+    localStorage.setItem('safara_jamaah_kita_fields',JSON.stringify(dynamicFieldsJamaahKita)); 
 }
 
-function renderJamaahKitaDynamicFieldsForm() {
-    const container = document.getElementById('jamaahKitaDynamicFields');
-    if (!container) return;
-    let html = "";
-    dynamicFieldsJamaahKita.forEach(field => {
-        if (field.name !== "whatsapp") {
-            html += `<div class="input-group"><label>${field.icon || '📌'} ${escapeHtml(field.label)}</label><input type="text" id="jamaahKitaField_${field.name}" placeholder="${field.icon || '📌'} ${escapeHtml(field.label)}"></div>`;
-        }
-    });
-    container.innerHTML = html;
+function renderPilihJamaahKita(){ 
+    const select=document.getElementById('pilihJamaahKita'); 
+    if(!select) return; 
+    let html='<option value="">-- Pilih Jamaah --</option>'; 
+    jamaahList.forEach((j,idx)=>{ 
+        html+=`<option value="${idx}">${escapeHtml(j.nama_lengkap)}</option>`; 
+    }); 
+    select.innerHTML=html; 
 }
 
-function tambahJamaahKita() {
-    const select = document.getElementById('pilihJamaahKita');
-    const selectedIndex = select.value;
-    if (!selectedIndex) return showToast('Pilih jamaah terlebih dahulu!');
-    const jamaah = jamaahList[parseInt(selectedIndex)];
-    if (!jamaah) return;
-    if (jamaahKitaList.some(j => j.jamaahId === jamaah.id)) return showToast('Jamaah ini sudah ada di daftar On Proses!');
-    const additional = {};
-    dynamicFieldsJamaahKita.forEach(field => {
-        const input = document.getElementById(`jamaahKitaField_${field.name}`);
-        if (input && input.value.trim()) additional[field.name] = input.value.trim();
-    });
-    if (jamaah.additional_fields?.whatsapp) additional.whatsapp = jamaah.additional_fields.whatsapp;
-    else if (jamaah.additional_fields?.no_hp) additional.whatsapp = jamaah.additional_fields.no_hp;
-    else if (jamaah.additional_fields?.telepon) additional.whatsapp = jamaah.additional_fields.telepon;
-    const now = new Date().toLocaleDateString('id-ID') + ' ' + new Date().toLocaleTimeString('id-ID');
-    jamaahKitaList.push({ id: Date.now(), jamaahId: jamaah.id, nama_lengkap: jamaah.nama_lengkap, additional_fields: additional, created_at: now });
-    saveJamaahKitaData();
-    renderJamaahKitaList();
-    renderPilihJamaahKita();
-    dynamicFieldsJamaahKita.forEach(field => { const input = document.getElementById(`jamaahKitaField_${field.name}`); if (input) input.value = ''; });
-    select.value = '';
-    showToast('Jamaah berhasil ditambahkan ke On Proses!');
+function renderJamaahKitaDynamicFieldsForm(){ 
+    const container=document.getElementById('jamaahKitaDynamicFields'); 
+    if(!container) return; 
+    let html=''; 
+    for(const field of dynamicFieldsJamaahKita){ 
+        html+=`<div class="dynamic-field"><label>${escapeHtml(field.label)}</label>${field.type==='textarea'?`<textarea id="jamaahKitaField_${field.name}" rows="2"></textarea>`:`<input type="${field.type}" id="jamaahKitaField_${field.name}">`}</div>`; 
+    } 
+    container.innerHTML=html; 
 }
 
-function renderJamaahKitaList() {
-    const container = document.getElementById('jamaahKitaListContainer');
-    if (!container) return;
-    const keyword = document.getElementById('searchJamaahKitaInput')?.value.toLowerCase() || "";
-    let filtered = [...jamaahKitaList];
-    if (keyword) filtered = filtered.filter(j => j.nama_lengkap.toLowerCase().includes(keyword));
-    if (filtered.length === 0) { container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;">Belum ada data</div>'; return; }
-    let html = "";
-    [...filtered].reverse().forEach(jk => {
-        const isChecked = selectedJamaahKitaIds.includes(jk.id);
-        html += `<div class="jamaah-kita-item">
-            <input type="checkbox" class="jamaah-kita-checkbox" value="${jk.id}" ${isChecked ? "checked" : ""} onchange="toggleJamaahKitaSelect(${jk.id}, this.checked)">
-            <div class="jamaah-kita-info">
-                <div class="jamaah-kita-nama">👤 ${escapeHtml(jk.nama_lengkap)}
-                    <div class="jamaah-kita-actions">
-                        <button onclick="openJamaahKitaEditModal(${jk.id})" style="background:#3B82F6;">✏️ Edit</button>
-                        <button onclick="confirmDeleteJamaahKitaById(${jk.id})" style="background:#ef4444;">🗑️ Hapus</button>
-                    </div>
-                </div>
-                <div class="jamaah-kita-detail">📅 ${jk.created_at || "-"}${renderJamaahKitaDetailFields(jk)}</div>
-            </div>
-        </div>`;
-    });
-    container.innerHTML = html;
-    updateJamaahKitaBatchBar();
+function tambahJamaahKita(){ 
+    const select=document.getElementById('pilihJamaahKita'); 
+    const selectedIndex=select.value; 
+    if(!selectedIndex) return showToast('Pilih jamaah terlebih dahulu!'); 
+    const jamaah=jamaahList[parseInt(selectedIndex)]; 
+    if(!jamaah) return; 
+    const additionalFields={}; 
+    for(const field of dynamicFieldsJamaahKita){ 
+        const input=document.getElementById(`jamaahKitaField_${field.name}`); 
+        if(input) additionalFields[field.name]=input.value.trim(); 
+    } 
+    const now=new Date().toLocaleDateString('id-ID')+' '+new Date().toLocaleTimeString('id-ID'); 
+    const existing=jamaahKitaList.find(jk=>jk.jamaahId===jamaah.id); 
+    if(existing){ 
+        if(confirm('Jamaah ini sudah ada di daftar. Update data?')){ 
+            existing.additional_fields=additionalFields; 
+            existing.updated_at=now; 
+            saveJamaahKitaData(); 
+            renderJamaahKitaList(); 
+            showToast('database kita diupdate'); 
+        } 
+    } else { 
+        jamaahKitaList.push({id:Date.now(), jamaahId:jamaah.id, nama_lengkap:jamaah.nama_lengkap, additional_fields:additionalFields, created_at:now}); 
+        saveJamaahKitaData(); 
+        renderJamaahKitaList(); 
+        showToast('Jamaah ditambahkan ke Jamaah on proses'); 
+    } 
+    for(const field of dynamicFieldsJamaahKita){ 
+        const input=document.getElementById(`jamaahKitaField_${field.name}`); 
+        if(input) input.value=''; 
+    } 
+    select.value=''; 
 }
 
-function renderJamaahKitaDetailFields(jk) {
-    let html = "";
-    dynamicFieldsJamaahKita.forEach(field => {
-        const val = jk.additional_fields?.[field.name] || "";
-        if (val && field.name !== "whatsapp") html += `<div class="jamaah-kita-detail-item">${field.icon || '📌'} ${escapeHtml(field.label)}: ${escapeHtml(val)}</div>`;
-    });
-    const wa = jk.additional_fields?.whatsapp || "";
-    if (wa) html += `<div class="jamaah-kita-detail-item">📞 WhatsApp: ${escapeHtml(wa)}</div>`;
-    return html;
+function renderJamaahKitaList(){ 
+    const container=document.getElementById('jamaahKitaListContainer'); 
+    if(!container) return; 
+    if(jamaahKitaList.length===0){ 
+        container.innerHTML='<p style="text-align:center; padding:20px;">Belum ada database kita</p>'; 
+        return; 
+    } 
+    let html=''; 
+    [...jamaahKitaList].reverse().forEach((jk,idx)=>{ 
+        const displayNum=idx+1; 
+        html+=`<div class="jamaah-card"><div class="jamaah-header"><div><div class="jamaah-nama"><span style="background:var(--primary); color:white; display:inline-block; width:28px; height:28px; border-radius:50%; text-align:center; line-height:28px; font-size:13px; margin-right:10px;">${displayNum}</span> ${escapeHtml(jk.nama_lengkap)}</div><div class="jamaah-tgl"> ${jk.created_at||'-'}</div></div><div class="jamaah-actions"><button class="btn-share-wa" onclick="shareSingleJamaahKita(${jamaahKitaList.findIndex(j=>j.id===jk.id)})"><i class="fab fa-whatsapp"></i></button><button class="btn-edit-jamaah" onclick="editJamaahKita(${jamaahKitaList.findIndex(j=>j.id===jk.id)})"><i class="fas fa-edit"></i></button><button class="btn-delete-jamaah" onclick="confirmDeleteJamaahKita(${jamaahKitaList.findIndex(j=>j.id===jk.id)})"><i class="fas fa-trash"></i></button></div></div><div class="jamaah-detail">`; 
+        for(const field of dynamicFieldsJamaahKita){ 
+            const val=jk.additional_fields?.[field.name]||''; 
+            if(val) html+=`<div class="jamaah-detail-item"><strong>${escapeHtml(field.label)}:</strong> ${escapeHtml(val)}</div>`; 
+        } 
+        html+=`</div></div>`; 
+    }); 
+    container.innerHTML=html; 
 }
 
-function filterJamaahKitaList() { renderJamaahKitaList(); }
-
-function resetJamaahKitaFilter() {
-    document.getElementById('searchJamaahKitaInput').value = '';
-    renderJamaahKitaList();
-    showToast('Filter direset');
+function filterJamaahKitaList(){ 
+    const keyword=document.getElementById('searchJamaahKitaInput').value.toLowerCase().trim(); 
+    if(!keyword){ 
+        renderJamaahKitaList(); 
+        return; 
+    } 
+    const filtered=jamaahKitaList.filter(jk=>jk.nama_lengkap.toLowerCase().includes(keyword)); 
+    const container=document.getElementById('jamaahKitaListContainer'); 
+    if(!container) return; 
+    if(filtered.length===0){ 
+        container.innerHTML='<p style="text-align:center; padding:20px;">Tidak ada hasil pencarian</p>'; 
+        return; 
+    } 
+    let html=''; 
+    [...filtered].reverse().forEach((jk,idx)=>{ 
+        const displayNum=idx+1; 
+        html+=`<div class="jamaah-card"><div class="jamaah-header"><div><div class="jamaah-nama"><span style="background:var(--primary); color:white; display:inline-block; width:28px; height:28px; border-radius:50%; text-align:center; line-height:28px; font-size:13px; margin-right:10px;">${displayNum}</span> ${escapeHtml(jk.nama_lengkap)}</div><div class="jamaah-tgl"> ${jk.created_at||'-'}</div></div><div class="jamaah-actions"><button class="btn-share-wa" onclick="shareSingleJamaahKita(${jamaahKitaList.findIndex(j=>j.id===jk.id)})"><i class="fab fa-whatsapp"></i></button><button class="btn-edit-jamaah" onclick="editJamaahKita(${jamaahKitaList.findIndex(j=>j.id===jk.id)})"><i class="fas fa-edit"></i></button><button class="btn-delete-jamaah" onclick="confirmDeleteJamaahKita(${jamaahKitaList.findIndex(j=>j.id===jk.id)})"><i class="fas fa-trash"></i></button></div></div><div class="jamaah-detail">`; 
+        for(const field of dynamicFieldsJamaahKita){ 
+            const val=jk.additional_fields?.[field.name]||''; 
+            if(val) html+=`<div class="jamaah-detail-item"><strong>${escapeHtml(field.label)}:</strong> ${escapeHtml(val)}</div>`; 
+        } 
+        html+=`</div></div>`; 
+    }); 
+    container.innerHTML=html; 
 }
 
-function toggleJamaahKitaSelect(id, checked) {
-    if (checked) { if (!selectedJamaahKitaIds.includes(id)) selectedJamaahKitaIds.push(id); }
-    else selectedJamaahKitaIds = selectedJamaahKitaIds.filter(i => i !== id);
-    updateJamaahKitaBatchBar();
-    renderJamaahKitaList();
+function resetJamaahKitaFilter(){ 
+    document.getElementById('searchJamaahKitaInput').value=''; 
+    renderJamaahKitaList(); 
+    showToast('Filter direset'); 
 }
 
-function updateJamaahKitaBatchBar() {
-    const bar = document.getElementById('jamaahKitaBatchBar');
-    const countSpan = document.getElementById('jamaahKitaSelectedCount');
-    if (!bar) return;
-    if (selectedJamaahKitaIds.length > 0) { countSpan.innerText = `${selectedJamaahKitaIds.length} dipilih`; bar.classList.add('show'); }
-    else bar.classList.remove('show');
+function shareSingleJamaahKita(index){ 
+    const jk=jamaahKitaList[index]; 
+    if(!jk) return; 
+    let text=`*⏳ JAMAAH ON PROSES*\n\n*Nama:* ${jk.nama_lengkap}\n`; 
+    for(const field of dynamicFieldsJamaahKita){ 
+        const val=jk.additional_fields?.[field.name]||''; 
+        if(val) text+=`*${field.label}:* ${val}\n`; 
+    } 
+    text+=`\n📅 *Tgl Input:* ${jk.created_at||'-'}\n#Safara`; 
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`); 
 }
 
-function clearJamaahKitaSelection() {
-    selectedJamaahKitaIds = [];
-    updateJamaahKitaBatchBar();
-    renderJamaahKitaList();
+function editJamaahKita(index){ 
+    if(!isAdminModePremium) return showToast('Aktifkan Mode Admin dulu!'); 
+    const jk=jamaahKitaList[index]; 
+    if(!jk) return; 
+    for(const field of dynamicFieldsJamaahKita){ 
+        const input=document.getElementById(`jamaahKitaField_${field.name}`); 
+        if(input) input.value=jk.additional_fields?.[field.name]||''; 
+    } 
+    const select=document.getElementById('pilihJamaahKita'); 
+    const jamaahIndex=jamaahList.findIndex(j=>j.id===jk.jamaahId); 
+    if(jamaahIndex!==-1) select.value=jamaahIndex; 
+    jamaahKitaList.splice(index,1); 
+    saveJamaahKitaData(); 
+    renderJamaahKitaList(); 
+    showToast('Edit data, silakan simpan ulang'); 
 }
 
-function sendBatchWA() {
-    if (selectedJamaahKitaIds.length === 0) return showToast('Pilih jamaah terlebih dahulu!');
-    const selected = jamaahKitaList.filter(j => selectedJamaahKitaIds.includes(j.id));
-    let msg = "📋 *DATA JAMAAH ON PROSES*\n\n━━━━━━━━━━━━━━━━━━\n";
-    selected.forEach((jk, i) => {
-        msg += `${i+1}. *${jk.nama_lengkap}*\n`;
-        dynamicFieldsJamaahKita.forEach(field => {
-            const val = jk.additional_fields?.[field.name] || "";
-            if (val && field.name !== "whatsapp") msg += `   ${field.icon || '📌'} ${field.label}: ${val}\n`;
-        });
-        const wa = jk.additional_fields?.whatsapp || "";
-        if (wa) msg += `   📞 WA: ${wa}\n`;
-        msg += "\n";
-    });
-    msg += `━━━━━━━━━━━━━━━━━━\n_${getKonfigurasiProData().instansi1.nama || 'Safara'}_`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-    clearJamaahKitaSelection();
+function confirmDeleteJamaahKita(index){ 
+    if(confirm('Hapus database kita ini?')){ 
+        jamaahKitaList.splice(index,1); 
+        saveJamaahKitaData(); 
+        renderJamaahKitaList(); 
+        showToast('Data dihapus'); 
+    } 
 }
 
-function openJamaahKitaEditModal(id) {
-    const jk = jamaahKitaList.find(j => j.id === id);
-    if (!jk) return;
-    editingJamaahKitaId = id;
-    document.getElementById('jamaahKitaEditModalTitle').innerHTML = `✏️ Edit Data - ${escapeHtml(jk.nama_lengkap)}`;
-    let formHtml = "";
-    dynamicFieldsJamaahKita.forEach(field => {
-        const currentValue = jk.additional_fields?.[field.name] || "";
-        formHtml += `<div class="jamaahkita-edit-field"><label>${field.icon || '📌'} ${escapeHtml(field.label)}</label><input type="${field.type === 'tel' ? 'tel' : 'text'}" id="editJamaahKita_${field.name}" value="${escapeHtml(currentValue)}"></div>`;
-    });
-    document.getElementById('jamaahKitaEditFormContainer').innerHTML = formHtml;
-    document.getElementById('jamaahKitaEditModal').classList.add('show');
+function shareAllJamaahKitaToWA(){ 
+    if(jamaahKitaList.length===0) return showToast('Tidak ada database kita!'); 
+    let text=`*⏳ JAMAAH ON PROSES*\n\n *Total: ${jamaahKitaList.length} Jamaah*\n\n\n`; 
+    jamaahKitaList.forEach((jk,i)=>{ 
+        text+=`${i+1}. *${jk.nama_lengkap}*\n`; 
+        for(const field of dynamicFieldsJamaahKita){ 
+            const val=jk.additional_fields?.[field.name]||''; 
+            if(val) text+=`   ${field.label}: ${val}\n`; 
+        } 
+        text+=`\n`; 
+    }); 
+    text+=`\n#Safara`; 
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`); 
 }
 
-function closeJamaahKitaEditModal() {
-    document.getElementById('jamaahKitaEditModal').classList.remove('show');
-    editingJamaahKitaId = null;
+function backupJamaahKitaData(){ 
+    if(jamaahKitaList.length===0 && dynamicFieldsJamaahKita.length===0) return showToast("Tidak ada data!"); 
+    const backup={app:"Safara - Jamaah on proses", version:"1.0", created:new Date().toISOString(), fields:dynamicFieldsJamaahKita, data:jamaahKitaList}; 
+    const a=document.createElement('a'); 
+    a.href=URL.createObjectURL(new Blob([JSON.stringify(backup,null,2)],{type:'application/json'})); 
+    a.download=`Safara_JamaahKita_Backup_${new Date().toLocaleDateString('id-ID').replace(/\//g,'-')}.json`; 
+    a.click(); 
+    showToast('Backup Jamaah on proses berhasil'); 
 }
 
-function saveEditJamaahKita() {
-    if (!editingJamaahKitaId) return;
-    const jkIndex = jamaahKitaList.findIndex(j => j.id === editingJamaahKitaId);
-    if (jkIndex === -1) return;
-    const updatedFields = {};
-    dynamicFieldsJamaahKita.forEach(field => {
-        const input = document.getElementById(`editJamaahKita_${field.name}`);
-        if (input) updatedFields[field.name] = input.value.trim();
-    });
-    jamaahKitaList[jkIndex].additional_fields = updatedFields;
-    jamaahKitaList[jkIndex].updated_at = new Date().toLocaleDateString('id-ID');
-    saveJamaahKitaData();
-    renderJamaahKitaList();
-    closeJamaahKitaEditModal();
-    showToast('Data berhasil diupdate!');
+function restoreJamaahKitaData(input){ 
+    const file=input.files[0]; 
+    if(!file) return; 
+    input.value=''; 
+    if(confirm("Timpa database kita yang ada?")) { 
+        const reader=new FileReader(); 
+        reader.onload=e=>{ 
+            try{ 
+                const backup=JSON.parse(e.target.result); 
+                if(backup.data&&Array.isArray(backup.data)){ 
+                    jamaahKitaList=backup.data; 
+                    if(backup.fields){ 
+                        dynamicFieldsJamaahKita=backup.fields; 
+                        saveDynamicFieldsJamaahKita(); 
+                    } 
+                    saveJamaahKitaData(); 
+                    renderJamaahKitaList(); 
+                    showToast(`Restore ${jamaahKitaList.length} data berhasil`); 
+                } else showToast("File backup tidak valid!"); 
+            } catch(err){ 
+                showToast("File backup tidak valid!"); 
+            } 
+        }; 
+        reader.readAsText(file); 
+    } 
 }
 
-function confirmDeleteJamaahKitaById(id) {
-    if (confirm('Hapus jamaah ini dari daftar On Proses?')) {
-        jamaahKitaList = jamaahKitaList.filter(j => j.id !== id);
-        selectedJamaahKitaIds = selectedJamaahKitaIds.filter(i => i !== id);
-        saveJamaahKitaData();
-        renderJamaahKitaList();
-        showToast('Data dihapus');
-    }
+function openJamaahKitaFieldModal(){ 
+    if(!isAdminModePremium) return showToast('Aktifkan Mode Admin dulu!'); 
+    renderJamaahKitaFieldsList(); 
+    document.getElementById('jamaahKitaFieldModal').classList.add('show'); 
 }
 
-function shareAllJamaahKitaToWA() {
-    if (jamaahKitaList.length === 0) return showToast('Tidak ada data!');
-    let msg = "📋 *SEMUA JAMAAH ON PROSES*\n\n━━━━━━━━━━━━━━━━━━\n";
-    msg += `📊 *Total: ${jamaahKitaList.length} Jamaah*\n\n`;
-    jamaahKitaList.forEach((jk, i) => {
-        msg += `${i+1}. *${jk.nama_lengkap}*\n`;
-        dynamicFieldsJamaahKita.forEach(field => {
-            const val = jk.additional_fields?.[field.name] || "";
-            if (val && field.name !== "whatsapp") msg += `   ${field.icon || '📌'} ${field.label}: ${val}\n`;
-        });
-        msg += "\n";
-    });
-    msg += `━━━━━━━━━━━━━━━━━━\n_${getKonfigurasiProData().instansi1.nama || 'Safara'}_`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+function closeJamaahKitaFieldModal(){ 
+    document.getElementById('jamaahKitaFieldModal').classList.remove('show'); 
 }
 
-function cetakLabelJamaahKita() {
-    if (jamaahKitaList.length === 0) return showToast('Tidak ada data untuk dicetak!');
-    let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cetak Label</title>
-    <style>* { margin:0; padding:0; box-sizing:border-box; } body { font-family:'Segoe UI',Arial,sans-serif; padding:20px; background:#f0f0f0; }
-    .print-area { display:flex; flex-wrap:wrap; gap:16px; justify-content:center; }
-    .label-card { background:white; border-radius:16px; padding:16px; width:260px; box-shadow:0 2px 12px rgba(0,0,0,0.1); border:1px solid #0D5C4A; page-break-inside:avoid; break-inside:avoid; }
-    .label-card h3 { color:#0D5C4A; font-size:16px; border-bottom:1px dashed #D4AF37; padding-bottom:8px; margin-bottom:12px; text-align:center; }
-    .label-field { margin:8px 0; font-size:12px; } .label-field strong { color:#0D5C4A; }
-    .label-wa { background:#f0f7f4; padding:8px; border-radius:12px; margin-top:10px; word-break:break-all; font-size:11px; }
-    .no-print { text-align:center; margin-top:20px; padding:20px; }
-    .no-print button { padding:10px 30px; margin:0 10px; background:#0D5C4A; color:white; border:none; border-radius:8px; cursor:pointer; }
-    @media print { body { background:white; padding:0; } .print-area { display:block; padding:10px; } .label-card { box-shadow:none; border:1px solid #ccc; margin-bottom:16px; } .no-print { display:none !important; } }
-    </style></head><body><div class="print-area">`;
-    jamaahKitaList.forEach(j => {
-        const f = j.additional_fields || {};
-        html += `<div class="label-card"><h3>${escapeHtml(j.nama_lengkap)}</h3>
-            ${f.bus ? `<div class="label-field"><strong>🚌 Bus</strong>: ${escapeHtml(f.bus)}</div>` : ''}
-            ${f.kamar ? `<div class="label-field"><strong>🛏️ Kamar</strong>: ${escapeHtml(f.kamar)}</div>` : ''}
-            ${f.hotel ? `<div class="label-field"><strong>🏨 Hotel</strong>: ${escapeHtml(f.hotel)}</div>` : ''}
-            ${f.paspor ? `<div class="label-field"><strong>📘 Paspor</strong>: ${escapeHtml(f.paspor)}</div>` : ''}
-            ${f.whatsapp ? `<div class="label-wa"><strong>📞 WA</strong><br>${escapeHtml(f.whatsapp)}</div>` : ''}
-            <div style="text-align:center;margin-top:12px;font-size:10px;color:#999;">${getKonfigurasiProData().instansi1.nama || 'Safara'}</div>
-        </div>`;
-    });
-    html += `</div><div class="no-print"><button onclick="window.print()">🖨️ CETAK</button><button onclick="window.close()">✕ TUTUP</button></div></body></html>`;
-    const win = window.open("", "_blank");
-    win.document.write(html);
-    win.document.close();
+function renderJamaahKitaFieldsList(){ 
+    const container=document.getElementById('jamaahKitaFieldsListContainer'); 
+    if(!container) return; 
+    if(dynamicFieldsJamaahKita.length===0){ 
+        container.innerHTML='<p>Belum ada field dinamis</p>'; 
+        return; 
+    } 
+    let html='<h4 style="margin-top:10px;">Daftar Field Saat Ini:</h4>'; 
+    dynamicFieldsJamaahKita.forEach((f,idx)=>{ 
+        html+=`<div class="field-item"><div><strong>${escapeHtml(f.label)}</strong><br><small>${f.name} (${f.type})</small></div><button class="btn-danger-small" onclick="confirmDeleteJamaahKitaDynamicField(${idx})">Hapus</button></div>`; 
+    }); 
+    container.innerHTML=html; 
 }
 
-function showGroupDialogJamaahKita() {
-    if (jamaahKitaList.length === 0) return showToast('Belum ada data!');
-    const groupableFields = dynamicFieldsJamaahKita.filter(f => f.name !== "whatsapp");
-    if (groupableFields.length === 0) return showToast('Tidak ada field untuk pengelompokan.');
-    let optionsHtml = "";
-    groupableFields.forEach(f => { optionsHtml += `<option value="${f.name}">${f.icon || '📌'} ${escapeHtml(f.label)}</option>`; });
-    const dialogHtml = `<div id="groupDialogJamaahKita" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;">
-        <div style="background:white;border-radius:24px;padding:24px;width:90%;max-width:320px;">
-            <h3 style="color:#0D5C4A;margin-bottom:16px;">📊 Pilih Kelompok</h3>
-            <p style="font-size:13px;color:#666;margin-bottom:12px;">Kelompokkan berdasarkan:</p>
-            <select id="groupFieldSelectJamaahKita" style="margin-bottom:20px;width:100%;padding:12px;border-radius:12px;border:1px solid #e2e8f0;">${optionsHtml}</select>
-            <div class="row" style="gap:12px;">
-                <button onclick="closeGroupDialogJamaahKita()" style="background:#ccc;color:#333;">Batal</button>
-                <button onclick="printGroupedPDFJamaahKita()" style="background:#0D5C4A;">Cetak</button>
-            </div>
-        </div>
-    </div>`;
-    document.body.insertAdjacentHTML("beforeend", dialogHtml);
+function addJamaahKitaDynamicField(){ 
+    const name=document.getElementById('jamaahKitaNewFieldName').value.trim().toLowerCase(); 
+    const label=document.getElementById('jamaahKitaNewFieldLabel').value.trim(); 
+    const type=document.getElementById('jamaahKitaNewFieldType').value; 
+    if(!/^[a-z0-9_]+$/.test(name)) return showToast('Nama field: huruf kecil, angka, underscore!'); 
+    if(!label) return showToast('Label harus diisi!'); 
+    if(dynamicFieldsJamaahKita.some(f=>f.name===name)) return showToast('Field sudah ada!'); 
+    dynamicFieldsJamaahKita.push({name,label,type}); 
+    saveDynamicFieldsJamaahKita(); 
+    document.getElementById('jamaahKitaNewFieldName').value=''; 
+    document.getElementById('jamaahKitaNewFieldLabel').value=''; 
+    renderJamaahKitaFieldsList(); 
+    renderJamaahKitaDynamicFieldsForm(); 
+    showToast('Field ditambahkan'); 
 }
 
-function closeGroupDialogJamaahKita() {
-    const dialog = document.getElementById("groupDialogJamaahKita");
-    if (dialog) dialog.remove();
+function confirmDeleteJamaahKitaDynamicField(idx){ 
+    if(confirm(`Hapus field "${dynamicFieldsJamaahKita[idx].label}"?`)){ 
+        dynamicFieldsJamaahKita.splice(idx,1); 
+        saveDynamicFieldsJamaahKita(); 
+        renderJamaahKitaFieldsList(); 
+        renderJamaahKitaDynamicFieldsForm(); 
+        renderJamaahKitaList(); 
+        showToast('Field dihapus'); 
+    } 
 }
 
-function printGroupedPDFJamaahKita() {
-    const select = document.getElementById("groupFieldSelectJamaahKita");
-    if (!select) return;
-    const fieldName = select.value;
-    const groupField = dynamicFieldsJamaahKita.find(f => f.name === fieldName);
-    if (!groupField) { showToast('Field tidak ditemukan!'); closeGroupDialogJamaahKita(); return; }
-    closeGroupDialogJamaahKita();
-    const groups = {};
-    jamaahKitaList.forEach(jk => {
-        const key = jk.additional_fields?.[groupField.name] || "Tidak diisi";
-        if (!groups[key]) groups[key] = [];
-        groups[key].push(jk);
-    });
-    const sortedGroups = Object.keys(groups).sort((a, b) => { if (a === "Tidak diisi") return 1; if (b === "Tidak diisi") return -1; return a.localeCompare(b); });
-    let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cetak Kelompok</title>
-    <style>body { font-family:Arial,sans-serif; padding:20px; } h1 { color:#0D5C4A; text-align:center; }
-    .date { text-align:center; margin-bottom:20px; color:#666; font-size:12px; }
-    .group { margin-bottom:30px; } .group-title { background:#0D5C4A; color:white; padding:8px 12px; border-radius:8px; margin-bottom:10px; font-weight:bold; }
-    table { width:100%; border-collapse:collapse; margin-bottom:20px; } th,td { border:1px solid #ddd; padding:8px; text-align:left; } th { background:#f0f0f0; }
-    .footer { text-align:center; margin-top:30px; font-size:11px; color:#999; border-top:1px solid #ddd; padding-top:10px; }
-    @media print { button { display:none; } }
-    </style></head><body>
-    <h1>📋 DATA KELOMPOK JAMAAH</h1>
-    <div class="date">Tanggal Cetak: ${new Date().toLocaleDateString("id-ID")}</div>
-    <div class="date">Berdasarkan: ${groupField.icon || '📌'} ${escapeHtml(groupField.label)}</div>`;
-    for (const key of sortedGroups) {
-        const members = groups[key];
-        html += `<div class="group"><div class="group-title">${groupField.icon || '📌'} ${escapeHtml(groupField.label)}: ${escapeHtml(key)} (${members.length} orang)</div>
-        <table><thead><tr><th>No</th><th>Nama Jamaah</th>${dynamicFieldsJamaahKita.map(f => `<th>${f.icon || '📌'} ${escapeHtml(f.label)}</th>`).join("")}</tr></thead><tbody>`;
-        members.forEach((jk, i) => {
-            html += `<tr><td>${i+1}</td><td>${escapeHtml(jk.nama_lengkap)}</td>${dynamicFieldsJamaahKita.map(f => `<td>${escapeHtml(jk.additional_fields?.[f.name] || "-")}</td>`).join("")}</tr>`;
-        });
-        html += `</tbody></table></div>`;
-    }
-    html += `<div class="footer">Dicetak dari ${getKonfigurasiProData().instansi1.nama || 'Safara'}</div>
-    <div style="text-align:center;margin-top:20px;">
-        <button onclick="window.print()" style="padding:10px 30px;background:#0D5C4A;color:white;border:none;border-radius:8px;">🖨️ CETAK</button>
-        <button onclick="window.close()" style="padding:10px 30px;background:#ccc;border:none;border-radius:8px;margin-left:10px;">TUTUP</button>
-    </div></body></html>`;
-    const win = window.open("", "_blank");
-    win.document.write(html);
-    win.document.close();
+function confirmDeleteAllJamaahKita(){ 
+    if(jamaahKitaList.length===0){ 
+        showToast('Tidak ada data Jamaah on proses!'); 
+        return; 
+    } 
+    if(confirm(`⚠️ PERINGATAN: Semua ${jamaahKitaList.length} data Jamaah on proses akan dihapus PERMANEN! Lanjutkan?`)){ 
+        jamaahKitaList=[]; 
+        saveJamaahKitaData(); 
+        renderJamaahKitaList(); 
+        showToast('✅ Semua data Jamaah on proses telah dihapus'); 
+    } 
 }
 
-function renderJamaahKitaFieldsList() {
-    const container = document.getElementById('jamaahKitaFieldsListContainer');
-    if (!container) return;
-    if (dynamicFieldsJamaahKita.length === 0) { container.innerHTML = '<p style="color:#999;">Belum ada field dinamis.</p>'; return; }
-    let html = '<h4 style="margin-top:10px;">Daftar Field Saat Ini:</h4>';
-    dynamicFieldsJamaahKita.forEach((f, idx) => {
-        const isProtected = (f.name === "whatsapp");
-        html += `<div class="admin-field-item"><div><strong>${f.icon || '📌'} ${escapeHtml(f.label)}</strong><br><small style="color:#64748B;">${f.name}</small>${f.isRequired ? ' <span class="default-badge">WAJIB</span>' : ''}</div>
-            ${!isProtected ? `<button onclick="confirmDeleteJamaahKitaDynamicField(${idx})" style="background:#ef4444;padding:6px 12px;width:auto;font-size:11px;border:none;border-radius:20px;color:white;cursor:pointer;">Hapus</button>` : '<span style="color:#94a3b8;font-size:11px;">Tidak bisa dihapus</span>'}
-        </div>`;
-    });
-    container.innerHTML = html;
+function printGroupedPDF(){ 
+    if(jamaahKitaList.length===0){ 
+        showToast('Tidak ada data di Jamaah on proses.'); 
+        return; 
+    } 
+    const groupFields=dynamicFieldsJamaahKita.filter(f=>f.type!=='tel'); 
+    if(groupFields.length===0){ 
+        showToast('Belum ada field dinamis untuk kelompok.'); 
+        return; 
+    } 
+    let fieldOptions='<option value="">-- Pilih field untuk pengelompokan --</option>'; 
+    groupFields.forEach(f=>{ 
+        fieldOptions+=`<option value="${f.name}">${escapeHtml(f.label)}</option>`; 
+    }); 
+    const modalHtml=`<div id="groupPrintModal" class="modal" style="display:flex;"><div class="modal-content"><h3> Cetak PDF Per Kelompok</h3><div class="dynamic-field"><label>Pilih Field Kelompok</label><select id="groupFieldSelect">${fieldOptions}</select></div><div class="dynamic-field"><label>Judul Laporan</label><input type="text" id="reportTitle" value="Daftar Kelompok Jamaah"></div><button class="btn btn-primary" onclick="generateGroupedPDF()">CETAK PDF</button><button class="btn btn-danger mt-2" onclick="closeGroupPrintModal()">BATAL</button></div></div>`; 
+    document.body.insertAdjacentHTML('beforeend', modalHtml); 
 }
 
-function addJamaahKitaDynamicField() {
-    const name = document.getElementById('jamaahKitaNewFieldName').value.trim().toLowerCase();
-    const label = document.getElementById('jamaahKitaNewFieldLabel').value.trim();
-    if (!/^[a-z0-9_]+$/.test(name)) return showToast('Nama field: huruf kecil, angka, underscore!');
-    if (!label) return showToast('Label harus diisi!');
-    if (dynamicFieldsJamaahKita.some(f => f.name === name)) return showToast('Field sudah ada!');
-    dynamicFieldsJamaahKita.push({ name, label, type: 'text', icon: "📌", isRequired: false });
-    saveDynamicFieldsJamaahKita();
-    document.getElementById('jamaahKitaNewFieldName').value = '';
-    document.getElementById('jamaahKitaNewFieldLabel').value = '';
-    renderJamaahKitaFieldsList();
-    renderJamaahKitaDynamicFieldsForm();
-    showToast('Field ditambahkan');
+function closeGroupPrintModal(){ 
+    const modal=document.getElementById('groupPrintModal'); 
+    if(modal) modal.remove(); 
 }
 
-function confirmDeleteJamaahKitaDynamicField(idx) {
-    const field = dynamicFieldsJamaahKita[idx];
-    if (field.name === "whatsapp") return showToast('Field WhatsApp tidak bisa dihapus!');
-    if (confirm(`Hapus field "${field.label}"? Data yang sudah diisi akan ikut hilang.`)) {
-        jamaahKitaList.forEach(jk => { if (jk.additional_fields && jk.additional_fields[field.name]) delete jk.additional_fields[field.name]; });
-        dynamicFieldsJamaahKita.splice(idx, 1);
-        saveDynamicFieldsJamaahKita();
-        saveJamaahKitaData();
-        renderJamaahKitaFieldsList();
-        renderJamaahKitaDynamicFieldsForm();
-        renderJamaahKitaList();
-        showToast('Field dihapus');
-    }
+async function generateGroupedPDF(){ 
+    const fieldName=document.getElementById('groupFieldSelect').value; 
+    if(!fieldName){ 
+        showToast('Pilih field untuk pengelompokan!'); 
+        return; 
+    } 
+    const reportTitle=document.getElementById('reportTitle').value.trim()||'Daftar Kelompok Jamaah'; 
+    closeGroupPrintModal(); 
+    showToast('Membuat PDF...'); 
+    setTimeout(async()=>{ 
+        try{ 
+            const groups={}; 
+            jamaahKitaList.forEach(jk=>{ 
+                let groupValue=jk.additional_fields?.[fieldName]||'Tidak diisi'; 
+                groupValue=groupValue.replace(/[^\w\s\d\-]/g,'').trim(); 
+                if(!groups[groupValue]) groups[groupValue]=[]; 
+                groups[groupValue].push(jk); 
+            }); 
+            const {jsPDF}=window.jspdf; 
+            const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'}); 
+            await applyPDFConfig(doc, { landscape: false }); 
+            doc.setFontSize(16); 
+            doc.setTextColor(26,93,74); 
+            doc.text(reportTitle,105,65,{align:'center'}); 
+            let y=80; 
+            const sortedGroups=Object.keys(groups).sort((a,b)=>{ 
+                if(a==='Tidak diisi') return 1; 
+                if(b==='Tidak diisi') return -1; 
+                return a.localeCompare(b); 
+            }); 
+            for(const groupName of sortedGroups){ 
+                const members=groups[groupName]; 
+                if(y>250){ 
+                    doc.addPage(); 
+                    y=20; 
+                } 
+                doc.setFontSize(12); 
+                doc.setTextColor(26,93,74); 
+                const labelClean=fieldName.replace(/[^\w\s]/g,'').toUpperCase(); 
+                const groupClean=groupName.replace(/[^\w\s\d\-]/g,'').trim(); 
+                doc.text(`${labelClean}: ${groupClean} (${members.length} orang)`,14,y); 
+                y+=8; 
+                const tableData=members.map((jk,idx)=>[idx+1, jk.nama_lengkap]); 
+                doc.autoTable({startY:y,head:[['No','Nama Lengkap']],body:tableData,theme:'striped',headStyles:{fillColor:[26,93,74],textColor:[255,255,255],fontSize:10},styles:{fontSize:9,cellPadding:3,lineWidth:0.1},margin:{left:14,right:14}}); 
+                y=doc.lastAutoTable.finalY+10; 
+            } 
+            doc.save(`Kelompok_${fieldName}_${new Date().toLocaleDateString('id-ID').replace(/\//g,'-')}.pdf`); 
+            showToast('PDF berhasil dibuat'); 
+        } catch(e){ 
+            showToast('Gagal membuat PDF: '+e.message); 
+        } 
+    },100); 
 }
 
-function confirmDeleteAllJamaahKita() {
-    if (jamaahKitaList.length === 0) return showToast('Tidak ada data Jamaah on proses!');
-    if (confirm(`PERINGATAN: Semua ${jamaahKitaList.length} data Jamaah on proses akan dihapus PERMANEN! Lanjutkan?`)) {
-        jamaahKitaList = [];
-        selectedJamaahKitaIds = [];
-        saveJamaahKitaData();
-        renderJamaahKitaList();
-        showToast('Semua data Jamaah on proses telah dihapus');
-    }
-}
-
-function backupJamaahKitaData() {
-    if (jamaahKitaList.length === 0 && dynamicFieldsJamaahKita.length === 0) return showToast("Tidak ada data!");
-    const backup = { app: "Safara - Jamaah On Proses", version: "2.0", date: new Date().toISOString(), onProsesList: jamaahKitaList, dynamicFields: dynamicFieldsJamaahKita };
-    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `safara_onproses_backup_${new Date().toLocaleDateString("id-ID").replace(/\//g, "-")}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('Backup berhasil!');
-}
-
-function restoreJamaahKitaData(input) {
-    const file = input.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        try {
-            const data = JSON.parse(e.target.result);
-            if (data.onProsesList) jamaahKitaList = data.onProsesList;
-            if (data.dynamicFields) dynamicFieldsJamaahKita = data.dynamicFields;
-            saveJamaahKitaData();
-            renderJamaahKitaList();
-            renderPilihJamaahKita();
-            renderJamaahKitaDynamicFieldsForm();
-            if (isAdminModePremium) renderJamaahKitaFieldsList();
-            showToast('Restore berhasil!');
-        } catch (err) { showToast('File tidak valid!'); }
-    };
-    reader.readAsText(file);
-    input.value = "";
-}
-
-function printGroupedPDF() { showGroupDialogJamaahKita(); }
-
-function editJamaahKita(index) { const jk = jamaahKitaList[index]; if (jk) openJamaahKitaEditModal(jk.id); }
-function confirmDeleteJamaahKita(index) { const jk = jamaahKitaList[index]; if (jk) confirmDeleteJamaahKitaById(jk.id); }
-
-
-function openJamaahKitaFieldModal() { if(isAdminModePremium) renderJamaahKitaFieldsList(); }
-function closeJamaahKitaFieldModal() {}
-
-loadJamaahKitaData();
 // ==================== ZAKAT ====================
 let sumberHartaList=[], lastZakatText='';
 
@@ -4866,18 +4689,16 @@ function confirmDeleteFolder(folderId) {
 }
 
 function toggleFolderField(folderId, fieldKey, checked) {
-    const folderIdx = folderList.findIndex(f => f.id == folderId);
-    if(folderIdx === -1) return;
-    if(!folderList[folderIdx].selectedFields) folderList[folderIdx].selectedFields = [];
+    const folder = folderList.find(f => f.id == folderId);
+    if(!folder) return;
+    if(!folder.selectedFields) folder.selectedFields = [];
     if(checked) {
-        if(!folderList[folderIdx].selectedFields.includes(fieldKey)) {
-            folderList[folderIdx].selectedFields.push(fieldKey);
-        }
+        if(!folder.selectedFields.includes(fieldKey)) folder.selectedFields.push(fieldKey);
     } else {
-        folderList[folderIdx].selectedFields = folderList[folderIdx].selectedFields.filter(k => k !== fieldKey);
+        folder.selectedFields = folder.selectedFields.filter(k => k !== fieldKey);
     }
     saveFolderData();
-    showToast(checked ? '✅ Field ditambahkan' : '❌ Field dihapus');
+    showToast(checked ? 'Field ditambahkan ke PDF/Excel' : 'Field dihapus dari PDF/Excel');
 }
 
 function addFolderField(folderId) {
@@ -4953,25 +4774,10 @@ async function exportFolderToPDF(folderId) {
         const allDynFieldsPDF = JSON.parse(localStorage.getItem('safara_jamaah_fields') || '[]');
         const selectedFieldsPDF = folder.selectedFields || [];
         const chosenFields = allDynFieldsPDF.filter(fd => selectedFieldsPDF.includes(fd.name));
-
         const tHead = ['No', 'Nama Lengkap', ...chosenFields.map(fd => fd.label), 'Tanggal Input'];
         const tableData = jamaahInFolder.map((j, i) => {
             const row = [i+1, j.nama_lengkap];
-            // Coba semua kemungkinan key yang ada di additional_fields
-            chosenFields.forEach(fd => {
-                let val = '-';
-                if (j.additional_fields) {
-                    // Coba exact match
-                    if (j.additional_fields[fd.name] !== undefined && j.additional_fields[fd.name] !== '') {
-                        val = j.additional_fields[fd.name];
-                    }
-                    // Coba dengan key dari fields di objek jamaah langsung
-                    else if (j[fd.name] !== undefined && j[fd.name] !== '') {
-                        val = j[fd.name];
-                    }
-                }
-                row.push(val);
-            });
+            chosenFields.forEach(fd => row.push((j.additional_fields && j.additional_fields[fd.name]) ? j.additional_fields[fd.key] : '-'));
             row.push(j.created_at || '-');
             return row;
         });
@@ -5009,7 +4815,7 @@ function exportFolderToExcel(folderId) {
     // Buat data rows
     jamaahInFolder.forEach((j, i) => {
         const row = { 'No': i+1, 'Nama Lengkap': j.nama_lengkap };
-        chosenFieldsXLS.forEach(fd => row[fd.label] = (j.additional_fields && j.additional_fields[fd.name]) ? j.additional_fields[fd.name] : '-');
+        chosenFieldsXLS.forEach(fd => row[fd.label] = (j.additional_fields && j.additional_fields[fd.name]) ? j.additional_fields[fd.key] : '-');
         row['Tanggal Input'] = j.created_at || '-';
         wsData.push(row);
     });
@@ -6579,21 +6385,7 @@ const installPopupClosed = localStorage.getItem('safara_install_popup_closed') =
 
 // Service Worker
 if ('serviceWorker' in navigator) {
-    const swCode = `
-        const CACHE_NAME = 'safara-v202605030628';
-        const urlsToCache = ['.', 'index.html'];
-        self.addEventListener('install', e => {
-            e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)));
-            self.skipWaiting();
-        });
-        self.addEventListener('activate', e => {
-            e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))));
-            self.clients.claim();
-        });
-        self.addEventListener('fetch', e => {
-            e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
-        });
-    `
+    const swCode = `const CACHE_NAME='safara-v3';const urlsToCache=['.','index.html'];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(urlsToCache)))});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(response=>response||fetch(e.request)))});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))))});`;
     const blob = new Blob([swCode], {type:'application/javascript'});
     const swURL = URL.createObjectURL(blob);
     navigator.serviceWorker.register(swURL).then(reg => console.log('✅ SW registered')).catch(err => console.log('SW failed:', err));
@@ -6662,7 +6454,7 @@ async function initPremium() {
     loadJamaahData();
     loadDynamicFieldsJamaah();
     loadJamaahKitaData();
-    // loadDynamicFieldsJamaahKita sudah include di loadJamaahKitaData()
+    loadDynamicFieldsJamaahKita();
     loadPaymentData();
     loadMasterData();
     loadModesFromStorage();
@@ -6768,4 +6560,4 @@ document.addEventListener('DOMContentLoaded', initPremium);
 </script>
 
 </body>
-    </html>
+                </html>
