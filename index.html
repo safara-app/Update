@@ -7038,20 +7038,22 @@ function closePreviewPDF() {
 async function showPreviewPDF(title, generateFn, downloadFn) {
     showToast('Menyiapkan preview...');
     try {
-        const blobUrl = await generateFn();
-        if (!blobUrl) return;
-        window._previewBlobUrl = blobUrl;
+        const dataUri = await generateFn('datauri');
+        if (!dataUri) return;
+        window._previewDownloadFn = downloadFn;
         document.getElementById('previewPDFTitle').textContent = '👁️ Preview - ' + title;
-        document.getElementById('previewPDFIframe').src = blobUrl;
+        const iframe = document.getElementById('previewPDFIframe');
+        iframe.src = dataUri;
         document.getElementById('previewDownloadBtn').onclick = downloadFn;
         document.getElementById('previewPDFModal').classList.add('show');
     } catch(e) {
         showToast('Gagal preview: ' + e.message);
+        console.error('Preview error:', e);
     }
 }
 
 // Generate PDF blob tanpa download - KAS
-async function generateKasPDFBlob() {
+async function generateKasPDFBlob(outputType) {
     if(dataKas.length===0) { showToast('Tidak ada data!'); return null; }
     const {jsPDF} = window.jspdf;
     const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
@@ -7068,11 +7070,13 @@ async function generateKasPDFBlob() {
     doc.text('Total Pengeluaran: Rp '+keluar.toLocaleString('id-ID'), 14, finalY+7);
     doc.setTextColor(26,93,74); doc.setFont('helvetica','bold');
     doc.text('SALDO AKHIR: Rp '+(masuk-keluar).toLocaleString('id-ID'), 14, finalY+14);
+    // output: 'datauri' untuk preview/cetak, default untuk blob
+    if (outputType === 'datauri') return doc.output('datauristring');
     return URL.createObjectURL(doc.output('blob'));
 }
 
 // Generate PDF blob tanpa download - PEMBAYARAN
-async function generatePaymentPDFBlob() {
+async function generatePaymentPDFBlob(outputType) {
     if(paymentTransaksiList.length===0) { showToast('Tidak ada data transaksi!'); return null; }
     const {jsPDF} = window.jspdf;
     const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
@@ -7084,11 +7088,12 @@ async function generatePaymentPDFBlob() {
     doc.autoTable({startY:80, head:[['No','Tanggal','Jamaah','Keterangan','Metode','Nominal']], body:tableData, theme:'striped', headStyles:{fillColor:[26,93,74]}, styles:{fontSize:8, lineWidth:0.1}});
     let finalY = doc.lastAutoTable.finalY + 10;
     doc.text('TOTAL PEMASUKAN: '+formatRupiah(totalMasuk), 14, finalY);
+    if (outputType === 'datauri') return doc.output('datauristring');
     return URL.createObjectURL(doc.output('blob'));
 }
 
 // Generate PDF blob tanpa download - MULTI EVENT
-async function generateMasterPDFBlob() {
+async function generateMasterPDFBlob(outputType) {
     if(masterDataList.length===0) { showToast('Tidak ada data!'); return null; }
     const {jsPDF} = window.jspdf;
     const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
@@ -7099,25 +7104,46 @@ async function generateMasterPDFBlob() {
     const headers = ['No', ...masterDynamicFields.map(f=>f.label)];
     const tableData = masterDataList.map((row,i)=>[i+1, ...masterDynamicFields.map(f=>row[f.name]||'-')]);
     doc.autoTable({startY:80, head:[headers], body:tableData, theme:'striped', headStyles:{fillColor:[26,93,74]}, styles:{fontSize:8, lineWidth:0.1}});
+    if (outputType === 'datauri') return doc.output('datauristring');
     return URL.createObjectURL(doc.output('blob'));
 }
 
 // Fungsi cetak dari preview blob
-function cetakDariBlob(generateFn) {
-    generateFn().then(blobUrl => {
-        if (!blobUrl) return;
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = blobUrl;
-        document.body.appendChild(iframe);
-        iframe.onload = () => {
-            iframe.contentWindow.print();
-            setTimeout(() => {
-                document.body.removeChild(iframe);
-                URL.revokeObjectURL(blobUrl);
-            }, 1000);
-        };
-    }).catch(e => showToast('Gagal cetak: ' + e.message));
+async function cetakDariBlob(generateFn) {
+    showToast('Menyiapkan cetak...');
+    try {
+        const dataUri = await generateFn('datauri');
+        if (!dataUri) return;
+        const win = window.open('', '_blank');
+        if (!win) { showToast('Izinkan popup untuk cetak!'); return; }
+        win.document.write(`<!DOCTYPE html>
+        <html>
+        <head>
+            <title>Cetak</title>
+            <style>
+                * { margin:0; padding:0; }
+                body { display:flex; justify-content:center; align-items:flex-start; min-height:100vh; background:#f0f0f0; padding:10px; }
+                iframe { width:100%; height:90vh; border:none; background:white; }
+                .no-print { text-align:center; padding:10px; }
+                .no-print button { padding:10px 30px; background:#0D5C4A; color:white; border:none; border-radius:8px; cursor:pointer; margin:5px; font-size:14px; }
+                @media print { .no-print { display:none !important; } body { padding:0; background:white; } iframe { height:100vh; } }
+            </style>
+        </head>
+        <body>
+            <div style="width:100%;">
+                <div class="no-print">
+                    <button onclick="window.print()">🖨️ Cetak Sekarang</button>
+                    <button onclick="window.close()" style="background:#ccc;color:#333;">Tutup</button>
+                </div>
+                <iframe src="${dataUri}"></iframe>
+            </div>
+        </body>
+        </html>`);
+        win.document.close();
+        setTimeout(() => { try { win.print(); } catch(e) {} }, 1500);
+    } catch(e) {
+        showToast('Gagal cetak: ' + e.message);
+    }
 }
 </script>
 
