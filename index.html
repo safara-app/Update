@@ -4711,42 +4711,69 @@ function copyInvoiceText() {
     closeInvoiceConfirmModal(); 
 }
 
-async function cetakInvoicePDF(jamaahId) { 
-    const jamaah = jamaahList.find(j => j.id == jamaahId); 
-    if (!jamaah) { showToast('Data jamaah tidak ditemukan'); return; } 
-    showToast('Membuat PDF...'); 
-    try { 
-        const { jsPDF } = window.jspdf; 
-        const doc = new jsPDF(); 
-        await applyPDFConfig(doc, { landscape: false }); 
-        const transaksiList = paymentTransaksiList.filter(t => t.id_jamaah == jamaahId).sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal)); 
-        const totalBayar = hitungTotalBayarJamaah(jamaahId); 
-        let totalHargaPaket = getTotalHargaPaket(jamaah) || 0; 
-        const sisa = totalHargaPaket - totalBayar; 
-        const prefix = getKonfigurasiProData().settings.invoice_prefix || 'INV/SAFARA'; 
-        doc.setFontSize(16); 
-        doc.setTextColor(26,93,74); 
-        doc.text('INVOICE PEMBAYARAN', 105, 65, { align: 'center' }); 
-        doc.setFontSize(10); 
-        doc.setTextColor(100,100,100); 
-        doc.text(`No: ${prefix}/${jamaah.id}/${new Date().toLocaleDateString('id-ID').replace(/\//g,'')}`, 105, 72, { align: 'center' }); 
-        doc.setFontSize(11); 
-        doc.setTextColor(0,0,0); 
-        doc.text(`Nama Jamaah: ${jamaah.nama_lengkap}`, 20, 85); 
-        doc.text(`Tanggal: ${new Date().toLocaleDateString('id-ID')}`, 20, 95); 
-        doc.text(`Total Paket: ${formatRupiah(totalHargaPaket)}`, 20, 105); 
-        const tableData = transaksiList.map((t, i) => [i+1, t.tanggal, t.keterangan, t.metode, formatRupiah(t.nominal)]); 
-        if (tableData.length > 0) { 
-            doc.autoTable({ startY: 120, head: [['No','Tanggal','Keterangan','Metode','Nominal']], body: tableData, theme: 'striped', headStyles: { fillColor: [26,93,74] }, styles: { fontSize: 9, lineWidth: 0.1 } }); 
-        } 
-        let finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 130; 
-        doc.text(`Total Dibayar: ${formatRupiah(totalBayar)}`, 20, finalY); 
-        doc.text(`Sisa Tagihan: ${formatRupiah(sisa > 0 ? sisa : 0)}`, 20, finalY+10); 
-        doc.setTextColor(sisa <= 0 ? '#2ecc71' : '#e74c3c'); 
-        doc.text(`Status: ${sisa <= 0 ? 'LUNAS' : 'BELUM LUNAS'}`, 20, finalY+20); 
-        doc.save(`Invoice_${jamaah.nama_lengkap.replace(/\s/g, '_')}.pdf`); 
-        showToast('PDF Invoice berhasil dibuat'); 
-    } catch(e) { showToast('Gagal PDF: ' + e.message); } 
+// Generate invoice PDF - reusable untuk preview, cetak, download
+async function generateInvoicePDFDoc(jamaahId) {
+    const jamaah = jamaahList.find(j => j.id == jamaahId);
+    if (!jamaah) { showToast('Data jamaah tidak ditemukan'); return null; }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    await applyPDFConfig(doc, { landscape: false });
+    const transaksiList = paymentTransaksiList.filter(t => t.id_jamaah == jamaahId).sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
+    const totalBayar = hitungTotalBayarJamaah(jamaahId);
+    let totalHargaPaket = getTotalHargaPaket(jamaah) || 0;
+    const sisa = totalHargaPaket - totalBayar;
+    const prefix = getKonfigurasiProData().settings.invoice_prefix || 'INV/SAFARA';
+    doc.setFontSize(16);
+    doc.setTextColor(26,93,74);
+    doc.text('INVOICE PEMBAYARAN', 105, 65, { align: 'center' });
+    doc.setFontSize(10);
+    doc.setTextColor(100,100,100);
+    doc.text(`No: ${prefix}/${jamaah.id}/${new Date().toLocaleDateString('id-ID').replace(/\//g,'')}`, 105, 72, { align: 'center' });
+    doc.setFontSize(11);
+    doc.setTextColor(0,0,0);
+    doc.text(`Nama Jamaah: ${jamaah.nama_lengkap}`, 20, 85);
+    doc.text(`Tanggal: ${new Date().toLocaleDateString('id-ID')}`, 20, 95);
+    doc.text(`Total Paket: ${formatRupiah(totalHargaPaket)}`, 20, 105);
+    const tableData = transaksiList.map((t, i) => [i+1, t.tanggal, t.keterangan, t.metode, formatRupiah(t.nominal)]);
+    if (tableData.length > 0) {
+        doc.autoTable({ startY: 120, head: [['No','Tanggal','Keterangan','Metode','Nominal']], body: tableData, theme: 'striped', headStyles: { fillColor: [26,93,74] }, styles: { fontSize: 9, lineWidth: 0.1 } });
+    }
+    let finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 130;
+    doc.text(`Total Dibayar: ${formatRupiah(totalBayar)}`, 20, finalY);
+    doc.text(`Sisa Tagihan: ${formatRupiah(sisa > 0 ? sisa : 0)}`, 20, finalY+10);
+    doc.setTextColor(sisa <= 0 ? '#2ecc71' : '#e74c3c');
+    doc.text(`Status: ${sisa <= 0 ? 'LUNAS' : 'BELUM LUNAS'}`, 20, finalY+20);
+    return { doc, jamaah };
+}
+
+async function cetakInvoicePDF(jamaahId) {
+    showToast('Menyiapkan preview...');
+    try {
+        const result = await generateInvoicePDFDoc(jamaahId);
+        if (!result) return;
+        const { doc, jamaah } = result;
+
+        // Generate datauri untuk preview di iframe
+        const dataUri = doc.output('datauristring');
+
+        // Tampilkan di modal preview yang sudah ada
+        document.getElementById('previewPDFTitle').textContent = '👁️ Invoice - ' + jamaah.nama_lengkap;
+        document.getElementById('previewPDFIframe').src = dataUri;
+
+        // Tombol Download → download PDF jamaah ini
+        document.getElementById('previewDownloadBtn').onclick = async () => {
+            const r2 = await generateInvoicePDFDoc(jamaahId);
+            if (r2) r2.doc.save(`Invoice_${r2.jamaah.nama_lengkap.replace(/\s/g, '_')}.pdf`);
+            showToast('PDF Invoice berhasil didownload');
+        };
+
+        // Tampilkan modal
+        document.getElementById('previewPDFModal').classList.add('show');
+
+    } catch(e) {
+        showToast('Gagal preview: ' + e.message);
+        console.error(e);
+    }
 }
 
 function openEditHargaModal(jamaahId) { 
@@ -7145,6 +7172,32 @@ async function cetakDariBlob(generateFn) {
         showToast('Gagal cetak: ' + e.message);
     }
 }
+
+function cetakDariPreview() {
+    const iframe = document.getElementById('previewPDFIframe');
+    if (!iframe || !iframe.src || iframe.src === 'about:blank') {
+        showToast('Tidak ada preview untuk dicetak!');
+        return;
+    }
+    try {
+        // Buka window baru dengan src yang sama dan langsung print
+        const win = window.open(iframe.src, '_blank');
+        if (!win) { showToast('Izinkan popup untuk cetak!'); return; }
+        win.onload = () => {
+            setTimeout(() => {
+                win.print();
+            }, 500);
+        };
+    } catch(e) {
+        // Fallback: print langsung dari iframe
+        try {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+        } catch(e2) {
+            showToast('Gagal cetak: ' + e2.message);
+        }
+    }
+}
 </script>
 
 
@@ -7158,6 +7211,7 @@ async function cetakDariBlob(generateFn) {
         <iframe id="previewPDFIframe" class="preview-modal-iframe" src="about:blank"></iframe>
         <div class="preview-modal-footer">
             <button onclick="closePreviewPDF()" style="padding:8px 20px; background:#ccc; border:none; border-radius:8px; cursor:pointer;">Tutup</button>
+            <button id="previewCetakBtn" onclick="cetakDariPreview()" style="padding:8px 20px; background:#3B82F6; color:white; border:none; border-radius:8px; cursor:pointer;">🖨️ Cetak</button>
             <button id="previewDownloadBtn" onclick="" style="padding:8px 20px; background:#0D5C4A; color:white; border:none; border-radius:8px; cursor:pointer;">📄 Download PDF</button>
         </div>
     </div>
