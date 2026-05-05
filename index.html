@@ -4753,12 +4753,20 @@ async function cetakInvoicePDF(jamaahId) {
         if (!result) return;
         const { doc, jamaah } = result;
 
-        // Generate datauri untuk preview di iframe
-        const dataUri = doc.output('datauristring');
+        // Konversi ke blob URL untuk iframe yang reliable
+        const pdfBlob = doc.output('blob');
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        if (window._previewBlobUrl) URL.revokeObjectURL(window._previewBlobUrl);
+        window._previewBlobUrl = blobUrl;
 
-        // Tampilkan di modal preview yang sudah ada
+        // Tampilkan modal DULU baru set src
         document.getElementById('previewPDFTitle').textContent = '👁️ Invoice - ' + jamaah.nama_lengkap;
-        document.getElementById('previewPDFIframe').src = dataUri;
+        document.getElementById('previewPDFModal').classList.add('show');
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                document.getElementById('previewPDFIframe').src = blobUrl;
+            });
+        });
 
         // Tombol Download → download PDF jamaah ini
         document.getElementById('previewDownloadBtn').onclick = async () => {
@@ -4767,8 +4775,7 @@ async function cetakInvoicePDF(jamaahId) {
             showToast('PDF Invoice berhasil didownload');
         };
 
-        // Tampilkan modal
-        document.getElementById('previewPDFModal').classList.add('show');
+
 
     } catch(e) {
         showToast('Gagal preview: ' + e.message);
@@ -7054,25 +7061,55 @@ function closePreviewPDF() {
     const modal = document.getElementById('previewPDFModal');
     const iframe = document.getElementById('previewPDFIframe');
     modal.classList.remove('show');
-    iframe.src = 'about:blank';
-    // Revoke blob URL
-    if (window._previewBlobUrl) {
-        URL.revokeObjectURL(window._previewBlobUrl);
-        window._previewBlobUrl = null;
-    }
+    // Reset iframe setelah modal tutup agar tidak ada flash
+    setTimeout(() => {
+        iframe.src = 'about:blank';
+        if (window._previewBlobUrl) {
+            URL.revokeObjectURL(window._previewBlobUrl);
+            window._previewBlobUrl = null;
+        }
+    }, 300);
 }
 
 async function showPreviewPDF(title, generateFn, downloadFn) {
     showToast('Menyiapkan preview...');
     try {
+        // Generate doc dulu
         const dataUri = await generateFn('datauri');
         if (!dataUri) return;
-        window._previewDownloadFn = downloadFn;
+
+        // Konversi dataUri ke blob untuk iframe yang lebih reliable
+        const base64 = dataUri.split(',')[1];
+        const binary = atob(base64);
+        const array = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i);
+        const blob = new Blob([array], { type: 'application/pdf' });
+        const blobUrl = URL.createObjectURL(blob);
+
+        // Simpan blob url untuk cleanup
+        if (window._previewBlobUrl) URL.revokeObjectURL(window._previewBlobUrl);
+        window._previewBlobUrl = blobUrl;
+
+        // Set judul
         document.getElementById('previewPDFTitle').textContent = '👁️ Preview - ' + title;
+
+        // Set iframe dengan loading indicator
         const iframe = document.getElementById('previewPDFIframe');
-        iframe.src = dataUri;
-        document.getElementById('previewDownloadBtn').onclick = downloadFn;
+        iframe.style.background = '#f5f5f5';
+        
+        // Tampilkan modal DULU baru set src - ini kunci agar iframe bisa render
         document.getElementById('previewPDFModal').classList.add('show');
+        
+        // Set src setelah modal visible agar browser bisa render
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                iframe.src = blobUrl;
+            });
+        });
+
+        // Set tombol download
+        document.getElementById('previewDownloadBtn').onclick = downloadFn;
+
     } catch(e) {
         showToast('Gagal preview: ' + e.message);
         console.error('Preview error:', e);
@@ -7141,62 +7178,50 @@ async function cetakDariBlob(generateFn) {
     try {
         const dataUri = await generateFn('datauri');
         if (!dataUri) return;
-        const win = window.open('', '_blank');
-        if (!win) { showToast('Izinkan popup untuk cetak!'); return; }
-        win.document.write(`<!DOCTYPE html>
-        <html>
-        <head>
-            <title>Cetak</title>
-            <style>
-                * { margin:0; padding:0; }
-                body { display:flex; justify-content:center; align-items:flex-start; min-height:100vh; background:#f0f0f0; padding:10px; }
-                iframe { width:100%; height:90vh; border:none; background:white; }
-                .no-print { text-align:center; padding:10px; }
-                .no-print button { padding:10px 30px; background:#0D5C4A; color:white; border:none; border-radius:8px; cursor:pointer; margin:5px; font-size:14px; }
-                @media print { .no-print { display:none !important; } body { padding:0; background:white; } iframe { height:100vh; } }
-            </style>
-        </head>
-        <body>
-            <div style="width:100%;">
-                <div class="no-print">
-                    <button onclick="window.print()">🖨️ Cetak Sekarang</button>
-                    <button onclick="window.close()" style="background:#ccc;color:#333;">Tutup</button>
-                </div>
-                <iframe src="${dataUri}"></iframe>
-            </div>
-        </body>
-        </html>`);
-        win.document.close();
-        setTimeout(() => { try { win.print(); } catch(e) {} }, 1500);
+
+        // Konversi ke blob URL
+        const base64 = dataUri.split(',')[1];
+        const binary = atob(base64);
+        const array = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i);
+        const blob = new Blob([array], { type: 'application/pdf' });
+        const blobUrl = URL.createObjectURL(blob);
+
+        // Buka window baru dengan blob URL - browser akan tampilkan PDF viewer native
+        const win = window.open(blobUrl, '_blank');
+        if (!win) {
+            showToast('Izinkan popup untuk cetak!');
+            URL.revokeObjectURL(blobUrl);
+            return;
+        }
+        // Trigger print setelah PDF load
+        win.onload = () => {
+            setTimeout(() => {
+                try { win.print(); } catch(e) {}
+            }, 800);
+        };
+        // Cleanup blob setelah beberapa detik
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
     } catch(e) {
         showToast('Gagal cetak: ' + e.message);
+        console.error(e);
     }
 }
 
 function cetakDariPreview() {
-    const iframe = document.getElementById('previewPDFIframe');
-    if (!iframe || !iframe.src || iframe.src === 'about:blank') {
+    // Gunakan blob URL yang sudah ada
+    const blobUrl = window._previewBlobUrl;
+    if (!blobUrl) {
         showToast('Tidak ada preview untuk dicetak!');
         return;
     }
-    try {
-        // Buka window baru dengan src yang sama dan langsung print
-        const win = window.open(iframe.src, '_blank');
-        if (!win) { showToast('Izinkan popup untuk cetak!'); return; }
-        win.onload = () => {
-            setTimeout(() => {
-                win.print();
-            }, 500);
-        };
-    } catch(e) {
-        // Fallback: print langsung dari iframe
-        try {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-        } catch(e2) {
-            showToast('Gagal cetak: ' + e2.message);
-        }
-    }
+    const win = window.open(blobUrl, '_blank');
+    if (!win) { showToast('Izinkan popup untuk cetak!'); return; }
+    win.onload = () => {
+        setTimeout(() => {
+            try { win.print(); } catch(e) {}
+        }, 800);
+    };
 }
 </script>
 
