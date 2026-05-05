@@ -7060,7 +7060,7 @@ async function generateKasPDFBlob() {
         doc.text('Total Pengeluaran: Rp '+formatRupiah(keluar), 14, finalY+7);
         doc.setTextColor(26,93,74); doc.setFont('helvetica','bold');
         doc.text('SALDO AKHIR: Rp '+formatRupiah(masuk-keluar), 14, finalY+14);
-        return URL.createObjectURL(doc.output('blob'));
+        return doc;
     } catch(e) { showToast('Gagal generate: '+e.message); return null; }
 }
 
@@ -7078,7 +7078,7 @@ async function generatePaymentPDFBlob() {
         let finalY = doc.lastAutoTable.finalY + 10;
         doc.setTextColor(0,0,0);
         doc.text('TOTAL PEMASUKAN: '+formatRupiah(totalMasuk), 14, finalY);
-        return URL.createObjectURL(doc.output('blob'));
+        return doc;
     } catch(e) { showToast('Gagal generate: '+e.message); return null; }
 }
 
@@ -7094,54 +7094,90 @@ async function generateMasterPDFBlob() {
         const headers = ['No', ...(masterDynamicFields||[]).map(f=>f.label)];
         const tableData = (masterDataList||[]).map((row,i)=>[i+1, ...(masterDynamicFields||[]).map(f=>row[f.name]||'-')]);
         doc.autoTable({startY:80, head:[headers], body:tableData, theme:'striped', headStyles:{fillColor:[26,93,74]}, styles:{fontSize:8, lineWidth:0.1}});
-        return URL.createObjectURL(doc.output('blob'));
+        return doc;
     } catch(e) { showToast('Gagal generate: '+e.message); return null; }
 }
 
+// Preview - buka di window baru dengan embed data URI
 async function showPreviewPDF(title, generateFn, downloadFn) {
     showToast('Menyiapkan preview...');
     try {
-        const blobUrl = await generateFn();
-        if (!blobUrl) return;
-        if (window._previewBlobUrl) URL.revokeObjectURL(window._previewBlobUrl);
-        window._previewBlobUrl = blobUrl;
-        document.getElementById('previewPDFTitle').textContent = '👁️ Preview - ' + title;
-        document.getElementById('previewPDFIframe').src = blobUrl;
-        document.getElementById('previewDownloadBtn').onclick = downloadFn;
-        document.getElementById('previewPDFModal').classList.add('show');
+        const doc = await generateFn();
+        if (!doc) return;
+        // Gunakan data URI string - lebih kompatibel di semua browser/PWA
+        const dataUri = doc.output('datauristring');
+        const win = window.open('', '_blank');
+        if (!win) { showToast('Popup diblokir! Izinkan popup di browser.'); return; }
+        win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview - ${title}</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: Arial, sans-serif; background: #f0f0f0; }
+        .toolbar { background:#0D5C4A; color:white; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:10; }
+        .toolbar h3 { font-size:15px; }
+        .toolbar-btns { display:flex; gap:8px; }
+        .btn-toolbar { padding:8px 16px; border:none; border-radius:8px; cursor:pointer; font-size:13px; font-weight:bold; }
+        .btn-download { background:#D4AF37; color:#1a1a1a; }
+        .btn-close { background:rgba(255,255,255,0.2); color:white; }
+        .pdf-container { padding:16px; display:flex; justify-content:center; }
+        embed { width:100%; max-width:900px; height:85vh; border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <h3>👁️ Preview - ${title}</h3>
+        <div class="toolbar-btns">
+            <button class="btn-toolbar btn-download" onclick="document.querySelector('embed').focus(); window.print()">🖨️ Cetak</button>
+            <button class="btn-toolbar btn-close" onclick="window.close()">✕ Tutup</button>
+        </div>
+    </div>
+    <div class="pdf-container">
+        <embed src="${dataUri}" type="application/pdf" />
+    </div>
+</body>
+</html>`);
+        win.document.close();
     } catch(e) { showToast('Gagal preview: ' + e.message); }
 }
 
 function closePreviewPDF() {
     const modal = document.getElementById('previewPDFModal');
-    const iframe = document.getElementById('previewPDFIframe');
     if(modal) modal.classList.remove('show');
-    if(iframe) iframe.src = 'about:blank';
-    if (window._previewBlobUrl) {
-        URL.revokeObjectURL(window._previewBlobUrl);
-        window._previewBlobUrl = null;
-    }
 }
 
-function cetakDariBlob(generateFn) {
+// Cetak langsung dari doc jsPDF
+async function cetakDariBlob(generateFn) {
     showToast('Menyiapkan cetak...');
     try {
-        generateFn().then(blobUrl => {
-            if (!blobUrl) return;
-            const iframe = document.createElement('iframe');
-            iframe.style.cssText = 'display:none;position:fixed;top:0;left:0;width:0;height:0;';
-            iframe.src = blobUrl;
-            document.body.appendChild(iframe);
-            iframe.onload = () => {
-                try {
-                    iframe.contentWindow.print();
-                } catch(e) {}
-                setTimeout(() => {
-                    document.body.removeChild(iframe);
-                    URL.revokeObjectURL(blobUrl);
-                }, 2000);
-            };
-        });
+        const doc = await generateFn();
+        if (!doc) return;
+        const dataUri = doc.output('datauristring');
+        const win = window.open('', '_blank');
+        if (!win) { showToast('Popup diblokir! Izinkan popup di browser.'); return; }
+        win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Cetak</title>
+    <style>
+        body { margin:0; padding:0; }
+        embed { width:100vw; height:100vh; display:block; }
+    </style>
+</head>
+<body>
+    <embed src="${dataUri}" type="application/pdf" />
+    <script>
+        window.onload = function() {
+            setTimeout(function() { window.print(); }, 500);
+        };
+    <\/script>
+</body>
+</html>`);
+        win.document.close();
     } catch(e) { showToast('Gagal cetak: ' + e.message); }
 }
 
