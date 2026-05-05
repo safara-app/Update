@@ -2391,7 +2391,7 @@
 <div id="paymentModal" class="modal"><div class="modal-content"><h3> Input Pembayaran</h3><div class="input-group"><label> Tanggal</label><input type="date" id="paymentTanggal"></div><div class="input-group"><label> Nama Jamaah *</label><select id="paymentJamaahSelect"><option value="">-- Pilih Jamaah --</option></select></div><div class="input-group"><label> Nominal (Rp)</label><input type="number" id="paymentNominal" placeholder="Contoh: 5000000"></div><div class="input-group"><label> Metode</label><select id="paymentMetode"><option value="Transfer">Transfer</option><option value="Cash">Cash</option><option value="QRIS">QRIS</option></select></div><div class="input-group"><label> Keterangan</label><input type="text" id="paymentKeterangan" placeholder="DP / Cicilan / Pelunasan"></div><div class="row"><button class="btn btn-danger" onclick="closePaymentModal()" style="flex:1">Batal</button><button class="btn btn-primary" onclick="simpanPembayaran()" style="flex:1">Simpan</button></div></div></div>
 <div id="invoiceConfirmModal" class="modal"><div class="modal-content"><h3> Konfirmasi Kirim Invoice</h3><p>Akan dikirim ke nomor WhatsApp:</p><p id="invoiceWANumber" style="font-weight:bold; font-size:18px; background:#f0f0f0; padding:10px; border-radius:10px;"></p><p id="invoiceWAName" style="color:#666;"></p><div class="row" style="margin-top:20px;"><button class="btn btn-danger" onclick="closeInvoiceConfirmModal()" style="flex:1">Batal</button><button class="btn btn-wa" onclick="sendInvoiceWA()" style="flex:1">Kirim via WA</button><button class="btn btn-orange" onclick="copyInvoiceText()" style="flex:1">Salin Teks</button></div></div></div>
 <div id="editHargaModal" class="modal"><div class="modal-content"><h3> Edit Harga Paket</h3><p id="editHargaNama" style="font-weight:bold;"></p><div class="input-group"><label> Total Harga Paket (Rp)</label><input type="number" id="editHargaValue" placeholder="Contoh: 35000000"></div><div class="row"><button class="btn btn-danger" onclick="closeEditHargaModal()" style="flex:1">Batal</button><button class="btn btn-primary" onclick="saveEditHarga()" style="flex:1">Simpan</button></div></div></div>
-<div id="riwayatModal" class="modal"><div class="modal-content"><h3> Riwayat Pembayaran</h3><p id="riwayatNama" style="font-weight:bold;"></p><div id="riwayatListContainer" style="max-height:400px; overflow-y:auto;"></div><div class="row" style="margin-top:15px;"><button class="btn btn-danger" onclick="closeRiwayatModal()" style="flex:1">Tutup</button><button class="btn btn-purple" onclick="printRiwayatPDF()" style="flex:1"><i class="fas fa-file-pdf"></i> Cetak PDF</button></div></div></div>
+<div id="riwayatModal" class="modal"><div class="modal-content"><h3> Riwayat Pembayaran</h3><p id="riwayatNama" style="font-weight:bold;"></p><div id="riwayatListContainer" style="max-height:400px; overflow-y:auto;"></div><div class="row" style="margin-top:15px;"><button class="btn btn-danger" onclick="closeRiwayatModal()" style="flex:1">Tutup</button></div></div></div>
 <div id="masterFieldModal" class="modal"><div class="modal-content"><h3>Kelola Field Dinamis</h3><div class="dynamic-field"><label>Nama Field</label><input type="text" id="masterNewFieldName" placeholder="contoh: alamat, no_hp"></div><div class="dynamic-field"><label>Label Field</label><input type="text" id="masterNewFieldLabel" placeholder="Contoh: Alamat, No HP"></div><div class="dynamic-field"><label>Tipe</label><select id="masterNewFieldType"><option value="text">Text</option><option value="date">Tanggal</option><option value="tel">Telepon</option><option value="textarea">Text Area</option></select></div><button class="btn btn-primary" onclick="addMasterDynamicField()"> TAMBAH FIELD</button><div id="masterFieldsList" style="margin-top:15px;"></div><button class="btn btn-danger mt-2" onclick="closeMasterFieldModal()">TUTUP</button></div></div>
 <div id="masterItemModal" class="modal"><div class="modal-content"><h3>Kelola Daftar Item</h3><div class="row"><div class="input-group"><label>Nama Item</label><input type="text" id="masterNewItem" placeholder="Contoh: Kain Ihram"></div><button class="btn-small" onclick="addMasterItem()" style="background:var(--primary); color:white; padding:0 15px;">+ Tambah</button></div><div id="masterItemList" style="margin-top:15px;"></div><button class="btn btn-danger mt-2" onclick="closeMasterItemModal()">TUTUP</button></div></div>
 <div id="copyModal" class="modal"><div class="modal-content"><h3> Copy dari database</h3><div class="dynamic-field"><label>Pilih Kategori</label><select id="copyCategory"><option value="Haji"> Haji</option><option value="Toko"> Toko</option><option value="Sekolah"> Sekolah</option><option value="Umroh"> Umroh</option><option value="Donasi"> Donasi</option></select></div><p style="font-size:12px; color:#666; margin:10px 0;"> Data yang sudah ada tidak akan dihapus. Data baru akan ditambahkan.</p><div class="row"><button class="btn btn-danger" onclick="closeCopyModal()" style="flex:1">BATAL</button><button class="btn btn-primary" onclick="executeCopyFromJamaah()" style="flex:1">COPY SEKARANG</button></div></div></div>
@@ -7179,29 +7179,32 @@ async function cetakDariBlob(generateFn) {
         const dataUri = await generateFn('datauri');
         if (!dataUri) return;
 
-        // Konversi ke blob URL
-        const base64 = dataUri.split(',')[1];
-        const binary = atob(base64);
-        const array = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i);
-        const blob = new Blob([array], { type: 'application/pdf' });
-        const blobUrl = URL.createObjectURL(blob);
-
-        // Buka window baru dengan blob URL - browser akan tampilkan PDF viewer native
-        const win = window.open(blobUrl, '_blank');
-        if (!win) {
-            showToast('Izinkan popup untuk cetak!');
-            URL.revokeObjectURL(blobUrl);
-            return;
-        }
-        // Trigger print setelah PDF load
-        win.onload = () => {
-            setTimeout(() => {
-                try { win.print(); } catch(e) {}
-            }, 800);
+        // Buka window baru dengan HTML yang embed PDF + auto print
+        const win = window.open('', '_blank');
+        if (!win) { showToast('Izinkan popup untuk cetak!'); return; }
+        win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+    <title>Cetak</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html, body { width:100%; height:100%; }
+        embed { width:100%; height:100%; display:block; }
+        @media print { embed { width:100%; height:100%; } }
+    </style>
+</head>
+<body>
+    <embed src="${dataUri}" type="application/pdf" width="100%" height="100%">
+    <script>
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 600);
         };
-        // Cleanup blob setelah beberapa detik
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+    <\/script>
+</body>
+</html>`);
+        win.document.close();
     } catch(e) {
         showToast('Gagal cetak: ' + e.message);
         console.error(e);
@@ -7209,19 +7212,26 @@ async function cetakDariBlob(generateFn) {
 }
 
 function cetakDariPreview() {
-    // Gunakan blob URL yang sudah ada
     const blobUrl = window._previewBlobUrl;
-    if (!blobUrl) {
-        showToast('Tidak ada preview untuk dicetak!');
-        return;
-    }
-    const win = window.open(blobUrl, '_blank');
+    if (!blobUrl) { showToast('Tidak ada preview untuk dicetak!'); return; }
+    // Buka window dengan auto-print
+    const win = window.open('', '_blank');
     if (!win) { showToast('Izinkan popup untuk cetak!'); return; }
-    win.onload = () => {
-        setTimeout(() => {
-            try { win.print(); } catch(e) {}
-        }, 800);
-    };
+    // Ambil dataUri dari iframe yang sudah ada
+    const iframe = document.getElementById('previewPDFIframe');
+    const src = iframe ? iframe.src : blobUrl;
+    win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+    <title>Cetak</title>
+    <style>* { margin:0; padding:0; } html,body { width:100%; height:100%; } embed { width:100%; height:100%; display:block; }</style>
+</head>
+<body>
+    <embed src="${src}" type="application/pdf" width="100%" height="100%">
+    <script>window.onload = function() { setTimeout(function() { window.print(); }, 600); };<\/script>
+</body>
+</html>`);
+    win.document.close();
 }
 </script>
 
