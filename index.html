@@ -7038,12 +7038,117 @@ function putuskanGoogle() {
 
 document.addEventListener('DOMContentLoaded', initPremium);
 
-// ===== EXPORT DROPDOWN HANDLER =====
+
+
+// ===== GENERATE PDF BLOB FUNCTIONS =====
+async function generateKasPDFBlob() {
+    if(!dataKas || dataKas.length===0) { showToast('Tidak ada data!'); return null; }
+    try {
+        const {jsPDF} = window.jspdf;
+        const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+        await applyPDFConfig(doc, { landscape: true });
+        const judul = document.getElementById('kegiatan')?.value.trim() || 'Laporan Kas';
+        let masuk=0, keluar=0;
+        dataKas.forEach(i=>{ if(i.tipe==='masuk') masuk+=i.nom; else keluar+=i.nom; });
+        doc.setFontSize(16); doc.setTextColor(26,93,74);
+        doc.text(judul + ' - LAPORAN KAS', 148.5, 65, { align: 'center' });
+        const tableData = dataKas.map(i=>[i.tgl, i.kegiatan||'-', i.ket.length>30?i.ket.substring(0,27)+'...':i.ket, i.tipe==='masuk'?'MASUK':'KELUAR', 'Rp '+formatRupiah(i.nom)]);
+        doc.autoTable({startY:80, head:[['Tgl','Kegiatan','Keterangan','Tipe','Nominal']], body:tableData, theme:'striped', headStyles:{fillColor:[26,93,74]}, styles:{fontSize:8, lineWidth:0.1}});
+        let finalY = doc.lastAutoTable.finalY + 10;
+        doc.setTextColor(0,0,0); doc.setFont('helvetica','normal');
+        doc.text('Total Pemasukan: Rp '+formatRupiah(masuk), 14, finalY);
+        doc.text('Total Pengeluaran: Rp '+formatRupiah(keluar), 14, finalY+7);
+        doc.setTextColor(26,93,74); doc.setFont('helvetica','bold');
+        doc.text('SALDO AKHIR: Rp '+formatRupiah(masuk-keluar), 14, finalY+14);
+        return URL.createObjectURL(doc.output('blob'));
+    } catch(e) { showToast('Gagal generate: '+e.message); return null; }
+}
+
+async function generatePaymentPDFBlob() {
+    if(!paymentTransaksiList || paymentTransaksiList.length===0) { showToast('Tidak ada data transaksi!'); return null; }
+    try {
+        const {jsPDF} = window.jspdf;
+        const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+        await applyPDFConfig(doc, { landscape: true });
+        let totalMasuk = paymentTransaksiList.reduce((s,t)=>s+t.nominal,0);
+        doc.setFontSize(16); doc.setTextColor(26,93,74);
+        doc.text('LAPORAN PEMBAYARAN JAMAAH', 148.5, 65, { align: 'center' });
+        const tableData = paymentTransaksiList.map((t,i)=>[i+1, t.tanggal, t.nama_jamaah, t.keterangan, t.metode, formatRupiah(t.nominal)]);
+        doc.autoTable({startY:80, head:[['No','Tanggal','Jamaah','Keterangan','Metode','Nominal']], body:tableData, theme:'striped', headStyles:{fillColor:[26,93,74]}, styles:{fontSize:8, lineWidth:0.1}});
+        let finalY = doc.lastAutoTable.finalY + 10;
+        doc.setTextColor(0,0,0);
+        doc.text('TOTAL PEMASUKAN: '+formatRupiah(totalMasuk), 14, finalY);
+        return URL.createObjectURL(doc.output('blob'));
+    } catch(e) { showToast('Gagal generate: '+e.message); return null; }
+}
+
+async function generateMasterPDFBlob() {
+    if(!masterDataList || masterDataList.length===0) { showToast('Tidak ada data!'); return null; }
+    try {
+        const {jsPDF} = window.jspdf;
+        const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+        await applyPDFConfig(doc, { landscape: true });
+        const judul = getMasterJudul ? getMasterJudul() : 'Multi Event';
+        doc.setFontSize(16); doc.setTextColor(26,93,74);
+        doc.text(judul, 148.5, 65, { align: 'center' });
+        const headers = ['No', ...(masterDynamicFields||[]).map(f=>f.label)];
+        const tableData = (masterDataList||[]).map((row,i)=>[i+1, ...(masterDynamicFields||[]).map(f=>row[f.name]||'-')]);
+        doc.autoTable({startY:80, head:[headers], body:tableData, theme:'striped', headStyles:{fillColor:[26,93,74]}, styles:{fontSize:8, lineWidth:0.1}});
+        return URL.createObjectURL(doc.output('blob'));
+    } catch(e) { showToast('Gagal generate: '+e.message); return null; }
+}
+
+async function showPreviewPDF(title, generateFn, downloadFn) {
+    showToast('Menyiapkan preview...');
+    try {
+        const blobUrl = await generateFn();
+        if (!blobUrl) return;
+        if (window._previewBlobUrl) URL.revokeObjectURL(window._previewBlobUrl);
+        window._previewBlobUrl = blobUrl;
+        document.getElementById('previewPDFTitle').textContent = '👁️ Preview - ' + title;
+        document.getElementById('previewPDFIframe').src = blobUrl;
+        document.getElementById('previewDownloadBtn').onclick = downloadFn;
+        document.getElementById('previewPDFModal').classList.add('show');
+    } catch(e) { showToast('Gagal preview: ' + e.message); }
+}
+
+function closePreviewPDF() {
+    const modal = document.getElementById('previewPDFModal');
+    const iframe = document.getElementById('previewPDFIframe');
+    if(modal) modal.classList.remove('show');
+    if(iframe) iframe.src = 'about:blank';
+    if (window._previewBlobUrl) {
+        URL.revokeObjectURL(window._previewBlobUrl);
+        window._previewBlobUrl = null;
+    }
+}
+
+function cetakDariBlob(generateFn) {
+    showToast('Menyiapkan cetak...');
+    try {
+        generateFn().then(blobUrl => {
+            if (!blobUrl) return;
+            const iframe = document.createElement('iframe');
+            iframe.style.cssText = 'display:none;position:fixed;top:0;left:0;width:0;height:0;';
+            iframe.src = blobUrl;
+            document.body.appendChild(iframe);
+            iframe.onload = () => {
+                try {
+                    iframe.contentWindow.print();
+                } catch(e) {}
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                    URL.revokeObjectURL(blobUrl);
+                }, 2000);
+            };
+        });
+    } catch(e) { showToast('Gagal cetak: ' + e.message); }
+}
+
 function toggleExportDropdown(id) {
     const menu = document.getElementById(id);
     if (!menu) return;
     const isShow = menu.classList.contains('show');
-    // Tutup semua dropdown dulu
     document.querySelectorAll('.export-dropdown-menu').forEach(m => m.classList.remove('show'));
     if (!isShow) menu.classList.add('show');
 }
@@ -7054,172 +7159,6 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// ===== PREVIEW PDF FUNCTIONS =====
-function closePreviewPDF() {
-    const modal = document.getElementById('previewPDFModal');
-    const container = document.getElementById('previewPDFIframe');
-    modal.classList.remove('show');
-    setTimeout(() => {
-        container.innerHTML = '';
-        window._previewDataUri = null;
-    }, 300);
-}
-
-async function showPreviewPDF(title, generateFn, downloadFn) {
-    showToast('Menyiapkan preview...');
-    try {
-        const dataUri = await generateFn('datauri');
-        if (!dataUri) return;
-
-        // Simpan untuk cetak & download
-        window._previewDataUri = dataUri;
-        window._previewDownloadFn = downloadFn;
-
-        // Set judul & tombol download
-        document.getElementById('previewPDFTitle').textContent = '\uD83D\uDC41\uFE0F Preview - ' + title;
-        document.getElementById('previewDownloadBtn').onclick = downloadFn;
-
-        // Tampilkan modal dulu
-        document.getElementById('previewPDFModal').classList.add('show');
-
-        // Render PDF di canvas pakai PDF.js
-        renderPDFPreview(dataUri);
-
-    } catch(e) {
-        showToast('Gagal preview: ' + e.message);
-        console.error('Preview error:', e);
-    }
-}
-
-async function renderPDFPreview(dataUri) {
-    const container = document.getElementById('previewPDFIframe');
-    container.innerHTML = '<div style="text-align:center;padding:30px;color:#666;">Memuat PDF...</div>';
-
-    try {
-        // Konversi dataUri ke Uint8Array
-        const base64 = dataUri.split(',')[1];
-        const binary = atob(base64);
-        const array = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i);
-
-        // Load PDF.js dari CDN jika belum ada
-        if (!window.pdfjsLib) {
-            await new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-                script.onload = () => {
-                    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-                    resolve();
-                };
-                script.onerror = reject;
-                document.head.appendChild(script);
-            });
-        }
-
-        const pdf = await window.pdfjsLib.getDocument({ data: array }).promise;
-        const totalPages = pdf.numPages;
-
-        // Render semua halaman
-        let html = `<div style="background:#888;padding:10px;min-height:100%;overflow-y:auto;">`;
-        container.innerHTML = html + '<div style="text-align:center;padding:20px;color:white;">Merender halaman...</div></div>';
-
-        const canvasContainer = document.createElement('div');
-        canvasContainer.style.cssText = 'background:#888;padding:10px;min-height:100%;overflow-y:auto;';
-
-        for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-            const page = await pdf.getPage(pageNum);
-            const viewport = page.getViewport({ scale: 1.5 });
-
-            const canvas = document.createElement('canvas');
-            canvas.style.cssText = 'display:block;margin:0 auto 10px auto;box-shadow:0 2px 8px rgba(0,0,0,0.3);max-width:100%;';
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-
-            canvasContainer.appendChild(canvas);
-
-            const ctx = canvas.getContext('2d');
-            await page.render({ canvasContext: ctx, viewport }).promise;
-        }
-
-        container.innerHTML = '';
-        container.appendChild(canvasContainer);
-        container.style.cssText = 'flex:1;width:100%;border:none;overflow-y:auto;background:#888;';
-
-    } catch(e) {
-        container.innerHTML = `<div style="text-align:center;padding:30px;color:#e74c3c;">
-            <p style="font-size:14px;">Gagal render PDF</p>
-            <p style="font-size:12px;margin-top:8px;color:#666;">${e.message}</p>
-        </div>`;
-        console.error('PDF render error:', e);
-    }
-}
-
-
-async function cetakDariBlob(generateFn) {
-    showToast('Menyiapkan cetak...');
-    try {
-        const dataUri = await generateFn('datauri');
-        if (!dataUri) return;
-        printFromDataUri(dataUri);
-    } catch(e) {
-        showToast('Gagal cetak: ' + e.message);
-        console.error(e);
-    }
-}
-
-function cetakDariPreview() {
-    const dataUri = window._previewDataUri;
-    if (!dataUri) { showToast('Tidak ada preview untuk dicetak!'); return; }
-    printFromDataUri(dataUri);
-}
-
-// Fungsi cetak universal dari dataUri - auto print tanpa klik
-function printFromDataUri(dataUri) {
-    const win = window.open('', '_blank');
-    if (!win) { showToast('Izinkan popup untuk cetak!'); return; }
-    win.document.write(`<!DOCTYPE html>
-<html>
-<head>
-    <title>Cetak</title>
-    <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        html, body { width:100%; height:100vh; overflow:hidden; }
-        canvas { display:block; width:100%; height:auto; page-break-after:always; }
-        @media print { canvas { page-break-inside:avoid; } }
-    </style>
-</head>
-<body>
-    <div id="pdfContainer" style="text-align:center;padding:20px;font-family:Arial;">Memuat PDF untuk cetak...</div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>
-    <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        const dataUri = '${dataUri.replace(/'/g, "\\'")}';
-        const base64 = dataUri.split(',')[1];
-        const binary = atob(base64);
-        const array = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i);
-        
-        pdfjsLib.getDocument({ data: array }).promise.then(async pdf => {
-            const container = document.getElementById('pdfContainer');
-            container.innerHTML = '';
-            for (let p = 1; p <= pdf.numPages; p++) {
-                const page = await pdf.getPage(p);
-                const viewport = page.getViewport({ scale: 2 });
-                const canvas = document.createElement('canvas');
-                canvas.width = viewport.width;
-                canvas.height = viewport.height;
-                container.appendChild(canvas);
-                await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-            }
-            setTimeout(() => window.print(), 800);
-        }).catch(e => {
-            document.getElementById('pdfContainer').innerHTML = 'Gagal memuat PDF: ' + e.message;
-        });
-    <\/script>
-</body>
-</html>`);
-    win.document.close();
-}
 </script>
 
 
