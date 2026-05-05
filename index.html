@@ -4753,18 +4753,20 @@ async function cetakInvoicePDF(jamaahId) {
         if (!result) return;
         const { doc, jamaah } = result;
 
-        // Simpan dataUri untuk cetak & download
-        const dataUri = doc.output('datauristring');
-        window._previewDataUri = dataUri;
+        // Konversi ke blob URL untuk iframe yang reliable
+        const pdfBlob = doc.output('blob');
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        if (window._previewBlobUrl) URL.revokeObjectURL(window._previewBlobUrl);
+        window._previewBlobUrl = blobUrl;
 
-        // Set judul & tombol download
-        document.getElementById('previewPDFTitle').textContent = '\uD83D\uDC41\uFE0F Invoice - ' + jamaah.nama_lengkap;
-
-        // Tampilkan modal dulu
+        // Tampilkan modal DULU baru set src
+        document.getElementById('previewPDFTitle').textContent = '👁️ Invoice - ' + jamaah.nama_lengkap;
         document.getElementById('previewPDFModal').classList.add('show');
-
-        // Render PDF pakai PDF.js canvas
-        renderPDFPreview(dataUri);
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                document.getElementById('previewPDFIframe').src = blobUrl;
+            });
+        });
 
         // Tombol Download → download PDF jamaah ini
         document.getElementById('previewDownloadBtn').onclick = async () => {
@@ -7038,153 +7040,12 @@ function putuskanGoogle() {
 
 document.addEventListener('DOMContentLoaded', initPremium);
 
-
-
-// ===== GENERATE PDF BLOB FUNCTIONS =====
-async function generateKasPDFBlob() {
-    if(!dataKas || dataKas.length===0) { showToast('Tidak ada data!'); return null; }
-    try {
-        const {jsPDF} = window.jspdf;
-        const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
-        await applyPDFConfig(doc, { landscape: true });
-        const judul = document.getElementById('kegiatan')?.value.trim() || 'Laporan Kas';
-        let masuk=0, keluar=0;
-        dataKas.forEach(i=>{ if(i.tipe==='masuk') masuk+=i.nom; else keluar+=i.nom; });
-        doc.setFontSize(16); doc.setTextColor(26,93,74);
-        doc.text(judul + ' - LAPORAN KAS', 148.5, 65, { align: 'center' });
-        const tableData = dataKas.map(i=>[i.tgl, i.kegiatan||'-', i.ket.length>30?i.ket.substring(0,27)+'...':i.ket, i.tipe==='masuk'?'MASUK':'KELUAR', 'Rp '+formatRupiah(i.nom)]);
-        doc.autoTable({startY:80, head:[['Tgl','Kegiatan','Keterangan','Tipe','Nominal']], body:tableData, theme:'striped', headStyles:{fillColor:[26,93,74]}, styles:{fontSize:8, lineWidth:0.1}});
-        let finalY = doc.lastAutoTable.finalY + 10;
-        doc.setTextColor(0,0,0); doc.setFont('helvetica','normal');
-        doc.text('Total Pemasukan: Rp '+formatRupiah(masuk), 14, finalY);
-        doc.text('Total Pengeluaran: Rp '+formatRupiah(keluar), 14, finalY+7);
-        doc.setTextColor(26,93,74); doc.setFont('helvetica','bold');
-        doc.text('SALDO AKHIR: Rp '+formatRupiah(masuk-keluar), 14, finalY+14);
-        return doc;
-    } catch(e) { showToast('Gagal generate: '+e.message); return null; }
-}
-
-async function generatePaymentPDFBlob() {
-    if(!paymentTransaksiList || paymentTransaksiList.length===0) { showToast('Tidak ada data transaksi!'); return null; }
-    try {
-        const {jsPDF} = window.jspdf;
-        const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
-        await applyPDFConfig(doc, { landscape: true });
-        let totalMasuk = paymentTransaksiList.reduce((s,t)=>s+t.nominal,0);
-        doc.setFontSize(16); doc.setTextColor(26,93,74);
-        doc.text('LAPORAN PEMBAYARAN JAMAAH', 148.5, 65, { align: 'center' });
-        const tableData = paymentTransaksiList.map((t,i)=>[i+1, t.tanggal, t.nama_jamaah, t.keterangan, t.metode, formatRupiah(t.nominal)]);
-        doc.autoTable({startY:80, head:[['No','Tanggal','Jamaah','Keterangan','Metode','Nominal']], body:tableData, theme:'striped', headStyles:{fillColor:[26,93,74]}, styles:{fontSize:8, lineWidth:0.1}});
-        let finalY = doc.lastAutoTable.finalY + 10;
-        doc.setTextColor(0,0,0);
-        doc.text('TOTAL PEMASUKAN: '+formatRupiah(totalMasuk), 14, finalY);
-        return doc;
-    } catch(e) { showToast('Gagal generate: '+e.message); return null; }
-}
-
-async function generateMasterPDFBlob() {
-    if(!masterDataList || masterDataList.length===0) { showToast('Tidak ada data!'); return null; }
-    try {
-        const {jsPDF} = window.jspdf;
-        const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
-        await applyPDFConfig(doc, { landscape: true });
-        const judul = getMasterJudul ? getMasterJudul() : 'Multi Event';
-        doc.setFontSize(16); doc.setTextColor(26,93,74);
-        doc.text(judul, 148.5, 65, { align: 'center' });
-        const headers = ['No', ...(masterDynamicFields||[]).map(f=>f.label)];
-        const tableData = (masterDataList||[]).map((row,i)=>[i+1, ...(masterDynamicFields||[]).map(f=>row[f.name]||'-')]);
-        doc.autoTable({startY:80, head:[headers], body:tableData, theme:'striped', headStyles:{fillColor:[26,93,74]}, styles:{fontSize:8, lineWidth:0.1}});
-        return doc;
-    } catch(e) { showToast('Gagal generate: '+e.message); return null; }
-}
-
-// Preview - buka di window baru dengan embed data URI
-async function showPreviewPDF(title, generateFn, downloadFn) {
-    showToast('Menyiapkan preview...');
-    try {
-        const doc = await generateFn();
-        if (!doc) return;
-        // Gunakan data URI string - lebih kompatibel di semua browser/PWA
-        const dataUri = doc.output('datauristring');
-        const win = window.open('', '_blank');
-        if (!win) { showToast('Popup diblokir! Izinkan popup di browser.'); return; }
-        win.document.write(`<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Preview - ${title}</title>
-    <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: Arial, sans-serif; background: #f0f0f0; }
-        .toolbar { background:#0D5C4A; color:white; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:10; }
-        .toolbar h3 { font-size:15px; }
-        .toolbar-btns { display:flex; gap:8px; }
-        .btn-toolbar { padding:8px 16px; border:none; border-radius:8px; cursor:pointer; font-size:13px; font-weight:bold; }
-        .btn-download { background:#D4AF37; color:#1a1a1a; }
-        .btn-close { background:rgba(255,255,255,0.2); color:white; }
-        .pdf-container { padding:16px; display:flex; justify-content:center; }
-        embed { width:100%; max-width:900px; height:85vh; border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,0.2); }
-    </style>
-</head>
-<body>
-    <div class="toolbar">
-        <h3>👁️ Preview - ${title}</h3>
-        <div class="toolbar-btns">
-            <button class="btn-toolbar btn-download" onclick="document.querySelector('embed').focus(); window.print()">🖨️ Cetak</button>
-            <button class="btn-toolbar btn-close" onclick="window.close()">✕ Tutup</button>
-        </div>
-    </div>
-    <div class="pdf-container">
-        <embed src="${dataUri}" type="application/pdf" />
-    </div>
-</body>
-</html>`);
-        win.document.close();
-    } catch(e) { showToast('Gagal preview: ' + e.message); }
-}
-
-function closePreviewPDF() {
-    const modal = document.getElementById('previewPDFModal');
-    if(modal) modal.classList.remove('show');
-}
-
-// Cetak langsung dari doc jsPDF
-async function cetakDariBlob(generateFn) {
-    showToast('Menyiapkan cetak...');
-    try {
-        const doc = await generateFn();
-        if (!doc) return;
-        const dataUri = doc.output('datauristring');
-        const win = window.open('', '_blank');
-        if (!win) { showToast('Popup diblokir! Izinkan popup di browser.'); return; }
-        win.document.write(`<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Cetak</title>
-    <style>
-        body { margin:0; padding:0; }
-        embed { width:100vw; height:100vh; display:block; }
-    </style>
-</head>
-<body>
-    <embed src="${dataUri}" type="application/pdf" />
-    <script>
-        window.onload = function() {
-            setTimeout(function() { window.print(); }, 500);
-        };
-    <\/script>
-</body>
-</html>`);
-        win.document.close();
-    } catch(e) { showToast('Gagal cetak: ' + e.message); }
-}
-
+// ===== EXPORT DROPDOWN HANDLER =====
 function toggleExportDropdown(id) {
     const menu = document.getElementById(id);
     if (!menu) return;
     const isShow = menu.classList.contains('show');
+    // Tutup semua dropdown dulu
     document.querySelectorAll('.export-dropdown-menu').forEach(m => m.classList.remove('show'));
     if (!isShow) menu.classList.add('show');
 }
@@ -7195,6 +7056,183 @@ document.addEventListener('click', function(e) {
     }
 });
 
+// ===== PREVIEW PDF FUNCTIONS =====
+function closePreviewPDF() {
+    const modal = document.getElementById('previewPDFModal');
+    const iframe = document.getElementById('previewPDFIframe');
+    modal.classList.remove('show');
+    // Reset iframe setelah modal tutup agar tidak ada flash
+    setTimeout(() => {
+        iframe.src = 'about:blank';
+        if (window._previewBlobUrl) {
+            URL.revokeObjectURL(window._previewBlobUrl);
+            window._previewBlobUrl = null;
+        }
+    }, 300);
+}
+
+async function showPreviewPDF(title, generateFn, downloadFn) {
+    showToast('Menyiapkan preview...');
+    try {
+        // Generate doc dulu
+        const dataUri = await generateFn('datauri');
+        if (!dataUri) return;
+
+        // Konversi dataUri ke blob untuk iframe yang lebih reliable
+        const base64 = dataUri.split(',')[1];
+        const binary = atob(base64);
+        const array = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i);
+        const blob = new Blob([array], { type: 'application/pdf' });
+        const blobUrl = URL.createObjectURL(blob);
+
+        // Simpan blob url untuk cleanup
+        if (window._previewBlobUrl) URL.revokeObjectURL(window._previewBlobUrl);
+        window._previewBlobUrl = blobUrl;
+
+        // Set judul
+        document.getElementById('previewPDFTitle').textContent = '👁️ Preview - ' + title;
+
+        // Set iframe dengan loading indicator
+        const iframe = document.getElementById('previewPDFIframe');
+        iframe.style.background = '#f5f5f5';
+        
+        // Tampilkan modal DULU baru set src - ini kunci agar iframe bisa render
+        document.getElementById('previewPDFModal').classList.add('show');
+        
+        // Set src setelah modal visible agar browser bisa render
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                iframe.src = blobUrl;
+            });
+        });
+
+        // Set tombol download
+        document.getElementById('previewDownloadBtn').onclick = downloadFn;
+
+    } catch(e) {
+        showToast('Gagal preview: ' + e.message);
+        console.error('Preview error:', e);
+    }
+}
+
+// Generate PDF blob tanpa download - KAS
+async function generateKasPDFBlob(outputType) {
+    if(dataKas.length===0) { showToast('Tidak ada data!'); return null; }
+    const {jsPDF} = window.jspdf;
+    const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+    await applyPDFConfig(doc, { landscape: true });
+    const judul = document.getElementById('kegiatan').value.trim() || 'Laporan Kas';
+    let masuk=0, keluar=0;
+    dataKas.forEach(i=>{ if(i.tipe==='masuk') masuk+=i.nom; else keluar+=i.nom; });
+    doc.setFontSize(16); doc.setTextColor(26,93,74);
+    doc.text(judul + ' - LAPORAN KAS', 148.5, 65, { align: 'center' });
+    const tableData = dataKas.map(i=>[i.tgl, i.kegiatan||'-', i.ket.length>30?i.ket.substring(0,27)+'...':i.ket, i.tipe==='masuk'?'MASUK':'KELUAR', 'Rp '+i.nom.toLocaleString('id-ID')]);
+    doc.autoTable({startY:80, head:[['Tgl','Kegiatan','Keterangan','Tipe','Nominal']], body:tableData, theme:'striped', headStyles:{fillColor:[26,93,74]}, styles:{fontSize:8, lineWidth:0.1}});
+    let finalY = doc.lastAutoTable.finalY + 10;
+    doc.text('Total Pemasukan: Rp '+masuk.toLocaleString('id-ID'), 14, finalY);
+    doc.text('Total Pengeluaran: Rp '+keluar.toLocaleString('id-ID'), 14, finalY+7);
+    doc.setTextColor(26,93,74); doc.setFont('helvetica','bold');
+    doc.text('SALDO AKHIR: Rp '+(masuk-keluar).toLocaleString('id-ID'), 14, finalY+14);
+    // output: 'datauri' untuk preview/cetak, default untuk blob
+    if (outputType === 'datauri') return doc.output('datauristring');
+    return URL.createObjectURL(doc.output('blob'));
+}
+
+// Generate PDF blob tanpa download - PEMBAYARAN
+async function generatePaymentPDFBlob(outputType) {
+    if(paymentTransaksiList.length===0) { showToast('Tidak ada data transaksi!'); return null; }
+    const {jsPDF} = window.jspdf;
+    const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+    await applyPDFConfig(doc, { landscape: true });
+    let totalMasuk = paymentTransaksiList.reduce((s,t)=>s+t.nominal,0);
+    doc.setFontSize(16); doc.setTextColor(26,93,74);
+    doc.text('LAPORAN PEMBAYARAN JAMAAH', 148.5, 65, { align: 'center' });
+    const tableData = paymentTransaksiList.map((t,i)=>[i+1, t.tanggal, t.nama_jamaah, t.keterangan, t.metode, formatRupiah(t.nominal)]);
+    doc.autoTable({startY:80, head:[['No','Tanggal','Jamaah','Keterangan','Metode','Nominal']], body:tableData, theme:'striped', headStyles:{fillColor:[26,93,74]}, styles:{fontSize:8, lineWidth:0.1}});
+    let finalY = doc.lastAutoTable.finalY + 10;
+    doc.text('TOTAL PEMASUKAN: '+formatRupiah(totalMasuk), 14, finalY);
+    if (outputType === 'datauri') return doc.output('datauristring');
+    return URL.createObjectURL(doc.output('blob'));
+}
+
+// Generate PDF blob tanpa download - MULTI EVENT
+async function generateMasterPDFBlob(outputType) {
+    if(masterDataList.length===0) { showToast('Tidak ada data!'); return null; }
+    const {jsPDF} = window.jspdf;
+    const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+    await applyPDFConfig(doc, { landscape: true });
+    const judul = getMasterJudul();
+    doc.setFontSize(16); doc.setTextColor(26,93,74);
+    doc.text(judul, 148.5, 65, { align: 'center' });
+    const headers = ['No', ...masterDynamicFields.map(f=>f.label)];
+    const tableData = masterDataList.map((row,i)=>[i+1, ...masterDynamicFields.map(f=>row[f.name]||'-')]);
+    doc.autoTable({startY:80, head:[headers], body:tableData, theme:'striped', headStyles:{fillColor:[26,93,74]}, styles:{fontSize:8, lineWidth:0.1}});
+    if (outputType === 'datauri') return doc.output('datauristring');
+    return URL.createObjectURL(doc.output('blob'));
+}
+
+// Fungsi cetak dari preview blob
+async function cetakDariBlob(generateFn) {
+    showToast('Menyiapkan cetak...');
+    try {
+        const dataUri = await generateFn('datauri');
+        if (!dataUri) return;
+
+        // Buka window baru dengan HTML yang embed PDF + auto print
+        const win = window.open('', '_blank');
+        if (!win) { showToast('Izinkan popup untuk cetak!'); return; }
+        win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+    <title>Cetak</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html, body { width:100%; height:100%; }
+        embed { width:100%; height:100%; display:block; }
+        @media print { embed { width:100%; height:100%; } }
+    </style>
+</head>
+<body>
+    <embed src="${dataUri}" type="application/pdf" width="100%" height="100%">
+    <script>
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 600);
+        };
+    <\/script>
+</body>
+</html>`);
+        win.document.close();
+    } catch(e) {
+        showToast('Gagal cetak: ' + e.message);
+        console.error(e);
+    }
+}
+
+function cetakDariPreview() {
+    const blobUrl = window._previewBlobUrl;
+    if (!blobUrl) { showToast('Tidak ada preview untuk dicetak!'); return; }
+    // Buka window dengan auto-print
+    const win = window.open('', '_blank');
+    if (!win) { showToast('Izinkan popup untuk cetak!'); return; }
+    // Ambil dataUri dari iframe yang sudah ada
+    const iframe = document.getElementById('previewPDFIframe');
+    const src = iframe ? iframe.src : blobUrl;
+    win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+    <title>Cetak</title>
+    <style>* { margin:0; padding:0; } html,body { width:100%; height:100%; } embed { width:100%; height:100%; display:block; }</style>
+</head>
+<body>
+    <embed src="${src}" type="application/pdf" width="100%" height="100%">
+    <script>window.onload = function() { setTimeout(function() { window.print(); }, 600); };<\/script>
+</body>
+</html>`);
+    win.document.close();
+}
 </script>
 
 
@@ -7205,7 +7243,7 @@ document.addEventListener('click', function(e) {
             <h3 id="previewPDFTitle">👁️ Preview PDF</h3>
             <button class="preview-modal-close" onclick="closePreviewPDF()">✕</button>
         </div>
-        <div id="previewPDFIframe" style="flex:1;width:100%;border:none;overflow-y:auto;background:#888;"></div>
+        <iframe id="previewPDFIframe" class="preview-modal-iframe" src="about:blank"></iframe>
         <div class="preview-modal-footer">
             <button onclick="closePreviewPDF()" style="padding:8px 20px; background:#ccc; border:none; border-radius:8px; cursor:pointer;">Tutup</button>
             <button id="previewCetakBtn" onclick="cetakDariPreview()" style="padding:8px 20px; background:#3B82F6; color:white; border:none; border-radius:8px; cursor:pointer;">🖨️ Cetak</button>
