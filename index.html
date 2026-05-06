@@ -1775,65 +1775,6 @@
 .export-menu-item .export-label { color: #1e293b; }
 .export-menu-item .export-desc { font-size: 11px; color: #94a3b8; margin-top: 1px; }
 
-/* ===== PREVIEW PDF MODAL ===== */
-.preview-modal-overlay {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 99999;
-    justify-content: center;
-    align-items: center;
-    padding: 16px;
-}
-.preview-modal-overlay.show { display: flex; }
-.preview-modal-box {
-    background: white;
-    border-radius: 20px;
-    width: 100%;
-    max-width: 700px;
-    height: 85vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-}
-.preview-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    border-bottom: 1px solid #e2e8f0;
-    background: #0D5C4A;
-    color: white;
-    border-radius: 20px 20px 0 0;
-}
-.preview-modal-header h3 { font-size: 16px; margin: 0; }
-.preview-modal-close {
-    background: rgba(255,255,255,0.2);
-    border: none;
-    color: white;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.preview-modal-iframe {
-    flex: 1;
-    width: 100%;
-    border: none;
-}
-.preview-modal-footer {
-    padding: 12px 20px;
-    border-top: 1px solid #e2e8f0;
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-}
 </style>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&family=Amiri&display=swap" rel="stylesheet">
@@ -1968,10 +1909,7 @@
                 <i class="fas fa-download"></i> Export <i class="fas fa-chevron-up" style="font-size:11px;"></i>
             </button>
             <div class="export-dropdown-menu" id="exportMenuKas">
-                <div class="export-menu-item" onclick="showPreviewPDF('Laporan Kas', generateKasPDFBlob, exportKasPDF); toggleExportDropdown('exportMenuKas')">
-                    <div class="export-icon" style="background:#ede9fe;">👁️</div>
-                    <div><div class="export-label">Preview</div><div class="export-desc">Lihat sebelum download</div></div>
-                </div>
+
                 <div class="export-menu-item" onclick="exportKasPDF(); toggleExportDropdown('exportMenuKas')">
                     <div class="export-icon export-icon-pdf">📄</div>
                     <div><div class="export-label">Download PDF</div><div class="export-desc">Laporan kas format PDF</div></div>
@@ -2127,10 +2065,7 @@
                 <i class="fas fa-download"></i> Export <i class="fas fa-chevron-up" style="font-size:11px;"></i>
             </button>
             <div class="export-dropdown-menu" id="exportMenuPembayaran">
-                <div class="export-menu-item" onclick="showPreviewPDF('Laporan Pembayaran', generatePaymentPDFBlob, exportPaymentPDF); toggleExportDropdown('exportMenuPembayaran')">
-                    <div class="export-icon" style="background:#ede9fe;">👁️</div>
-                    <div><div class="export-label">Preview</div><div class="export-desc">Lihat sebelum download</div></div>
-                </div>
+
                 <div class="export-menu-item" onclick="exportPaymentPDF(); toggleExportDropdown('exportMenuPembayaran')">
                     <div class="export-icon export-icon-pdf">📄</div>
                     <div><div class="export-label">Download PDF</div><div class="export-desc">Laporan pembayaran format PDF</div></div>
@@ -2170,10 +2105,7 @@
                 <i class="fas fa-download"></i> Export <i class="fas fa-chevron-up" style="font-size:11px;"></i>
             </button>
             <div class="export-dropdown-menu" id="exportMenuMaster">
-                <div class="export-menu-item" onclick="showPreviewPDF('Multi Event', generateMasterPDFBlob, exportMasterPDF); toggleExportDropdown('exportMenuMaster')">
-                    <div class="export-icon" style="background:#ede9fe;">👁️</div>
-                    <div><div class="export-label">Preview</div><div class="export-desc">Lihat sebelum download</div></div>
-                </div>
+
                 <div class="export-menu-item" onclick="exportMasterPDF(); toggleExportDropdown('exportMenuMaster')">
                     <div class="export-icon export-icon-pdf">📄</div>
                     <div><div class="export-label">Download PDF</div><div class="export-desc">Data multi event format PDF</div></div>
@@ -4753,20 +4685,18 @@ async function cetakInvoicePDF(jamaahId) {
         if (!result) return;
         const { doc, jamaah } = result;
 
-        // Konversi ke blob URL untuk iframe yang reliable
-        const pdfBlob = doc.output('blob');
-        const blobUrl = URL.createObjectURL(pdfBlob);
-        if (window._previewBlobUrl) URL.revokeObjectURL(window._previewBlobUrl);
-        window._previewBlobUrl = blobUrl;
+        // Simpan dataUri untuk cetak & download
+        const dataUri = doc.output('datauristring');
+        window._previewDataUri = dataUri;
 
-        // Tampilkan modal DULU baru set src
-        document.getElementById('previewPDFTitle').textContent = '👁️ Invoice - ' + jamaah.nama_lengkap;
+        // Set judul & tombol download
+        document.getElementById('previewPDFTitle').textContent = '\uD83D\uDC41\uFE0F Invoice - ' + jamaah.nama_lengkap;
+
+        // Tampilkan modal dulu
         document.getElementById('previewPDFModal').classList.add('show');
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                document.getElementById('previewPDFIframe').src = blobUrl;
-            });
-        });
+
+        // Render PDF pakai PDF.js canvas
+        renderPDFPreview(dataUri);
 
         // Tombol Download → download PDF jamaah ini
         document.getElementById('previewDownloadBtn').onclick = async () => {
@@ -7040,12 +6970,15 @@ function putuskanGoogle() {
 
 document.addEventListener('DOMContentLoaded', initPremium);
 
-// ===== EXPORT DROPDOWN HANDLER =====
+
+
+// ===== GENERATE PDF BLOB FUNCTIONS =====
+// Preview - buka di window baru dengan embed data URI
+// Cetak langsung dari doc jsPDF
 function toggleExportDropdown(id) {
     const menu = document.getElementById(id);
     if (!menu) return;
     const isShow = menu.classList.contains('show');
-    // Tutup semua dropdown dulu
     document.querySelectorAll('.export-dropdown-menu').forEach(m => m.classList.remove('show'));
     if (!isShow) menu.classList.add('show');
 }
@@ -7056,68 +6989,9 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// ===== PREVIEW PDF FUNCTIONS =====
-function closePreviewPDF() {
-    const modal = document.getElementById('previewPDFModal');
-    const iframe = document.getElementById('previewPDFIframe');
-    modal.classList.remove('show');
-    // Reset iframe setelah modal tutup agar tidak ada flash
-    setTimeout(() => {
-        iframe.src = 'about:blank';
-        if (window._previewBlobUrl) {
-            URL.revokeObjectURL(window._previewBlobUrl);
-            window._previewBlobUrl = null;
-        }
-    }, 300);
-}
 
-async function showPreviewPDF(title, generateFn, downloadFn) {
-    showToast('Menyiapkan preview...');
-    try {
-        // Generate doc dulu
-        const dataUri = await generateFn('datauri');
-        if (!dataUri) return;
-
-        // Konversi dataUri ke blob untuk iframe yang lebih reliable
-        const base64 = dataUri.split(',')[1];
-        const binary = atob(base64);
-        const array = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i);
-        const blob = new Blob([array], { type: 'application/pdf' });
-        const blobUrl = URL.createObjectURL(blob);
-
-        // Simpan blob url untuk cleanup
-        if (window._previewBlobUrl) URL.revokeObjectURL(window._previewBlobUrl);
-        window._previewBlobUrl = blobUrl;
-
-        // Set judul
-        document.getElementById('previewPDFTitle').textContent = '👁️ Preview - ' + title;
-
-        // Set iframe dengan loading indicator
-        const iframe = document.getElementById('previewPDFIframe');
-        iframe.style.background = '#f5f5f5';
-        
-        // Tampilkan modal DULU baru set src - ini kunci agar iframe bisa render
-        document.getElementById('previewPDFModal').classList.add('show');
-        
-        // Set src setelah modal visible agar browser bisa render
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                iframe.src = blobUrl;
-            });
-        });
-
-        // Set tombol download
-        document.getElementById('previewDownloadBtn').onclick = downloadFn;
-
-    } catch(e) {
-        showToast('Gagal preview: ' + e.message);
-        console.error('Preview error:', e);
-    }
-}
-
-// Generate PDF blob tanpa download - KAS
-async function generateKasPDFBlob(outputType) {
+// ===== GENERATE PDF BLOB UNTUK CETAK =====
+async function generateKasPDFBlob() {
     if(dataKas.length===0) { showToast('Tidak ada data!'); return null; }
     const {jsPDF} = window.jspdf;
     const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
@@ -7132,15 +7006,10 @@ async function generateKasPDFBlob(outputType) {
     let finalY = doc.lastAutoTable.finalY + 10;
     doc.text('Total Pemasukan: Rp '+masuk.toLocaleString('id-ID'), 14, finalY);
     doc.text('Total Pengeluaran: Rp '+keluar.toLocaleString('id-ID'), 14, finalY+7);
-    doc.setTextColor(26,93,74); doc.setFont('helvetica','bold');
-    doc.text('SALDO AKHIR: Rp '+(masuk-keluar).toLocaleString('id-ID'), 14, finalY+14);
-    // output: 'datauri' untuk preview/cetak, default untuk blob
-    if (outputType === 'datauri') return doc.output('datauristring');
     return URL.createObjectURL(doc.output('blob'));
 }
 
-// Generate PDF blob tanpa download - PEMBAYARAN
-async function generatePaymentPDFBlob(outputType) {
+async function generatePaymentPDFBlob() {
     if(paymentTransaksiList.length===0) { showToast('Tidak ada data transaksi!'); return null; }
     const {jsPDF} = window.jspdf;
     const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
@@ -7152,12 +7021,10 @@ async function generatePaymentPDFBlob(outputType) {
     doc.autoTable({startY:80, head:[['No','Tanggal','Jamaah','Keterangan','Metode','Nominal']], body:tableData, theme:'striped', headStyles:{fillColor:[26,93,74]}, styles:{fontSize:8, lineWidth:0.1}});
     let finalY = doc.lastAutoTable.finalY + 10;
     doc.text('TOTAL PEMASUKAN: '+formatRupiah(totalMasuk), 14, finalY);
-    if (outputType === 'datauri') return doc.output('datauristring');
     return URL.createObjectURL(doc.output('blob'));
 }
 
-// Generate PDF blob tanpa download - MULTI EVENT
-async function generateMasterPDFBlob(outputType) {
+async function generateMasterPDFBlob() {
     if(masterDataList.length===0) { showToast('Tidak ada data!'); return null; }
     const {jsPDF} = window.jspdf;
     const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
@@ -7168,87 +7035,31 @@ async function generateMasterPDFBlob(outputType) {
     const headers = ['No', ...masterDynamicFields.map(f=>f.label)];
     const tableData = masterDataList.map((row,i)=>[i+1, ...masterDynamicFields.map(f=>row[f.name]||'-')]);
     doc.autoTable({startY:80, head:[headers], body:tableData, theme:'striped', headStyles:{fillColor:[26,93,74]}, styles:{fontSize:8, lineWidth:0.1}});
-    if (outputType === 'datauri') return doc.output('datauristring');
     return URL.createObjectURL(doc.output('blob'));
 }
 
-// Fungsi cetak dari preview blob
-async function cetakDariBlob(generateFn) {
+function cetakDariBlob(generateFn) {
     showToast('Menyiapkan cetak...');
-    try {
-        const dataUri = await generateFn('datauri');
-        if (!dataUri) return;
-
-        // Buka window baru dengan HTML yang embed PDF + auto print
-        const win = window.open('', '_blank');
-        if (!win) { showToast('Izinkan popup untuk cetak!'); return; }
-        win.document.write(`<!DOCTYPE html>
-<html>
-<head>
-    <title>Cetak</title>
-    <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        html, body { width:100%; height:100%; }
-        embed { width:100%; height:100%; display:block; }
-        @media print { embed { width:100%; height:100%; } }
-    </style>
-</head>
-<body>
-    <embed src="${dataUri}" type="application/pdf" width="100%" height="100%">
-    <script>
-        window.onload = function() {
-            setTimeout(function() {
-                window.print();
-            }, 600);
+    generateFn().then(blobUrl => {
+        if (!blobUrl) return;
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = blobUrl;
+        document.body.appendChild(iframe);
+        iframe.onload = () => {
+            iframe.contentWindow.print();
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+                URL.revokeObjectURL(blobUrl);
+            }, 1000);
         };
-    <\/script>
-</body>
-</html>`);
-        win.document.close();
-    } catch(e) {
-        showToast('Gagal cetak: ' + e.message);
-        console.error(e);
-    }
-}
-
-function cetakDariPreview() {
-    const blobUrl = window._previewBlobUrl;
-    if (!blobUrl) { showToast('Tidak ada preview untuk dicetak!'); return; }
-    // Buka window dengan auto-print
-    const win = window.open('', '_blank');
-    if (!win) { showToast('Izinkan popup untuk cetak!'); return; }
-    // Ambil dataUri dari iframe yang sudah ada
-    const iframe = document.getElementById('previewPDFIframe');
-    const src = iframe ? iframe.src : blobUrl;
-    win.document.write(`<!DOCTYPE html>
-<html>
-<head>
-    <title>Cetak</title>
-    <style>* { margin:0; padding:0; } html,body { width:100%; height:100%; } embed { width:100%; height:100%; display:block; }</style>
-</head>
-<body>
-    <embed src="${src}" type="application/pdf" width="100%" height="100%">
-    <script>window.onload = function() { setTimeout(function() { window.print(); }, 600); };<\/script>
-</body>
-</html>`);
-    win.document.close();
+    }).catch(e => showToast('Gagal cetak: ' + e.message));
 }
 </script>
 
 
-<!-- PREVIEW PDF MODAL -->
-<div id="previewPDFModal" class="preview-modal-overlay">
-    <div class="preview-modal-box">
-        <div class="preview-modal-header">
-            <h3 id="previewPDFTitle">👁️ Preview PDF</h3>
-            <button class="preview-modal-close" onclick="closePreviewPDF()">✕</button>
-        </div>
-        <iframe id="previewPDFIframe" class="preview-modal-iframe" src="about:blank"></iframe>
-        <div class="preview-modal-footer">
-            <button onclick="closePreviewPDF()" style="padding:8px 20px; background:#ccc; border:none; border-radius:8px; cursor:pointer;">Tutup</button>
-            <button id="previewCetakBtn" onclick="cetakDariPreview()" style="padding:8px 20px; background:#3B82F6; color:white; border:none; border-radius:8px; cursor:pointer;">🖨️ Cetak</button>
-            <button id="previewDownloadBtn" onclick="" style="padding:8px 20px; background:#0D5C4A; color:white; border:none; border-radius:8px; cursor:pointer;">📄 Download PDF</button>
-        </div>
+        <div id="previewPDFIframe" style="flex:1;width:100%;border:none;overflow-y:auto;background:#888;"></div>
+        
     </div>
 </div>
 </body>
