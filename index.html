@@ -1909,14 +1909,13 @@
                 <i class="fas fa-download"></i> Export <i class="fas fa-chevron-up" style="font-size:11px;"></i>
             </button>
             <div class="export-dropdown-menu" id="exportMenuKas">
-
                 <div class="export-menu-item" onclick="exportKasPDF(); toggleExportDropdown('exportMenuKas')">
                     <div class="export-icon export-icon-pdf">📄</div>
                     <div><div class="export-label">Download PDF</div><div class="export-desc">Laporan kas format PDF</div></div>
                 </div>
-                <div class="export-menu-item" onclick="cetakDariBlob(generateKasPDFBlob); toggleExportDropdown('exportMenuKas')">
+                <div class="export-menu-item" onclick="cetakLaporan(generateKasPDFBlob, 'Laporan Kas'); toggleExportDropdown('exportMenuKas')">
                     <div class="export-icon export-icon-cetak">🖨️</div>
-                    <div><div class="export-label">Cetak</div><div class="export-desc">Cetak laporan kas</div></div>
+                    <div><div class="export-label">Cetak</div><div class="export-desc">Lihat & cetak laporan kas</div></div>
                 </div>
                 <div class="export-menu-item" onclick="exportKasExcel(); toggleExportDropdown('exportMenuKas')">
                     <div class="export-icon export-icon-excel">📊</div>
@@ -2065,14 +2064,13 @@
                 <i class="fas fa-download"></i> Export <i class="fas fa-chevron-up" style="font-size:11px;"></i>
             </button>
             <div class="export-dropdown-menu" id="exportMenuPembayaran">
-
                 <div class="export-menu-item" onclick="exportPaymentPDF(); toggleExportDropdown('exportMenuPembayaran')">
                     <div class="export-icon export-icon-pdf">📄</div>
                     <div><div class="export-label">Download PDF</div><div class="export-desc">Laporan pembayaran format PDF</div></div>
                 </div>
-                <div class="export-menu-item" onclick="cetakDariBlob(generatePaymentPDFBlob); toggleExportDropdown('exportMenuPembayaran')">
+                <div class="export-menu-item" onclick="cetakLaporan(generatePaymentPDFBlob, 'Laporan Pembayaran'); toggleExportDropdown('exportMenuPembayaran')">
                     <div class="export-icon export-icon-cetak">🖨️</div>
-                    <div><div class="export-label">Cetak</div><div class="export-desc">Cetak laporan pembayaran</div></div>
+                    <div><div class="export-label">Cetak</div><div class="export-desc">Lihat & cetak laporan pembayaran</div></div>
                 </div>
                 <div class="export-menu-item" onclick="exportPaymentExcel(); toggleExportDropdown('exportMenuPembayaran')">
                     <div class="export-icon export-icon-excel">📊</div>
@@ -2105,14 +2103,13 @@
                 <i class="fas fa-download"></i> Export <i class="fas fa-chevron-up" style="font-size:11px;"></i>
             </button>
             <div class="export-dropdown-menu" id="exportMenuMaster">
-
                 <div class="export-menu-item" onclick="exportMasterPDF(); toggleExportDropdown('exportMenuMaster')">
                     <div class="export-icon export-icon-pdf">📄</div>
                     <div><div class="export-label">Download PDF</div><div class="export-desc">Data multi event format PDF</div></div>
                 </div>
-                <div class="export-menu-item" onclick="cetakDariBlob(generateMasterPDFBlob); toggleExportDropdown('exportMenuMaster')">
+                <div class="export-menu-item" onclick="cetakLaporan(generateMasterPDFBlob, 'Multi Event'); toggleExportDropdown('exportMenuMaster')">
                     <div class="export-icon export-icon-cetak">🖨️</div>
-                    <div><div class="export-label">Cetak</div><div class="export-desc">Cetak data multi event</div></div>
+                    <div><div class="export-label">Cetak</div><div class="export-desc">Lihat & cetak data multi event</div></div>
                 </div>
                 <div class="export-menu-item" onclick="exportMasterExcel(); toggleExportDropdown('exportMenuMaster')">
                     <div class="export-icon export-icon-excel">📊</div>
@@ -4396,22 +4393,6 @@ function salinRingkasanZakat(){
     }
 }
 
-function salinFallback(text) {
-    try {
-        const ta = document.createElement('textarea');
-        ta.value = text;
-        ta.style.position = 'fixed';
-        ta.style.opacity = '0';
-        document.body.appendChild(ta);
-        ta.focus();
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-        showToast('Ringkasan zakat tersalin!');
-    } catch(e) {
-        showToast('Gagal menyalin - coba manual');
-    }
-}
 
 // ==================== PEMBAYARAN ====================
 let paymentTransaksiList = [], currentInvoiceJamaahId = null, currentInvoiceText = '', currentEditJamaahId = null, currentRiwayatJamaahId = null, currentPaymentFilter = 'semua', currentPaymentSearch = '';
@@ -6972,7 +6953,7 @@ document.addEventListener('DOMContentLoaded', initPremium);
 
 
 
-// ===== GENERATE PDF BLOB FUNCTIONS =====
+
 // Preview - buka di window baru dengan embed data URI
 // Cetak langsung dari doc jsPDF
 function toggleExportDropdown(id) {
@@ -6990,7 +6971,44 @@ document.addEventListener('click', function(e) {
 });
 
 
-// ===== GENERATE PDF BLOB UNTUK CETAK =====
+
+
+// ===== CETAK LAPORAN - Buka window baru dengan preview + tombol CETAK =====
+function cetakLaporan(generateFn, judul) {
+    showToast('Menyiapkan laporan...');
+    generateFn().then(blobUrl => {
+        if (!blobUrl) return;
+        const printWindow = window.open('', '_blank');
+        const html = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Cetak ${judul}</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:#f0f0f0; }
+        .preview-wrap { width:100%; height:calc(100vh - 64px); }
+        iframe { width:100%; height:100%; border:none; display:block; }
+        .toolbar { position:fixed; bottom:0; left:0; right:0; background:white; padding:12px 20px; display:flex; gap:10px; justify-content:center; box-shadow:0 -2px 10px rgba(0,0,0,0.1); z-index:999; }
+        .btn-cetak { padding:10px 30px; background:#0D5C4A; color:white; border:none; border-radius:8px; cursor:pointer; font-size:15px; font-weight:bold; }
+        .btn-tutup { padding:10px 30px; background:#ccc; border:none; border-radius:8px; cursor:pointer; font-size:15px; }
+        @media print { .toolbar { display:none !important; } .preview-wrap { height:100vh; } }
+    </style>
+</head>
+<body>
+    <div class="preview-wrap"><iframe src="${blobUrl}"></iframe></div>
+    <div class="toolbar">
+        <button class="btn-cetak" onclick="document.querySelector('iframe').contentWindow.print()">🖨️ CETAK</button>
+        <button class="btn-tutup" onclick="window.close()">TUTUP</button>
+    </div>
+</body>
+</html>`;
+        printWindow.document.write(html);
+        printWindow.document.close();
+    }).catch(e => showToast('Gagal: ' + e.message));
+}
+
+// ===== GENERATE PDF BLOB (untuk Cetak) =====
 async function generateKasPDFBlob() {
     if(dataKas.length===0) { showToast('Tidak ada data!'); return null; }
     const {jsPDF} = window.jspdf;
@@ -7006,6 +7024,8 @@ async function generateKasPDFBlob() {
     let finalY = doc.lastAutoTable.finalY + 10;
     doc.text('Total Pemasukan: Rp '+masuk.toLocaleString('id-ID'), 14, finalY);
     doc.text('Total Pengeluaran: Rp '+keluar.toLocaleString('id-ID'), 14, finalY+7);
+    doc.setTextColor(26,93,74); doc.setFont('helvetica','bold');
+    doc.text('SALDO AKHIR: Rp '+(masuk-keluar).toLocaleString('id-ID'), 14, finalY+14);
     return URL.createObjectURL(doc.output('blob'));
 }
 
@@ -7037,30 +7057,6 @@ async function generateMasterPDFBlob() {
     doc.autoTable({startY:80, head:[headers], body:tableData, theme:'striped', headStyles:{fillColor:[26,93,74]}, styles:{fontSize:8, lineWidth:0.1}});
     return URL.createObjectURL(doc.output('blob'));
 }
-
-function cetakDariBlob(generateFn) {
-    showToast('Menyiapkan cetak...');
-    generateFn().then(blobUrl => {
-        if (!blobUrl) return;
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = blobUrl;
-        document.body.appendChild(iframe);
-        iframe.onload = () => {
-            iframe.contentWindow.print();
-            setTimeout(() => {
-                document.body.removeChild(iframe);
-                URL.revokeObjectURL(blobUrl);
-            }, 1000);
-        };
-    }).catch(e => showToast('Gagal cetak: ' + e.message));
-}
 </script>
-
-
-        <div id="previewPDFIframe" style="flex:1;width:100%;border:none;overflow-y:auto;background:#888;"></div>
-        
-    </div>
-</div>
 </body>
     </html>
