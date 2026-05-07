@@ -2224,6 +2224,20 @@
         <div class="config-section"><h3><i class="fas fa-file-pdf"></i> Pengaturan Laporan</h3>
             <div class="row"><div class="config-row"><label>Header PDF</label><select id="cfg_header_mode"><option value="both">Keduanya</option><option value="instansi1">Instansi 1 saja</option><option value="instansi2">Instansi 2 saja</option><option value="none">Tidak ada</option></select></div><div class="config-row"><label>Tanda Tangan</label><select id="cfg_ttd_mode"><option value="both">Dua Pihak</option><option value="single">Satu Pihak</option></select></div></div>
             <div class="config-row"><label>Prefix Invoice / No. Dokumen</label><input type="text" id="cfg_invoice_prefix" value="INV/SAFARA"></div>
+            <div class="config-row"><label style="font-weight:bold;color:var(--primary);margin-bottom:10px;display:block;">🖨️ Tampilkan di Header Cetak</label>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    <label style="display:flex;justify-content:space-between;align-items:center;font-weight:normal;"><span>Logo Instansi</span><label class="switch"><input type="checkbox" id="cfg_show_logo" checked><span class="slider"></span></label></label>
+                    <label style="display:flex;justify-content:space-between;align-items:center;font-weight:normal;"><span>Nama Instansi Utama</span><label class="switch"><input type="checkbox" id="cfg_show_nama1" checked><span class="slider"></span></label></label>
+                    <label style="display:flex;justify-content:space-between;align-items:center;font-weight:normal;"><span>Nama Instansi Kedua</span><label class="switch"><input type="checkbox" id="cfg_show_nama2" checked><span class="slider"></span></label></label>
+                    <label style="display:flex;justify-content:space-between;align-items:center;font-weight:normal;"><span>Alamat</span><label class="switch"><input type="checkbox" id="cfg_show_alamat" checked><span class="slider"></span></label></label>
+                    <label style="display:flex;justify-content:space-between;align-items:center;font-weight:normal;"><span>Telepon</span><label class="switch"><input type="checkbox" id="cfg_show_telp" checked><span class="slider"></span></label></label>
+                    <label style="display:flex;justify-content:space-between;align-items:center;font-weight:normal;"><span>Email</span><label class="switch"><input type="checkbox" id="cfg_show_email"><span class="slider"></span></label></label>
+                    <label style="display:flex;justify-content:space-between;align-items:center;font-weight:normal;"><span>Website</span><label class="switch"><input type="checkbox" id="cfg_show_web"><span class="slider"></span></label></label>
+                    <label style="display:flex;justify-content:space-between;align-items:center;font-weight:normal;"><span>NPWP</span><label class="switch"><input type="checkbox" id="cfg_show_npwp"><span class="slider"></span></label></label>
+                    <label style="display:flex;justify-content:space-between;align-items:center;font-weight:normal;"><span>No. Izin (Instansi Kedua)</span><label class="switch"><input type="checkbox" id="cfg_show_izin"><span class="slider"></span></label></label>
+                    <label style="display:flex;justify-content:space-between;align-items:center;font-weight:normal;"><span>Pimpinan & Jabatan</span><label class="switch"><input type="checkbox" id="cfg_show_pimpinan"><span class="slider"></span></label></label>
+                </div>
+            </div>
         </div>
         <div class="config-section"><h3><i class="fab fa-whatsapp"></i> Template WhatsApp</h3>
             <div class="config-row"><label>Template Laporan Kas</label><textarea id="cfg_wa_laporan" rows="3" placeholder=" *LAPORAN KAS KANTOR*\n\n Saldo: [saldo]\n Pemasukan: [masuk]\n Pengeluaran: [keluar]\n\nTerima kasih."></textarea><div class="template-variables">Variabel: <code>[saldo]</code> <code>[masuk]</code> <code>[keluar]</code></div></div>
@@ -3339,26 +3353,29 @@ function restoreKasData(input) {
     } 
 }
 
-function exportKasPDF() {
+async function exportKasPDF() {
     if(dataKas.length===0) return showToast('Tidak ada data!');
+    const cfg = getKonfigurasiProData();
     const judul = document.getElementById('kegiatan').value.trim() || 'Laporan Kas';
-    const namaInstansi = getKonfigurasiProData().instansi1.nama || 'Safara';
-    const tanggal = new Date().toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
+    const tglCetak = new Date().toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
     let masuk=0, keluar=0;
     dataKas.forEach(i=>{ if(i.tipe==='masuk') masuk+=i.nom; else keluar+=i.nom; });
     const saldo = masuk - keluar;
+    const saldoColor = saldo>=0 ? '#10B981' : '#EF4444';
+    const headerHtml = buildPrintHeader(cfg, tglCetak);
+    const watermarkHtml = buildPrintWatermark(cfg);
+    const qrHtml = await buildPrintQR(cfg, `Laporan Kas: ${judul}\nSaldo: Rp ${saldo.toLocaleString('id-ID')}\nTanggal: ${tglCetak}`);
     let rowsHtml = '';
     dataKas.forEach((i,idx)=>{
         const warna = i.tipe==='masuk' ? '#10B981' : '#EF4444';
         rowsHtml += `<tr><td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${idx+1}</td><td style="padding:8px;border-bottom:1px solid #eee;">${i.tgl}</td><td style="padding:8px;border-bottom:1px solid #eee;">${i.kegiatan||'-'}</td><td style="padding:8px;border-bottom:1px solid #eee;">${i.ket}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center;color:${warna};font-weight:bold;">${i.tipe==='masuk'?'MASUK':'KELUAR'}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">Rp ${i.nom.toLocaleString('id-ID')}</td></tr>`;
     });
-    const saldoColor = saldo>=0 ? '#10B981' : '#EF4444';
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Laporan Kas</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px;}.box{background:white;max-width:800px;margin:0 auto;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);}h2{color:#0D5C4A;font-size:20px;margin-bottom:4px;}.sub{color:#888;font-size:12px;margin-bottom:20px;}table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;}th{background:#0D5C4A;color:white;padding:10px 8px;text-align:left;}tr:nth-child(even) td{background:#f9f9f9;}.summary{background:#f8f8f8;border-radius:10px;padding:16px;font-size:13px;line-height:2.2;}.no-print{text-align:center;margin-top:24px;}.no-print button{padding:12px 32px;margin:0 8px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}@media print{body{background:white;padding:0;}.box{box-shadow:none;border-radius:0;}.no-print{display:none!important;}}</style></head><body><div class="box"><h2>${judul} — LAPORAN KAS</h2><div class="sub">${namaInstansi} | Dicetak: ${tanggal}</div><table><thead><tr><th style="width:36px;">No</th><th>Tgl</th><th>Kegiatan</th><th>Keterangan</th><th style="text-align:center;">Tipe</th><th style="text-align:right;">Nominal</th></tr></thead><tbody>${rowsHtml}</tbody></table><div class="summary"><div>Total Pemasukan &nbsp;: <strong style="color:#10B981;">Rp ${masuk.toLocaleString('id-ID')}</strong></div><div>Total Pengeluaran : <strong style="color:#EF4444;">Rp ${keluar.toLocaleString('id-ID')}</strong></div><div style="font-size:16px;font-weight:bold;color:${saldoColor};margin-top:8px;">SALDO AKHIR: Rp ${saldo.toLocaleString('id-ID')}</div></div></div><div class="no-print"><button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button><button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button></div><script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script></body></html>`;
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Laporan Kas</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px;position:relative;}.box{background:white;max-width:800px;margin:0 auto;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);position:relative;z-index:1;}h2{color:#0D5C4A;font-size:20px;margin-bottom:2px;}.tgl{color:#aaa;font-size:11px;margin-bottom:20px;}table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;}th{background:#0D5C4A;color:white;padding:10px 8px;text-align:left;}tr:nth-child(even) td{background:#f9f9f9;}.summary{background:#f8f8f8;border-radius:10px;padding:16px;font-size:13px;line-height:2.2;}.no-print{text-align:center;margin-top:24px;}.no-print button{padding:12px 32px;margin:0 8px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}@media print{body{background:white;padding:0;}.box{box-shadow:none;border-radius:0;}.no-print{display:none!important;}}}</style></head><body>${watermarkHtml}<div class="box">${headerHtml}<h2>${judul} — LAPORAN KAS</h2><div class="tgl">Tanggal Cetak: ${tglCetak}</div><table><thead><tr><th style="width:36px;">No</th><th>Tgl</th><th>Kegiatan</th><th>Keterangan</th><th style="text-align:center;">Tipe</th><th style="text-align:right;">Nominal</th></tr></thead><tbody>${rowsHtml}</tbody></table><div class="summary"><div>Total Pemasukan &nbsp;: <strong style="color:#10B981;">Rp ${masuk.toLocaleString('id-ID')}</strong></div><div>Total Pengeluaran : <strong style="color:#EF4444;">Rp ${keluar.toLocaleString('id-ID')}</strong></div><div style="font-size:16px;font-weight:bold;color:${saldoColor};margin-top:8px;">SALDO AKHIR: Rp ${saldo.toLocaleString('id-ID')}</div></div>${qrHtml}</div><div class="no-print"><button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button><button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button></div><script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script></body></html>`;
     const win = window.open('','_blank');
     if(!win) return showToast('Izinkan popup untuk cetak!');
-    win.document.write(html);
-    win.document.close();
+    win.document.write(html); win.document.close();
 }
+
 
 function exportKasExcel() { 
     if(dataKas.length===0) return showToast("Tidak ada data!"); 
@@ -4690,98 +4707,32 @@ async function cetakInvoiceLangsung(jamaahId) {
     try {
         const jamaah = jamaahList.find(j => j.id == jamaahId);
         if (!jamaah) return showToast('Data jamaah tidak ditemukan');
+        const cfg = getKonfigurasiProData();
         const transaksiList = paymentTransaksiList.filter(t => t.id_jamaah == jamaahId).sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
         const totalBayar = hitungTotalBayarJamaah(jamaahId);
         const totalHargaPaket = getTotalHargaPaket(jamaah) || 0;
         const sisa = totalHargaPaket - totalBayar;
-        const status = sisa <= 0 ? 'LUNAS' : 'BELUM LUNAS';
         const statusColor = sisa <= 0 ? '#10B981' : '#EF4444';
-        const prefix = getKonfigurasiProData().settings.invoice_prefix || 'INV/SAFARA';
-        const namaInstansi = getKonfigurasiProData().instansi1.nama || 'Safara';
+        const prefix = cfg.settings?.invoice_prefix || 'INV/SAFARA';
         const tglCetak = new Date().toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
         const noInvoice = `${prefix}/${jamaah.id}/${new Date().toLocaleDateString('id-ID').replace(/\//g,'')}`;
-
+        const headerHtml = buildPrintHeader(cfg, tglCetak);
+        const watermarkHtml = buildPrintWatermark(cfg);
+        const qrHtml = await buildPrintQR(cfg, `Invoice:${noInvoice}\nJamaah:${jamaah.nama_lengkap}\nStatus:${sisa<=0?'LUNAS':'BELUM LUNAS'}`);
         let rowsHtml = '';
-        transaksiList.forEach((t, i) => {
-            rowsHtml += `<tr>
-                <td style="padding:8px; border-bottom:1px solid #eee; text-align:center;">${i+1}</td>
-                <td style="padding:8px; border-bottom:1px solid #eee;">${t.tanggal}</td>
-                <td style="padding:8px; border-bottom:1px solid #eee;">${t.keterangan || '-'}</td>
-                <td style="padding:8px; border-bottom:1px solid #eee;">${t.metode || '-'}</td>
-                <td style="padding:8px; border-bottom:1px solid #eee; text-align:right;">${formatRupiah(t.nominal)}</td>
-            </tr>`;
+        transaksiList.forEach((t,i) => {
+            rowsHtml += `<tr><td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${i+1}</td><td style="padding:8px;border-bottom:1px solid #eee;">${t.tanggal}</td><td style="padding:8px;border-bottom:1px solid #eee;">${t.keterangan||'-'}</td><td style="padding:8px;border-bottom:1px solid #eee;">${t.metode||'-'}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${formatRupiah(t.nominal)}</td></tr>`;
         });
-        if (transaksiList.length === 0) {
-            rowsHtml = `<tr><td colspan="5" style="padding:12px; text-align:center; color:#999;">Belum ada transaksi</td></tr>`;
-        }
-
+        if(!transaksiList.length) rowsHtml = `<tr><td colspan="5" style="padding:12px;text-align:center;color:#999;">Belum ada transaksi</td></tr>`;
         const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice - ${jamaah.nama_lengkap}</title>
-        <style>
-            * { margin:0; padding:0; box-sizing:border-box; }
-            body { font-family:'Segoe UI',Arial,sans-serif; background:#f0f0f0; padding:20px; }
-            .invoice-box { background:white; max-width:600px; margin:0 auto; border-radius:16px; padding:30px; box-shadow:0 2px 16px rgba(0,0,0,0.1); }
-            .invoice-header { text-align:center; border-bottom:3px solid #0D5C4A; padding-bottom:16px; margin-bottom:20px; }
-            .invoice-header h2 { color:#0D5C4A; font-size:22px; margin-bottom:4px; }
-            .invoice-header p { color:#888; font-size:12px; }
-            .invoice-info { display:flex; justify-content:space-between; margin-bottom:20px; font-size:13px; }
-            .invoice-info div { line-height:1.8; }
-            .invoice-info strong { color:#0D5C4A; }
-            table { width:100%; border-collapse:collapse; font-size:13px; margin-bottom:20px; }
-            th { background:#0D5C4A; color:white; padding:10px 8px; text-align:left; }
-            th:last-child { text-align:right; }
-            .summary { background:#f8f8f8; border-radius:10px; padding:14px; font-size:13px; line-height:2; }
-            .summary .status { font-size:16px; font-weight:bold; color:${statusColor}; margin-top:8px; }
-            .no-print { text-align:center; margin-top:24px; }
-            .no-print button { padding:12px 32px; margin:0 8px; border:none; border-radius:10px; font-size:14px; font-weight:bold; cursor:pointer; }
-            .btn-cetak { background:#0D5C4A; color:white; }
-            .btn-tutup { background:#e2e8f0; color:#333; }
-            @media print {
-                body { background:white; padding:0; }
-                .invoice-box { box-shadow:none; border-radius:0; }
-                .no-print { display:none !important; }
-            }
-        </style></head><body>
-        <div class="invoice-box">
-            <div class="invoice-header">
-                <h2>INVOICE PEMBAYARAN</h2>
-                <p>${namaInstansi}</p>
-                <p>No: ${noInvoice}</p>
-            </div>
-            <div class="invoice-info">
-                <div>
-                    <strong>Nama Jamaah</strong><br>${jamaah.nama_lengkap}<br>
-                    <strong>Tanggal Cetak</strong><br>${tglCetak}
-                </div>
-                <div style="text-align:right;">
-                    <strong>Total Paket</strong><br>${formatRupiah(totalHargaPaket)}
-                </div>
-            </div>
-            <table>
-                <thead><tr><th style="width:36px;">No</th><th>Tanggal</th><th>Keterangan</th><th>Metode</th><th style="text-align:right;">Nominal</th></tr></thead>
-                <tbody>${rowsHtml}</tbody>
-            </table>
-            <div class="summary">
-                <div>Total Paket &nbsp;&nbsp;: <strong>${formatRupiah(totalHargaPaket)}</strong></div>
-                <div>Total Dibayar : <strong>${formatRupiah(totalBayar)}</strong></div>
-                <div>Sisa Tagihan &nbsp;: <strong>${formatRupiah(sisa > 0 ? sisa : 0)}</strong></div>
-                <div class="status">${sisa <= 0 ? '✅ LUNAS' : '⚠️ BELUM LUNAS'}</div>
-            </div>
-        </div>
-        <div class="no-print">
-            <button class="btn-cetak" onclick="window.print()">🖨️ CETAK</button>
-            <button class="btn-tutup" onclick="window.close()">✕ TUTUP</button>
-        </div>
-        <script>window.onload = function() { setTimeout(function() { window.print(); }, 800); };<\/script>
-        </body></html>`;
-
-        const win = window.open('', '_blank');
-        if (!win) { showToast('Izinkan popup untuk cetak!'); return; }
-        win.document.write(html);
-        win.document.close();
-    } catch(e) {
-        showToast('Gagal cetak: ' + e.message);
-        console.error(e);
-    }
+        <style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f0f0;padding:20px;position:relative;}.box{background:white;max-width:680px;margin:0 auto;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);position:relative;z-index:1;}h2{color:#0D5C4A;font-size:22px;text-align:center;margin-bottom:4px;}.inv-sub{text-align:center;color:#888;font-size:12px;margin-bottom:6px;}.tgl{text-align:center;color:#aaa;font-size:11px;margin-bottom:20px;}.info-row{display:flex;justify-content:space-between;margin-bottom:20px;font-size:13px;line-height:2;}table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;}th{background:#0D5C4A;color:white;padding:10px 8px;text-align:left;}th:last-child{text-align:right;}tr:nth-child(even) td{background:#f9f9f9;}.summary{background:#f8f8f8;border-radius:10px;padding:14px;font-size:13px;line-height:2.2;}.status{font-size:16px;font-weight:bold;color:${statusColor};margin-top:8px;}.no-print{text-align:center;margin-top:24px;}.no-print button{padding:12px 32px;margin:0 8px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}@media print{body{background:white;padding:0;}.box{box-shadow:none;border-radius:0;}.no-print{display:none!important;}}</style>
+        </head><body>${watermarkHtml}<div class="box">${headerHtml}<h2>INVOICE PEMBAYARAN</h2><div class="inv-sub">No: ${noInvoice}</div><div class="tgl">Tanggal Cetak: ${tglCetak}</div><div class="info-row"><div><strong>Nama Jamaah</strong><br>${jamaah.nama_lengkap}</div><div style="text-align:right;"><strong>Total Paket</strong><br>${formatRupiah(totalHargaPaket)}</div></div><table><thead><tr><th style="width:36px;">No</th><th>Tanggal</th><th>Keterangan</th><th>Metode</th><th style="text-align:right;">Nominal</th></tr></thead><tbody>${rowsHtml}</tbody></table><div class="summary"><div>Total Paket &nbsp;&nbsp;: <strong>${formatRupiah(totalHargaPaket)}</strong></div><div>Total Dibayar : <strong>${formatRupiah(totalBayar)}</strong></div><div>Sisa Tagihan &nbsp;: <strong>${formatRupiah(sisa>0?sisa:0)}</strong></div><div class="status">${sisa<=0?'✅ LUNAS':'⚠️ BELUM LUNAS'}</div></div>${qrHtml}</div>
+        <div class="no-print"><button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button><button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button></div>
+        <script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script></body></html>`;
+        const win = window.open('','_blank');
+        if(!win){showToast('Izinkan popup untuk cetak!');return;}
+        win.document.write(html); win.document.close();
+    } catch(e){showToast('Gagal cetak: '+e.message);console.error(e);}
 }
 
 function openEditHargaModal(jamaahId) { 
@@ -4888,21 +4839,24 @@ function filterPaymentJamaahList() {
     renderPaymentJamaahList(); 
 }
 
-function exportPaymentPDF() {
-    if(paymentTransaksiList.length === 0) { showToast('Tidak ada data transaksi!'); return; }
-    const namaInstansi = getKonfigurasiProData().instansi1.nama || 'Safara';
-    const tanggal = new Date().toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
+async function exportPaymentPDF() {
+    if(paymentTransaksiList.length===0) return showToast('Tidak ada data transaksi!');
+    const cfg = getKonfigurasiProData();
+    const tglCetak = new Date().toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
     const totalMasuk = paymentTransaksiList.reduce((s,t)=>s+t.nominal,0);
+    const headerHtml = buildPrintHeader(cfg, tglCetak);
+    const watermarkHtml = buildPrintWatermark(cfg);
+    const qrHtml = await buildPrintQR(cfg, `Laporan Pembayaran\nTotal: ${formatRupiah(totalMasuk)}\nTanggal: ${tglCetak}`);
     let rowsHtml = '';
     paymentTransaksiList.forEach((t,i) => {
         rowsHtml += `<tr><td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${i+1}</td><td style="padding:8px;border-bottom:1px solid #eee;">${t.tanggal}</td><td style="padding:8px;border-bottom:1px solid #eee;">${t.nama_jamaah||'-'}</td><td style="padding:8px;border-bottom:1px solid #eee;">${t.keterangan||'-'}</td><td style="padding:8px;border-bottom:1px solid #eee;">${t.metode||'-'}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${formatRupiah(t.nominal)}</td></tr>`;
     });
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Laporan Pembayaran</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px;}.box{background:white;max-width:900px;margin:0 auto;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);}h2{color:#0D5C4A;font-size:20px;margin-bottom:4px;}.sub{color:#888;font-size:12px;margin-bottom:20px;}table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;}th{background:#0D5C4A;color:white;padding:10px 8px;text-align:left;}tr:nth-child(even) td{background:#f9f9f9;}.summary{background:#f8f8f8;border-radius:10px;padding:16px;font-size:14px;}.no-print{text-align:center;margin-top:24px;}.no-print button{padding:12px 32px;margin:0 8px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}@media print{body{background:white;padding:0;}.box{box-shadow:none;border-radius:0;}.no-print{display:none!important;}}</style></head><body><div class="box"><h2>LAPORAN PEMBAYARAN JAMAAH</h2><div class="sub">${namaInstansi} | Dicetak: ${tanggal}</div><table><thead><tr><th style="width:36px;">No</th><th>Tanggal</th><th>Jamaah</th><th>Keterangan</th><th>Metode</th><th style="text-align:right;">Nominal</th></tr></thead><tbody>${rowsHtml}</tbody></table><div class="summary"><strong>TOTAL PEMASUKAN: <span style="color:#0D5C4A;">${formatRupiah(totalMasuk)}</span></strong></div></div><div class="no-print"><button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button><button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button></div><script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script></body></html>`;
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Laporan Pembayaran</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px;position:relative;}.box{background:white;max-width:900px;margin:0 auto;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);position:relative;z-index:1;}h2{color:#0D5C4A;font-size:20px;margin-bottom:2px;}.tgl{color:#aaa;font-size:11px;margin-bottom:20px;}table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;}th{background:#0D5C4A;color:white;padding:10px 8px;text-align:left;}tr:nth-child(even) td{background:#f9f9f9;}.summary{background:#f8f8f8;border-radius:10px;padding:16px;font-size:14px;}.no-print{text-align:center;margin-top:24px;}.no-print button{padding:12px 32px;margin:0 8px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}@media print{body{background:white;padding:0;}.box{box-shadow:none;border-radius:0;}.no-print{display:none!important;}}}</style></head><body>${watermarkHtml}<div class="box">${headerHtml}<h2>LAPORAN PEMBAYARAN JAMAAH</h2><div class="tgl">Tanggal Cetak: ${tglCetak}</div><table><thead><tr><th style="width:36px;">No</th><th>Tanggal</th><th>Jamaah</th><th>Keterangan</th><th>Metode</th><th style="text-align:right;">Nominal</th></tr></thead><tbody>${rowsHtml}</tbody></table><div class="summary"><strong>TOTAL PEMASUKAN: <span style="color:#0D5C4A;">${formatRupiah(totalMasuk)}</span></strong></div>${qrHtml}</div><div class="no-print"><button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button><button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button></div><script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script></body></html>`;
     const win = window.open('','_blank');
     if(!win) return showToast('Izinkan popup untuk cetak!');
-    win.document.write(html);
-    win.document.close();
+    win.document.write(html); win.document.close();
 }
+
 
 function exportPaymentExcel() { 
     if (paymentTransaksiList.length === 0) { showToast('Tidak ada data transaksi!'); return; } 
@@ -5952,6 +5906,72 @@ async function applyPDFConfig(doc, options = {}) {
     return doc;
 }
 
+// ==================== HEADER CETAK RESMI ====================
+function buildPrintHeader(cfg, tanggal) {
+    const i1 = cfg.instansi1 || {};
+    const i2 = cfg.instansi2 || {};
+    const s = cfg.settings || {};
+
+    // Default on: logo, nama1, nama2, alamat, telp
+    const showLogo     = s.show_logo     !== false;
+    const showNama1    = s.show_nama1    !== false;
+    const showNama2    = s.show_nama2    !== false;
+    const showAlamat   = s.show_alamat   !== false;
+    const showTelp     = s.show_telp     !== false;
+    // Default off: email, web, npwp, izin, pimpinan
+    const showEmail    = s.show_email    === true;
+    const showWeb      = s.show_web      === true;
+    const showNpwp     = s.show_npwp     === true;
+    const showIzin     = s.show_izin     === true;
+    const showPimpinan = s.show_pimpinan === true;
+
+    const logo = i1.logo || '';
+    const logoHtml = showLogo
+        ? (logo
+            ? `<img src="${logo}" style="width:72px;height:72px;object-fit:contain;border-radius:8px;background:white;padding:4px;">`
+            : `<div style="width:72px;height:72px;background:rgba(255,255,255,0.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;">🕌</div>`)
+        : '';
+
+    let infoHtml = '';
+    if(showNama1 && i1.nama)        infoHtml += `<div style="font-size:17px;font-weight:bold;">${i1.nama}</div>`;
+    if(showNama2 && i2.aktif && i2.nama) infoHtml += `<div style="font-size:13px;opacity:0.9;">${i2.nama}</div>`;
+    if(showAlamat && i1.alamat)     infoHtml += `<div style="font-size:11px;opacity:0.8;margin-top:3px;">${i1.alamat}</div>`;
+    if(showTelp && i1.telp)         infoHtml += `<div style="font-size:11px;opacity:0.8;">Telp: ${i1.telp}</div>`;
+    if(showEmail && i1.email)       infoHtml += `<div style="font-size:11px;opacity:0.8;">Email: ${i1.email}</div>`;
+    if(showWeb && i1.web)           infoHtml += `<div style="font-size:11px;opacity:0.8;">Web: ${i1.web}</div>`;
+    if(showNpwp && i1.npwp)         infoHtml += `<div style="font-size:11px;opacity:0.8;">NPWP: ${i1.npwp}</div>`;
+    if(showIzin && i2.izin)         infoHtml += `<div style="font-size:11px;opacity:0.8;">No. Izin: ${i2.izin}</div>`;
+    if(showPimpinan && i1.pimpinan) infoHtml += `<div style="font-size:11px;opacity:0.8;">Pimpinan: ${i1.pimpinan}${i1.jabatan ? ' ('+i1.jabatan+')' : ''}</div>`;
+
+    return `
+    <div style="background:#0D5C4A;color:white;padding:18px 22px;display:flex;align-items:center;gap:18px;margin-bottom:24px;border-radius:12px;">
+        ${logoHtml}
+        <div style="flex:1;">${infoHtml}</div>
+    </div>`;
+}
+
+function buildPrintWatermark(cfg) {
+    if (!cfg.watermark || !cfg.watermark.enabled) return '';
+    const text = cfg.watermark.text || cfg.instansi1?.nama || 'DOKUMEN RESMI';
+    const opacity = cfg.watermark.opacity || 0.08;
+    return `
+    <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);
+        font-size:52px;font-weight:bold;color:rgba(13,92,74,${opacity});
+        pointer-events:none;white-space:nowrap;z-index:0;user-select:none;">
+        ${text}
+    </div>`;
+}
+
+async function buildPrintQR(cfg, qrText) {
+    if (!cfg.qr || !cfg.qr.enabled) return '';
+    try {
+        const canvas = document.createElement('canvas');
+        await QRCode.toCanvas(canvas, qrText, { width: 90, height: 90 });
+        const dataUrl = canvas.toDataURL('image/png');
+        return `<div style="text-align:right;margin-top:24px;"><img src="${dataUrl}" style="width:80px;height:80px;"><div style="font-size:10px;color:#999;margin-top:4px;">Dokumen Resmi</div></div>`;
+    } catch(e) { return ''; }
+}
+
 function getKonfigurasiProData() {
     const saved = localStorage.getItem('safara_konfigurasi_pro');
     if(saved) { try { return JSON.parse(saved); } catch(e) {} }
@@ -5960,7 +5980,7 @@ function getKonfigurasiProData() {
         instansi2: { aktif: true, nama: 'Safara', alamat: 'Jl. Siwalankerto Utara II No. 30, Wonocolo, Surabaya' },
         watermark: { enabled: true, text: 'DOKUMEN RESMI', opacity: 0.15, fontsize: 60, position: 'diagonal' },
         qr: { enabled: true, text: 'Dokumen Resmi - Divalidasi oleh Sistem Safara', size: 80 },
-        settings: { header_mode: 'both', ttd_mode: 'both', invoice_prefix: 'INV/SAFARA' }
+        settings: { header_mode: 'both', ttd_mode: 'both', invoice_prefix: 'INV/SAFARA', show_logo: true, show_nama1: true, show_nama2: true, show_alamat: true, show_telp: true, show_email: false, show_web: false, show_npwp: false, show_izin: false, show_pimpinan: false }
     };
 }
 
@@ -6655,6 +6675,17 @@ function loadKonfigurasiPro() {
     document.getElementById('cfg_header_mode').value = konfigurasiPro.settings.header_mode || 'both';
     document.getElementById('cfg_ttd_mode').value = konfigurasiPro.settings.ttd_mode || 'both';
     document.getElementById('cfg_invoice_prefix').value = konfigurasiPro.settings.invoice_prefix || 'INV/SAFARA';
+    const s = konfigurasiPro.settings;
+    document.getElementById('cfg_show_logo').checked = s.show_logo !== false;
+    document.getElementById('cfg_show_nama1').checked = s.show_nama1 !== false;
+    document.getElementById('cfg_show_nama2').checked = s.show_nama2 !== false;
+    document.getElementById('cfg_show_alamat').checked = s.show_alamat !== false;
+    document.getElementById('cfg_show_telp').checked = s.show_telp !== false;
+    document.getElementById('cfg_show_email').checked = s.show_email === true;
+    document.getElementById('cfg_show_web').checked = s.show_web === true;
+    document.getElementById('cfg_show_npwp').checked = s.show_npwp === true;
+    document.getElementById('cfg_show_izin').checked = s.show_izin === true;
+    document.getElementById('cfg_show_pimpinan').checked = s.show_pimpinan === true;
     document.getElementById('cfg_wa_laporan').value = konfigurasiPro.wa_template.laporan || '';
     updateHeaderFromConfig();
 }
@@ -6697,7 +6728,17 @@ function saveKonfigurasiPro() {
     konfigurasiPro.settings = {
         header_mode: document.getElementById('cfg_header_mode').value,
         ttd_mode: document.getElementById('cfg_ttd_mode').value,
-        invoice_prefix: document.getElementById('cfg_invoice_prefix').value
+        invoice_prefix: document.getElementById('cfg_invoice_prefix').value,
+        show_logo: document.getElementById('cfg_show_logo').checked,
+        show_nama1: document.getElementById('cfg_show_nama1').checked,
+        show_nama2: document.getElementById('cfg_show_nama2').checked,
+        show_alamat: document.getElementById('cfg_show_alamat').checked,
+        show_telp: document.getElementById('cfg_show_telp').checked,
+        show_email: document.getElementById('cfg_show_email').checked,
+        show_web: document.getElementById('cfg_show_web').checked,
+        show_npwp: document.getElementById('cfg_show_npwp').checked,
+        show_izin: document.getElementById('cfg_show_izin').checked,
+        show_pimpinan: document.getElementById('cfg_show_pimpinan').checked
     };
     konfigurasiPro.wa_template = { laporan: document.getElementById('cfg_wa_laporan').value };
     localStorage.setItem('safara_konfigurasi_pro', JSON.stringify(konfigurasiPro));
