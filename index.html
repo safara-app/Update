@@ -2104,6 +2104,7 @@
         <div id="sumberHartaContainer"></div>
         <button class="btn btn-accent" onclick="tambahSumberHarta()"><i class="fas fa-plus-circle"></i> + TAMBAH SUMBER HARTA</button>
         <button class="btn btn-primary mt-2" onclick="hitungZakat()"><i class="fas fa-calculator"></i> HITUNG ZAKAT</button>
+        <button class="btn btn-teal btn-small mt-2" onclick="cetakLaporanZakat()"><i class="fas fa-print"></i> CETAK LAPORAN ZAKAT</button>
     </div>
     <div id="hasilZakat" class="res-card" style="display:none;"></div>
 </div>
@@ -2945,7 +2946,7 @@ function renderDashboard() {
     document.getElementById('topPiutangList').innerHTML = topPiutangHtml || '<p class="text-center">Tidak ada data piutang</p>';
 }
 
-function printDashboard() {
+async function printDashboard() {
     const kasData = JSON.parse(localStorage.getItem('safara_kas_data') || '[]');
     const totalKas = kasData.reduce((s,i) => s + (i.tipe === 'masuk' ? i.nom : -i.nom), 0);
     const jamaahData = JSON.parse(localStorage.getItem('safara_jamaah_list') || '[]');
@@ -2965,7 +2966,6 @@ function printDashboard() {
         }
         if (hargaPaket > 0) { if (totalBayar >= hargaPaket) totalLunas++; else totalPiutang += (hargaPaket - totalBayar); }
     });
-    // Top 5 piutang terbesar
     const topPiutang = jamaahData.map(j => {
         const totalBayar = paymentData.filter(t => t.id_jamaah == j.id).reduce((s,t) => s + t.nominal, 0);
         let hargaPaket = 0;
@@ -2981,8 +2981,9 @@ function printDashboard() {
     }).sort((a,b) => b.sisa - a.sisa).slice(0,5);
 
     const cfg = getKonfigurasiProData();
-    const namaInstansi = cfg.instansi1?.nama || 'Safara';
     const tanggal = new Date().toLocaleDateString('id-ID', { day:'2-digit', month:'long', year:'numeric' });
+    const headerHtml = buildPrintHeader(cfg, tanggal);
+    const qrHtml = await buildPrintQR(cfg, `Dashboard ${cfg.instansi1?.nama||'Safara'}\nTotal Jamaah: ${totalJamaah}\nTanggal: ${tanggal}`);
 
     let topHtml = '';
     topPiutang.forEach((j,i) => {
@@ -2990,54 +2991,41 @@ function printDashboard() {
     });
 
     const printWindow = window.open('', '_blank');
-    printWindow.document.write(`<!DOCTYPE html>
-<html>
-<head>
-    <title>Dashboard - ${namaInstansi}</title>
-    <meta charset="UTF-8">
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>Dashboard</title><meta charset="UTF-8">
     <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: Arial, sans-serif; padding: 30px; color: #222; }
-        .no-print { display: block; }
-        h1 { color: #0D5C4A; font-size: 22px; margin-bottom: 4px; }
-        .sub { color: #666; font-size: 13px; margin-bottom: 24px; }
-        .stats { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
-        .stat-box { flex:1; min-width: 120px; background: #f0f7f4; border-radius: 10px; padding: 16px; text-align: center; border-left: 4px solid #0D5C4A; }
-        .stat-box .label { font-size: 11px; color: #666; margin-bottom: 6px; }
-        .stat-box .value { font-size: 18px; font-weight: bold; color: #0D5C4A; }
-        h2 { font-size: 15px; color: #0D5C4A; margin-bottom: 12px; border-bottom: 2px solid #0D5C4A; padding-bottom: 6px; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #0D5C4A; color: white; padding: 8px 12px; text-align: left; font-size: 13px; }
-        td { padding: 8px 12px; border-bottom: 1px solid #eee; font-size: 13px; }
-        tr:nth-child(even) td { background: #f9f9f9; }
-        .footer { margin-top: 24px; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #ddd; padding-top: 12px; }
-        @media print {
-            .no-print { display: none !important; }
-            body { padding: 10px; }
-        }
-    </style>
-</head>
-<body>
-    <h1>Dashboard - ${escapeHtml(namaInstansi)}</h1>
-    <div class="sub">Dicetak: ${tanggal}</div>
-    <div class="stats">
-        <div class="stat-box"><div class="label">TOTAL KAS</div><div class="value">Rp ${formatRupiah(totalKas)}</div></div>
-        <div class="stat-box"><div class="label">TOTAL JAMAAH</div><div class="value">${totalJamaah}</div></div>
-        <div class="stat-box"><div class="label">JAMAAH LUNAS</div><div class="value">${totalLunas}</div></div>
-        <div class="stat-box"><div class="label">TOTAL PIUTANG</div><div class="value">Rp ${formatRupiah(totalPiutang)}</div></div>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px;}
+        .box{background:white;max-width:800px;margin:0 auto;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);}
+        .tgl{color:#aaa;font-size:11px;margin-bottom:20px;}
+        .stats{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap;}
+        .stat-box{flex:1;min-width:120px;background:#f0f7f4;border-radius:10px;padding:16px;text-align:center;border-left:4px solid #0D5C4A;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+        .stat-box .label{font-size:11px;color:#666;margin-bottom:6px;}
+        .stat-box .value{font-size:18px;font-weight:bold;color:#0D5C4A;}
+        h2{font-size:15px;color:#0D5C4A;margin-bottom:12px;border-bottom:2px solid #0D5C4A;padding-bottom:6px;}
+        table{width:100%;border-collapse:collapse;}
+        th{background:#0D5C4A;color:white;padding:8px 12px;text-align:left;font-size:13px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+        td{padding:8px 12px;border-bottom:1px solid #eee;font-size:13px;}
+        tr:nth-child(even) td{background:#f9f9f9;}
+        .no-print{text-align:center;margin-top:24px;}
+        .no-print button{padding:12px 32px;margin:0 8px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}
+        @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}body{background:white;padding:0;}.box{box-shadow:none;border-radius:0;}.no-print{display:none!important;}}
+    </style></head><body>
+    <div class="box">
+        ${headerHtml}
+        <div class="tgl">Tanggal Cetak: ${tanggal}</div>
+        <div class="stats">
+            <div class="stat-box"><div class="label">TOTAL KAS</div><div class="value">Rp ${formatRupiah(totalKas)}</div></div>
+            <div class="stat-box"><div class="label">TOTAL JAMAAH</div><div class="value">${totalJamaah}</div></div>
+            <div class="stat-box"><div class="label">JAMAAH LUNAS</div><div class="value">${totalLunas}</div></div>
+            <div class="stat-box"><div class="label">TOTAL PIUTANG</div><div class="value">Rp ${formatRupiah(totalPiutang)}</div></div>
+        </div>
+        <h2>5 JAMAAH DENGAN TAGIHAN TERBESAR</h2>
+        <table><thead><tr><th>No</th><th>Nama Jamaah</th><th>Total Paket</th><th>Sisa Tagihan</th></tr></thead><tbody>${topHtml}</tbody></table>
+        ${qrHtml}
     </div>
-    <h2>5 JAMAAH DENGAN TAGIHAN TERBESAR</h2>
-    <table>
-        <thead><tr><th>No</th><th>Nama Jamaah</th><th>Total Paket</th><th>Sisa Tagihan</th></tr></thead>
-        <tbody>${topHtml}</tbody>
-    </table>
-    <div class="footer">${escapeHtml(namaInstansi)} | ${tanggal}</div>
-    <div class="no-print" style="text-align:center; margin-top:24px;">
-        <button onclick="window.print()" style="padding:10px 30px; background:#0D5C4A; color:white; border:none; border-radius:8px; cursor:pointer; margin-right:10px;">PRINT</button>
-        <button onclick="window.close()" style="padding:10px 30px; background:#ccc; border:none; border-radius:8px; cursor:pointer;">TUTUP</button>
-    </div>
-</body>
-</html>`);
+    <div class="no-print"><button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button><button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button></div>
+    <script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script>
+    </body></html>`);
     printWindow.document.close();
 }
 
@@ -3161,19 +3149,39 @@ function salinRingkasan() {
 async function cetakEstimasiPDFJamaah() {
     if(!lastCalculatedPrice) { showToast('Silakan hitung estimasi dulu!'); return; }
     const f = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
-    const namaInstansi = getKonfigurasiProData().instansi1.nama || 'Safara';
+    const cfg = getKonfigurasiProData();
     const tgl = new Date().toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Harga Paket</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px;display:flex;justify-content:center;align-items:center;min-height:100vh;}.box{background:white;width:100%;max-width:480px;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);text-align:center;}h2{color:#0D5C4A;font-size:20px;margin-bottom:6px;}h2 span{font-size:12px;color:#888;display:block;margin-top:4px;}.divider{border:none;border-top:2px solid #0D5C4A;margin:20px 0;}.harga{font-size:32px;font-weight:bold;color:#0D5C4A;margin:20px 0;}.info{color:#555;font-size:13px;line-height:1.8;margin-bottom:16px;}.note{font-size:11px;color:#999;margin-top:16px;}.no-print{text-align:center;margin-top:24px;}.no-print button{padding:12px 32px;margin:0 8px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}@media print{body{background:white;}.box{box-shadow:none;}.no-print{display:none!important;}}</style></head><body><div class="box"><h2>INFORMASI HARGA PAKET<span>${namaInstansi}</span></h2><div class="info"><div><strong>Paket :</strong> ${lastCalculatedPaket}</div><div><strong>Jamaah :</strong> ${lastCalculatedTotalJam} orang</div><div><strong>Tanggal :</strong> ${tgl}</div></div><hr class="divider"><div class="harga">${f(lastCalculatedPrice)}</div><div style="color:#888;font-size:13px;">Harga Per Pax</div><div class="note">*Harga sudah termasuk semua komponen paket<br>*Hubungi admin untuk informasi lebih lanjut</div></div><div class="no-print"><button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button><button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button></div><script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script></body></html>`;
+    const headerHtml = buildPrintHeader(cfg, tgl);
+    const watermarkHtml = buildPrintWatermark(cfg);
+    const qrHtml = await buildPrintQR(cfg, `Harga Paket: ${lastCalculatedPaket}\nHarga/Pax: ${f(lastCalculatedPrice)}\nTanggal: ${tgl}`);
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Harga Paket</title>
+    <style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px;}.box{background:white;max-width:480px;margin:0 auto;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);position:relative;overflow:hidden;}.watermark-wrap{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;}.content{position:relative;z-index:1;text-align:center;}h2{color:#0D5C4A;font-size:20px;margin-bottom:16px;}.divider{border:none;border-top:2px solid #0D5C4A;margin:20px 0;}.harga{font-size:32px;font-weight:bold;color:#0D5C4A;margin:20px 0;}.info{color:#555;font-size:13px;line-height:1.8;margin-bottom:16px;text-align:left;}.note{font-size:11px;color:#999;margin-top:16px;}.no-print{text-align:center;margin-top:24px;}.no-print button{padding:12px 32px;margin:0 8px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}body{background:white;padding:0;}.box{box-shadow:none;border-radius:0;}.no-print{display:none!important;}}
+    </style></head><body>
+    <div class="box">
+        <div class="watermark-wrap">${watermarkHtml}</div>
+        <div class="content">
+            ${headerHtml}
+            <h2>INFORMASI HARGA PAKET</h2>
+            <div class="info"><div><strong>Paket &nbsp;&nbsp;:</strong> ${lastCalculatedPaket}</div><div><strong>Jamaah :</strong> ${lastCalculatedTotalJam} orang</div><div><strong>Tanggal :</strong> ${tgl}</div></div>
+            <hr class="divider">
+            <div class="harga">${f(lastCalculatedPrice)}</div>
+            <div style="color:#888;font-size:13px;">Harga Per Pax</div>
+            <div class="note">*Harga sudah termasuk semua komponen paket<br>*Hubungi admin untuk informasi lebih lanjut</div>
+            ${qrHtml}
+        </div>
+    </div>
+    <div class="no-print"><button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button><button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button></div>
+    <script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script>
+    </body></html>`;
     const win = window.open('','_blank');
     if(!win) return showToast('Izinkan popup untuk cetak!');
-    win.document.write(html);
-    win.document.close();
+    win.document.write(html); win.document.close();
 }
 
 async function cetakEstimasiPDFInternal() {
     if(!lastCalculatedPrice) { showToast('Silakan hitung estimasi dulu!'); return; }
     const f = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
-    const namaInstansi = getKonfigurasiProData().instansi1.nama || 'Safara';
+    const cfg = getKonfigurasiProData();
     const tgl = new Date().toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
     const est = JSON.parse(localStorage.getItem('safara_estimasi_data') || '{}');
     const pr = v => parseInt((v||'0').toString().replace(/\./g,'').replace(/[^0-9]/g,'')) || 0;
@@ -3191,11 +3199,28 @@ async function cetakEstimasiPDFInternal() {
     items.forEach(([label, val]) => {
         if(val > 0) komponenHtml += `<tr><td style="padding:8px;border-bottom:1px solid #eee;">${label}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${f(val)}</td></tr>`;
     });
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Estimasi Internal</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px;}.box{background:white;max-width:520px;margin:0 auto;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);}h2{color:#0D5C4A;font-size:18px;margin-bottom:2px;}.konfidensial{color:#e74c3c;font-size:11px;font-style:italic;margin-bottom:16px;}.info{font-size:13px;color:#555;line-height:2;margin-bottom:16px;}table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px;}th{background:#0D5C4A;color:white;padding:10px 8px;text-align:left;}th:last-child{text-align:right;}.summary{background:#f8f8f8;border-radius:10px;padding:16px;font-size:13px;line-height:2.2;}.harga-jual{font-size:18px;font-weight:bold;color:#0D5C4A;margin-top:12px;border-top:2px solid #0D5C4A;padding-top:12px;}.no-print{text-align:center;margin-top:24px;}.no-print button{padding:12px 32px;margin:0 8px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}@media print{body{background:white;padding:0;}.box{box-shadow:none;border-radius:0;}.no-print{display:none!important;}}</style></head><body><div class="box"><h2>RINCIAN ESTIMASI INTERNAL</h2><div class="konfidensial">⚠️ Hanya Untuk Internal</div><div class="info"><div><strong>Paket :</strong> ${lastCalculatedPaket}</div><div><strong>Jamaah :</strong> ${nJam} orang (${nFoc} gratis, ${nTL} TL)</div><div><strong>Tanggal :</strong> ${tgl}</div></div><table><thead><tr><th>Komponen Biaya</th><th style="text-align:right;">Per Pax</th></tr></thead><tbody>${komponenHtml}<tr style="font-weight:bold;background:#f0f7f4;"><td style="padding:10px 8px;">Modal Pokok / Pax</td><td style="padding:10px 8px;text-align:right;">${f(sub)}</td></tr></tbody></table><div class="summary"><div>Profit (${est.profitPct||0}%) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong>${f(profitKotor)}</strong></div><div>Biaya TL (${nTL} orang) : <strong style="color:#e74c3c;">- ${f(biayaTL)}</strong></div><div>Profit Bersih &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong style="color:#10B981;">${f(profitBersih)}</strong></div><div>Profit Per Pax &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong style="color:#10B981;">${f(profitPerPax)}</strong></div><div class="harga-jual">HARGA JUAL PER PAX: ${f(lastCalculatedPrice)}</div></div></div><div class="no-print"><button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button><button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button></div><script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script></body></html>`;
+    const headerHtml = buildPrintHeader(cfg, tgl);
+    const ttdHtml = buildPrintTandaTangan(cfg, tgl);
+    const qrHtml = await buildPrintQR(cfg, `Estimasi Internal: ${lastCalculatedPaket}\nHarga Jual: ${f(lastCalculatedPrice)}\nTanggal: ${tgl}`);
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Estimasi Internal</title>
+    <style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px;}.box{background:white;max-width:520px;margin:0 auto;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);}h2{color:#0D5C4A;font-size:18px;margin-bottom:2px;}.konfidensial{color:#e74c3c;font-size:11px;font-style:italic;margin-bottom:16px;}.info{font-size:13px;color:#555;line-height:2;margin-bottom:16px;}table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px;}th{background:#0D5C4A;color:white;padding:10px 8px;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact;}th:last-child{text-align:right;}.summary{background:#f8f8f8;border-radius:10px;padding:16px;font-size:13px;line-height:2.2;}.harga-jual{font-size:18px;font-weight:bold;color:#0D5C4A;margin-top:12px;border-top:2px solid #0D5C4A;padding-top:12px;}.no-print{text-align:center;margin-top:24px;}.no-print button{padding:12px 32px;margin:0 8px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}body{background:white;padding:0;}.box{box-shadow:none;border-radius:0;}.no-print{display:none!important;}}
+    </style></head><body>
+    <div class="box">
+        ${headerHtml}
+        <h2>RINCIAN ESTIMASI INTERNAL</h2>
+        <div class="konfidensial">⚠️ Hanya Untuk Internal</div>
+        <div class="info"><div><strong>Paket :</strong> ${lastCalculatedPaket}</div><div><strong>Jamaah :</strong> ${nJam} orang (${nFoc} gratis, ${nTL} TL)</div><div><strong>Tanggal :</strong> ${tgl}</div></div>
+        <table><thead><tr><th>Komponen Biaya</th><th style="text-align:right;">Per Pax</th></tr></thead><tbody>${komponenHtml}<tr style="font-weight:bold;background:#f0f7f4;"><td style="padding:10px 8px;">Modal Pokok / Pax</td><td style="padding:10px 8px;text-align:right;">${f(sub)}</td></tr></tbody></table>
+        <div class="summary"><div>Profit (${est.profitPct||0}%) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong>${f(profitKotor)}</strong></div><div>Biaya TL (${nTL} orang) : <strong style="color:#e74c3c;">- ${f(biayaTL)}</strong></div><div>Profit Bersih &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong style="color:#10B981;">${f(profitBersih)}</strong></div><div>Profit Per Pax &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong style="color:#10B981;">${f(profitPerPax)}</strong></div><div class="harga-jual">HARGA JUAL PER PAX: ${f(lastCalculatedPrice)}</div></div>
+        ${ttdHtml}
+        ${qrHtml}
+    </div>
+    <div class="no-print"><button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button><button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button></div>
+    <script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script>
+    </body></html>`;
     const win = window.open('','_blank');
     if(!win) return showToast('Izinkan popup untuk cetak!');
-    win.document.write(html);
-    win.document.close();
+    win.document.write(html); win.document.close();
 }
 
 function resetEstimasiToDefault() { 
@@ -4429,7 +4454,6 @@ function hitungZakat(){
 
 function salinRingkasanZakat(){ 
     if(!lastZakatText) return showToast('Silakan hitung zakat dulu!');
-    // Kompatibel iPhone Safari
     if(navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(lastZakatText)
             .then(()=>showToast('Ringkasan zakat tersalin!'))
@@ -4437,6 +4461,77 @@ function salinRingkasanZakat(){
     } else {
         salinFallback(lastZakatText);
     }
+}
+
+async function cetakLaporanZakat() {
+    if(sumberHartaList.length === 0) return showToast('Tambah dan hitung zakat dulu!');
+    const cfg = getKonfigurasiProData();
+    const tgl = new Date().toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
+    const jenis = document.getElementById('jenisZakat').value;
+    const jenisLabel = jenis==='mal'?'Zakat Mal (Harta/Uang)':jenis==='pertanian'?'Zakat Pertanian':'Zakat Perdagangan';
+    const hargaEmas = parseInt((document.getElementById('hargaEmas')?.value||'1200000').replace(/\./g,'').replace(/[^0-9]/g,''));
+    const nisab = 85 * hargaEmas;
+    let totalHarta = 0, totalZakat = 0;
+    let rowsHtml = '';
+    sumberHartaList.forEach((s, i) => {
+        if(s.jumlah > 0 && s.persen > 0) {
+            const zakat = (s.jumlah * s.persen) / 100;
+            totalHarta += s.jumlah;
+            totalZakat += zakat;
+            rowsHtml += `<tr><td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${i+1}</td><td style="padding:8px;border-bottom:1px solid #eee;">${s.nama||'Sumber'}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">Rp ${s.jumlah.toLocaleString('id-ID')}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${s.persen}%</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right;font-weight:bold;color:#0D5C4A;">Rp ${zakat.toLocaleString('id-ID')}</td></tr>`;
+        }
+    });
+    const statusWajib = totalHarta >= nisab;
+    const statusColor = statusWajib ? '#10B981' : '#EF4444';
+    const statusLabel = statusWajib ? '✅ WAJIB ZAKAT' : '❌ BELUM MENCAPAI NISAB';
+    const headerHtml = buildPrintHeader(cfg, tgl);
+    const ttdHtml = buildPrintTandaTangan(cfg, tgl);
+    const qrHtml = await buildPrintQR(cfg, `Laporan Zakat ${cfg.instansi1?.nama||'Safara'}\nTotal Zakat: Rp ${totalZakat.toLocaleString('id-ID')}\nTanggal: ${tgl}`);
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Laporan Zakat</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px;}
+        .box{background:white;max-width:680px;margin:0 auto;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);}
+        h2{color:#0D5C4A;font-size:20px;margin-bottom:2px;text-align:center;}
+        .tgl{text-align:center;color:#aaa;font-size:11px;margin-bottom:20px;}
+        .info{font-size:13px;color:#555;line-height:2;margin-bottom:16px;background:#f8f8f8;border-radius:10px;padding:12px;}
+        table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;}
+        th{background:#0D5C4A;color:white;padding:10px 8px;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+        tr:nth-child(even) td{background:#f9f9f9;}
+        .summary{background:#f8f8f8;border-radius:10px;padding:16px;font-size:13px;line-height:2.4;}
+        .status{font-size:18px;font-weight:bold;color:${statusColor};margin-top:10px;}
+        .no-print{text-align:center;margin-top:24px;}
+        .no-print button{padding:12px 32px;margin:0 8px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}
+        @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}body{background:white;padding:0;}.box{box-shadow:none;border-radius:0;}.no-print{display:none!important;}}
+    </style></head><body>
+    <div class="box">
+        ${headerHtml}
+        <h2>LAPORAN ZAKAT PERUSAHAAN</h2>
+        <div class="tgl">Tanggal Cetak: ${tgl}</div>
+        <div class="info">
+            <div><strong>Jenis Zakat &nbsp;:</strong> ${jenisLabel}</div>
+            <div><strong>Harga Emas &nbsp;:</strong> Rp ${hargaEmas.toLocaleString('id-ID')} / gram</div>
+            <div><strong>Nisab (85gr) :</strong> Rp ${nisab.toLocaleString('id-ID')}</div>
+        </div>
+        <table>
+            <thead><tr><th style="width:36px;">No</th><th>Sumber Harta</th><th style="text-align:right;">Jumlah</th><th style="text-align:center;">%</th><th style="text-align:right;">Zakat</th></tr></thead>
+            <tbody>${rowsHtml}</tbody>
+        </table>
+        <div class="summary">
+            <div>Total Harta &nbsp;&nbsp;: <strong>Rp ${totalHarta.toLocaleString('id-ID')}</strong></div>
+            <div>Total Zakat &nbsp;&nbsp;: <strong style="color:#0D5C4A;">Rp ${totalZakat.toLocaleString('id-ID')}</strong></div>
+            <div>Harta Bersih : <strong>Rp ${(totalHarta-totalZakat).toLocaleString('id-ID')}</strong></div>
+            <div class="status">${statusLabel}</div>
+        </div>
+        ${ttdHtml}
+        ${qrHtml}
+    </div>
+    <div class="no-print"><button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button><button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button></div>
+    <script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script>
+    </body></html>`;
+    const win = window.open('','_blank');
+    if(!win) return showToast('Izinkan popup untuk cetak!');
+    win.document.write(html); win.document.close();
 }
 
 function salinFallback(text) {
@@ -7495,4 +7590,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-                    </html>
+                                                                                </html>
