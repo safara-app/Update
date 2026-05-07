@@ -1969,12 +1969,12 @@
             </button>
             <div class="export-dropdown-menu" id="exportMenuKas">
                 <div class="export-menu-item" onclick="exportKasPDF(); toggleExportDropdown('exportMenuKas')">
-                    <div class="export-icon export-icon-pdf">📄</div>
-                    <div><div class="export-label">Download PDF</div><div class="export-desc">Laporan kas format PDF</div></div>
-                </div>
-                <div class="export-menu-item" onclick="toggleExportDropdown('exportMenuKas'); cetakDariBlob(generateKasPDFBlob);">
                     <div class="export-icon export-icon-cetak">🖨️</div>
                     <div><div class="export-label">Cetak</div><div class="export-desc">Cetak laporan kas</div></div>
+                </div>
+                <div class="export-menu-item" onclick="toggleExportDropdown('exportMenuKas'); cetakDariBlob(generateKasPDFBlob);">
+                    <div class="export-icon export-icon-pdf">📄</div>
+                    <div><div class="export-label">Download PDF</div><div class="export-desc">Laporan kas format PDF</div></div>
                 </div>
                 <div class="export-menu-item" onclick="exportKasExcel(); toggleExportDropdown('exportMenuKas')">
                     <div class="export-icon export-icon-excel">📊</div>
@@ -2123,17 +2123,13 @@
                 <i class="fas fa-download"></i> Export <i class="fas fa-chevron-up" style="font-size:11px;"></i>
             </button>
             <div class="export-dropdown-menu" id="exportMenuPembayaran">
-                <div class="export-menu-item" onclick="showPreviewPDF('Laporan Pembayaran', generatePaymentPDFBlob, exportPaymentPDF); toggleExportDropdown('exportMenuPembayaran')">
-                    <div class="export-icon" style="background:#ede9fe;">👁️</div>
-                    <div><div class="export-label">Preview</div><div class="export-desc">Lihat sebelum download</div></div>
-                </div>
                 <div class="export-menu-item" onclick="exportPaymentPDF(); toggleExportDropdown('exportMenuPembayaran')">
-                    <div class="export-icon export-icon-pdf">📄</div>
-                    <div><div class="export-label">Download PDF</div><div class="export-desc">Laporan pembayaran format PDF</div></div>
-                </div>
-                <div class="export-menu-item" onclick="cetakDariBlob(generatePaymentPDFBlob); toggleExportDropdown('exportMenuPembayaran')">
                     <div class="export-icon export-icon-cetak">🖨️</div>
                     <div><div class="export-label">Cetak</div><div class="export-desc">Cetak laporan pembayaran</div></div>
+                </div>
+                <div class="export-menu-item" onclick="cetakDariBlob(generatePaymentPDFBlob); toggleExportDropdown('exportMenuPembayaran')">
+                    <div class="export-icon export-icon-pdf">📄</div>
+                    <div><div class="export-label">Download PDF</div><div class="export-desc">Laporan pembayaran format PDF</div></div>
                 </div>
                 <div class="export-menu-item" onclick="exportPaymentExcel(); toggleExportDropdown('exportMenuPembayaran')">
                     <div class="export-icon export-icon-excel">📊</div>
@@ -2166,17 +2162,13 @@
                 <i class="fas fa-download"></i> Export <i class="fas fa-chevron-up" style="font-size:11px;"></i>
             </button>
             <div class="export-dropdown-menu" id="exportMenuMaster">
-                <div class="export-menu-item" onclick="showPreviewPDF('Multi Event', generateMasterPDFBlob, exportMasterPDF); toggleExportDropdown('exportMenuMaster')">
-                    <div class="export-icon" style="background:#ede9fe;">👁️</div>
-                    <div><div class="export-label">Preview</div><div class="export-desc">Lihat sebelum download</div></div>
-                </div>
                 <div class="export-menu-item" onclick="exportMasterPDF(); toggleExportDropdown('exportMenuMaster')">
-                    <div class="export-icon export-icon-pdf">📄</div>
-                    <div><div class="export-label">Download PDF</div><div class="export-desc">Data multi event format PDF</div></div>
-                </div>
-                <div class="export-menu-item" onclick="cetakDariBlob(generateMasterPDFBlob); toggleExportDropdown('exportMenuMaster')">
                     <div class="export-icon export-icon-cetak">🖨️</div>
                     <div><div class="export-label">Cetak</div><div class="export-desc">Cetak data multi event</div></div>
+                </div>
+                <div class="export-menu-item" onclick="cetakDariBlob(generateMasterPDFBlob); toggleExportDropdown('exportMenuMaster')">
+                    <div class="export-icon export-icon-pdf">📄</div>
+                    <div><div class="export-label">Download PDF</div><div class="export-desc">Data multi event format PDF</div></div>
                 </div>
                 <div class="export-menu-item" onclick="exportMasterExcel(); toggleExportDropdown('exportMenuMaster')">
                     <div class="export-icon export-icon-excel">📊</div>
@@ -7185,4 +7177,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-    </html>
+            </html>
