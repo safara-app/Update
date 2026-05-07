@@ -2032,7 +2032,7 @@
         <div class="section-title"><span>📋 TAMBAH DATA</span></div>
         <div class="input-group">
             <label>Pilih Jamaah dari database</label>
-            <select id="pilihJamaahKita"></select>
+            <select id="pilihJamaahKita" onchange="autoFillJamaahKitaFields(this.value)"></select>
         </div>
         <div id="jamaahKitaDynamicFields"></div>
         <button class="btn btn-accent" onclick="tambahJamaahKita()" style="margin-top:16px;">
@@ -3868,6 +3868,45 @@ function renderJamaahKitaDynamicFieldsForm() {
         }
     });
     container.innerHTML = html;
+}
+
+function autoFillJamaahKitaFields(selectedIndex) {
+    if (!selectedIndex) {
+        // Reset semua field kalau tidak ada yang dipilih
+        dynamicFieldsJamaahKita.forEach(field => {
+            const input = document.getElementById(`jamaahKitaField_${field.name}`);
+            if (input) input.value = '';
+        });
+        return;
+    }
+    const jamaah = jamaahList[parseInt(selectedIndex)];
+    if (!jamaah) return;
+
+    // Gabungkan semua sumber field dari database jamaah
+    const dbFields = jamaah.additional_fields || {};
+
+    // Auto-fill setiap field On Proses dari database
+    dynamicFieldsJamaahKita.forEach(field => {
+        const input = document.getElementById(`jamaahKitaField_${field.name}`);
+        if (!input) return;
+
+        // Coba cocokkan nama field secara exact, lalu coba fuzzy match
+        let val = '';
+        if (dbFields[field.name] !== undefined && dbFields[field.name] !== '') {
+            val = dbFields[field.name];
+        } else {
+            // Coba cari field dengan nama mirip (case-insensitive)
+            const key = Object.keys(dbFields).find(k =>
+                k.toLowerCase().replace(/[_\s]/g,'') === field.name.toLowerCase().replace(/[_\s]/g,'')
+                || k.toLowerCase().includes(field.name.toLowerCase())
+                || field.name.toLowerCase().includes(k.toLowerCase())
+            );
+            if (key) val = dbFields[key];
+        }
+        input.value = val;
+    });
+
+    showToast('✅ Data jamaah berhasil dimuat!');
 }
 
 function tambahJamaahKita() {
@@ -7246,4 +7285,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-                    </html>
+    </html>
