@@ -2197,6 +2197,7 @@
             <div class="row"><div class="config-row"><label>Telepon</label><input type="text" id="cfg_telp1" placeholder="081391485440"></div><div class="config-row"><label>Email</label><input type="email" id="cfg_email1"></div></div>
             <div class="row"><div class="config-row"><label>NPWP</label><input type="text" id="cfg_npwp1"></div><div class="config-row"><label>Website</label><input type="text" id="cfg_web1"></div></div>
             <div class="row"><div class="config-row"><label>Pimpinan</label><input type="text" id="cfg_pimpinan1" placeholder="Ali mashar"></div><div class="config-row"><label>Jabatan</label><input type="text" id="cfg_jabatan1" placeholder="Admin"></div></div>
+            <div class="config-row"><label>Kota (untuk tanda tangan)</label><input type="text" id="cfg_kota1" placeholder="Surabaya"></div>
         </div>
         <div class="config-section"><h3><i class="fas fa-mosque"></i> Data Instansi Kedua</h3>
             <div class="config-row" style="display:flex; justify-content:space-between; align-items:center;"><label>Aktifkan Instansi Kedua</label><label class="switch"><input type="checkbox" id="cfg_instansi2_aktif"><span class="slider"></span></label></div>
@@ -6068,15 +6069,25 @@ function buildPrintHeader(cfg, tanggal) {
 function buildPrintWatermark(cfg) {
     if (!cfg.watermark || !cfg.watermark.enabled) return '';
     const text = cfg.watermark.text || cfg.instansi1?.nama || 'DOKUMEN RESMI';
-    const opacity = cfg.watermark.opacity || 0.08;
+    const opacity = cfg.watermark.opacity || 0.15;
     const fontSize = cfg.watermark.fontsize || 60;
-    // Pakai absolute bukan fixed agar ikut tercetak
-    return `
-    <div style="position:absolute;top:45%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);
-        font-size:${fontSize}px;font-weight:bold;color:rgba(13,92,74,${opacity});
-        pointer-events:none;white-space:nowrap;z-index:0;user-select:none;width:100%;text-align:center;">
-        ${text}
-    </div>`;
+    const posisi = cfg.watermark.position || 'diagonal';
+
+    if (posisi === 'diagonal') {
+        return `<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);font-size:${fontSize}px;font-weight:bold;color:rgba(13,92,74,${opacity});pointer-events:none;white-space:nowrap;z-index:0;user-select:none;width:150%;text-align:center;">${text}</div>`;
+    } else if (posisi === 'center') {
+        return `<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:${fontSize}px;font-weight:bold;color:rgba(13,92,74,${opacity});pointer-events:none;white-space:nowrap;z-index:0;user-select:none;text-align:center;">${text}</div>`;
+    } else if (posisi === 'tile') {
+        // Tile: watermark berulang
+        let tiles = '';
+        for(let r=0; r<6; r++) {
+            for(let c=0; c<3; c++) {
+                tiles += `<div style="position:absolute;top:${r*18}%;left:${c*35}%;font-size:${Math.round(fontSize*0.5)}px;font-weight:bold;color:rgba(13,92,74,${opacity});transform:rotate(-25deg);white-space:nowrap;user-select:none;">${text}</div>`;
+            }
+        }
+        return `<div style="position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;pointer-events:none;z-index:0;">${tiles}</div>`;
+    }
+    return '';
 }
 
 function buildPrintTandaTangan(cfg, tglCetak) {
@@ -6087,7 +6098,8 @@ function buildPrintTandaTangan(cfg, tglCetak) {
     if (!showPimpinan) return '';
 
     const ttdMode = s.ttd_mode || 'both';
-    const kota = i1.kota || 'Surabaya';
+    const kota = i1.kota || '';
+    const lokasiTgl = kota ? `${kota}, ${tglCetak}` : tglCetak;
 
     let pihak1 = '';
     let pihak2 = '';
@@ -6095,7 +6107,7 @@ function buildPrintTandaTangan(cfg, tglCetak) {
     if (ttdMode === 'both' || ttdMode === 'single') {
         pihak1 = `
         <div style="text-align:center;flex:1;">
-            <div style="font-size:12px;color:#555;">${kota}, ${tglCetak}</div>
+            <div style="font-size:12px;color:#555;">${lokasiTgl}</div>
             <div style="font-size:12px;color:#555;margin-bottom:60px;">Hormat kami,</div>
             <div style="border-top:1px solid #333;padding-top:6px;font-size:13px;font-weight:bold;">${i1.pimpinan||'Pimpinan'}</div>
             <div style="font-size:11px;color:#666;">${i1.jabatan||''}</div>
@@ -6106,7 +6118,7 @@ function buildPrintTandaTangan(cfg, tglCetak) {
     if (ttdMode === 'both' && i2.aktif && i2.pimpinan) {
         pihak2 = `
         <div style="text-align:center;flex:1;">
-            <div style="font-size:12px;color:#555;">${kota}, ${tglCetak}</div>
+            <div style="font-size:12px;color:#555;">${lokasiTgl}</div>
             <div style="font-size:12px;color:#555;margin-bottom:60px;">Mengetahui,</div>
             <div style="border-top:1px solid #333;padding-top:6px;font-size:13px;font-weight:bold;">${i2.pimpinan}</div>
             <div style="font-size:11px;color:#666;">${i2.jabatan||''}</div>
@@ -6808,6 +6820,7 @@ function loadKonfigurasiPro() {
     document.getElementById('cfg_web1').value = konfigurasiPro.instansi1.web || '';
     document.getElementById('cfg_pimpinan1').value = konfigurasiPro.instansi1.pimpinan || '';
     document.getElementById('cfg_jabatan1').value = konfigurasiPro.instansi1.jabatan || '';
+    document.getElementById('cfg_kota1').value = konfigurasiPro.instansi1.kota || '';
     if(konfigurasiPro.instansi1.logo) document.getElementById('previewLogo1').src = konfigurasiPro.instansi1.logo;
     document.getElementById('cfg_instansi2_aktif').checked = konfigurasiPro.instansi2.aktif || false;
     document.getElementById('cfg_nama2').value = konfigurasiPro.instansi2.nama || '';
@@ -6855,6 +6868,7 @@ function saveKonfigurasiPro() {
         web: document.getElementById('cfg_web1').value,
         pimpinan: document.getElementById('cfg_pimpinan1').value,
         jabatan: document.getElementById('cfg_jabatan1').value,
+        kota: document.getElementById('cfg_kota1').value,
         logo: document.getElementById('previewLogo1').src || ''
     };
     konfigurasiPro.instansi2 = {
@@ -7481,4 +7495,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-    </html>
+                    </html>
