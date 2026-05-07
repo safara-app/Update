@@ -1972,7 +1972,7 @@
                     <div class="export-icon export-icon-cetak">🖨️</div>
                     <div><div class="export-label">Cetak</div><div class="export-desc">Cetak laporan kas</div></div>
                 </div>
-                <div class="export-menu-item" onclick="toggleExportDropdown('exportMenuKas'); cetakDariBlob(generateKasPDFBlob);">
+                <div class="export-menu-item" onclick="toggleExportDropdown('exportMenuKas'); exportKasPDFDownload();">
                     <div class="export-icon export-icon-pdf">📄</div>
                     <div><div class="export-label">Download PDF</div><div class="export-desc">Laporan kas format PDF</div></div>
                 </div>
@@ -2127,7 +2127,7 @@
                     <div class="export-icon export-icon-cetak">🖨️</div>
                     <div><div class="export-label">Cetak</div><div class="export-desc">Cetak laporan pembayaran</div></div>
                 </div>
-                <div class="export-menu-item" onclick="cetakDariBlob(generatePaymentPDFBlob); toggleExportDropdown('exportMenuPembayaran')">
+                <div class="export-menu-item" onclick="exportPaymentPDFDownload(); toggleExportDropdown('exportMenuPembayaran')">
                     <div class="export-icon export-icon-pdf">📄</div>
                     <div><div class="export-label">Download PDF</div><div class="export-desc">Laporan pembayaran format PDF</div></div>
                 </div>
@@ -2166,7 +2166,7 @@
                     <div class="export-icon export-icon-cetak">🖨️</div>
                     <div><div class="export-label">Cetak</div><div class="export-desc">Cetak data multi event</div></div>
                 </div>
-                <div class="export-menu-item" onclick="cetakDariBlob(generateMasterPDFBlob); toggleExportDropdown('exportMenuMaster')">
+                <div class="export-menu-item" onclick="exportMasterPDFDownload(); toggleExportDropdown('exportMenuMaster')">
                     <div class="export-icon export-icon-pdf">📄</div>
                     <div><div class="export-label">Download PDF</div><div class="export-desc">Data multi event format PDF</div></div>
                 </div>
@@ -7136,6 +7136,75 @@ async function cetakDariBlob(generateFn) {
     }
 }
 
+// Download PDF langsung - KAS
+async function exportKasPDFDownload() {
+    if(dataKas.length===0) return showToast('Tidak ada data!');
+    showToast('Menyiapkan download...');
+    try {
+        const {jsPDF} = window.jspdf;
+        const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+        await applyPDFConfig(doc, { landscape: true });
+        const judul = document.getElementById('kegiatan').value.trim() || 'Laporan Kas';
+        let masuk=0, keluar=0;
+        dataKas.forEach(i=>{ if(i.tipe==='masuk') masuk+=i.nom; else keluar+=i.nom; });
+        doc.setFontSize(16); doc.setTextColor(26,93,74);
+        doc.text(judul + ' - LAPORAN KAS', 148.5, 65, { align: 'center' });
+        const tableData = dataKas.map(i=>[i.tgl, i.kegiatan||'-', i.ket.length>30?i.ket.substring(0,27)+'...':i.ket, i.tipe==='masuk'?'MASUK':'KELUAR', 'Rp '+i.nom.toLocaleString('id-ID')]);
+        doc.autoTable({startY:80, head:[['Tgl','Kegiatan','Keterangan','Tipe','Nominal']], body:tableData, theme:'striped', headStyles:{fillColor:[26,93,74]}, styles:{fontSize:8, lineWidth:0.1}});
+        let finalY = doc.lastAutoTable.finalY + 10;
+        doc.text('Total Pemasukan: Rp '+masuk.toLocaleString('id-ID'), 14, finalY);
+        doc.text('Total Pengeluaran: Rp '+keluar.toLocaleString('id-ID'), 14, finalY+7);
+        doc.setTextColor(26,93,74); doc.setFont('helvetica','bold');
+        doc.text('SALDO AKHIR: Rp '+(masuk-keluar).toLocaleString('id-ID'), 14, finalY+14);
+        doc.save(`${judul.replace(/\s+/g,'_')}_Laporan_Kas.pdf`);
+        showToast('✅ PDF berhasil didownload');
+    } catch(e) { showToast('Gagal download: '+e.message); }
+}
+
+// Download PDF langsung - PEMBAYARAN
+async function exportPaymentPDFDownload() {
+    if(paymentTransaksiList.length===0) return showToast('Tidak ada data transaksi!');
+    showToast('Menyiapkan download...');
+    try {
+        const {jsPDF} = window.jspdf;
+        const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+        await applyPDFConfig(doc, { landscape: true });
+        let totalMasuk = paymentTransaksiList.reduce((s,t)=>s+t.nominal,0);
+        doc.setFontSize(16); doc.setTextColor(26,93,74);
+        doc.text('LAPORAN PEMBAYARAN JAMAAH', 148.5, 65, { align: 'center' });
+        const tableData = paymentTransaksiList.map((t,i)=>[i+1, t.tanggal, t.nama_jamaah, t.keterangan, t.metode, formatRupiah(t.nominal)]);
+        doc.autoTable({startY:80, head:[['No','Tanggal','Jamaah','Keterangan','Metode','Nominal']], body:tableData, theme:'striped', headStyles:{fillColor:[26,93,74]}, styles:{fontSize:8, lineWidth:0.1}});
+        let finalY = doc.lastAutoTable.finalY + 10;
+        doc.text('TOTAL PEMASUKAN: '+formatRupiah(totalMasuk), 14, finalY);
+        doc.save(`Laporan_Pembayaran_${new Date().toLocaleDateString('id-ID').replace(/\//g,'-')}.pdf`);
+        showToast('✅ PDF berhasil didownload');
+    } catch(e) { showToast('Gagal download: '+e.message); }
+}
+
+// Download PDF langsung - MULTI EVENT
+async function exportMasterPDFDownload() {
+    if(masterDataList.length===0) return showToast('Tidak ada data!');
+    showToast('Menyiapkan download...');
+    try {
+        const {jsPDF} = window.jspdf;
+        const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+        await applyPDFConfig(doc, { landscape: true });
+        const judul = getMasterJudul();
+        doc.setFontSize(16); doc.setTextColor(26,93,74);
+        doc.text(judul, 148.5, 65, { align: 'center' });
+        const headers = ['No', 'Nama Lengkap', ...masterDynamicFields.map(f=>f.label), 'Item'];
+        const body = masterDataList.map((item,i)=>{
+            const row = [i+1, item.nama];
+            masterDynamicFields.forEach(f => row.push(item.additional_fields?.[f.name]||'-'));
+            row.push(item.items?.join(', ')||'-');
+            return row;
+        });
+        doc.autoTable({startY:80, head:[headers], body:body, theme:'striped', headStyles:{fillColor:[26,93,74]}, styles:{fontSize:8, lineWidth:0.1}});
+        doc.save(`${judul.replace(/\s+/g,'_')}.pdf`);
+        showToast('✅ PDF berhasil didownload');
+    } catch(e) { showToast('Gagal download: '+e.message); }
+}
+
 function cetakDariPreview() {
     const blobUrl = window._previewBlobUrl;
     if (!blobUrl) { showToast('Tidak ada preview untuk dicetak!'); return; }
@@ -7177,4 +7246,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-            </html>
+                    </html>
