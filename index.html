@@ -2032,10 +2032,16 @@
         <div class="section-title"><span>📋 TAMBAH DATA</span></div>
         <div class="input-group">
             <label>Pilih Jamaah dari database</label>
-            <select id="pilihJamaahKita" onchange="autoFillJamaahKitaFields(this.value)"></select>
+            <input type="text" id="searchJamaahKitaAdd" placeholder="🔍 Cari nama jamaah..." oninput="filterPilihJamaahKita()" style="margin-bottom:8px;">
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+                <button onclick="pilihSemuaJamaahKita()" style="flex:1;padding:8px;background:#0D5C4A;color:white;border:none;border-radius:8px;font-size:12px;cursor:pointer;">✅ Pilih Semua</button>
+                <button onclick="hapusPilihanJamaahKita()" style="flex:1;padding:8px;background:#e2e8f0;color:#333;border:none;border-radius:8px;font-size:12px;cursor:pointer;">❌ Hapus Pilihan</button>
+            </div>
+            <div id="multiSelectJamaahKita" style="max-height:220px;overflow-y:auto;border:1px solid #ddd;border-radius:10px;padding:8px;background:var(--card-bg);"></div>
+            <div id="jumlahDipilihKita" style="font-size:12px;color:#0D5C4A;margin-top:6px;font-weight:bold;"></div>
         </div>
         <div id="jamaahKitaDynamicFields"></div>
-        <button class="btn btn-accent" onclick="tambahJamaahKita()" style="margin-top:16px;">
+        <button class="btn btn-accent" onclick="tambahJamaahKitaMulti()" style="margin-top:16px;">
             <i class="fas fa-plus-circle"></i> TAMBAHKAN KE ON PROSES
         </button>
         <div class="section-title" style="margin-top:24px;"><span>📋 DAFTAR JAMAAH ON PROSES</span></div>
@@ -3928,13 +3934,92 @@ function saveDynamicFieldsJamaahKita() {
 }
 
 function renderPilihJamaahKita() {
-    const select = document.getElementById('pilihJamaahKita');
-    if (!select) return;
-    let html = '<option value="">-- Pilih Jamaah dari database --</option>';
-    jamaahList.forEach((j, idx) => {
-        html += `<option value="${idx}">${escapeHtml(j.nama_lengkap)}</option>`;
+    filterPilihJamaahKita();
+}
+
+function filterPilihJamaahKita() {
+    const q = (document.getElementById('searchJamaahKitaAdd')?.value || '').toLowerCase();
+    const container = document.getElementById('multiSelectJamaahKita');
+    if (!container) return;
+    const filtered = jamaahList.filter(j => j.nama_lengkap.toLowerCase().includes(q));
+    if (filtered.length === 0) {
+        container.innerHTML = '<div style="padding:10px;color:#999;text-align:center;font-size:13px;">Tidak ada jamaah ditemukan</div>';
+        return;
+    }
+    container.innerHTML = filtered.map((j, idx) => {
+        const sudahAda = jamaahKitaList.some(jk => jk.jamaahId === j.id);
+        return `<label style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid #eee;cursor:${sudahAda?'default':'pointer'};">
+            <input type="checkbox" value="${j.id}" ${sudahAda?'disabled checked':''}
+                onchange="updateJumlahDipilihKita()"
+                style="width:18px;height:18px;accent-color:#0D5C4A;cursor:${sudahAda?'default':'pointer'};">
+            <span style="font-size:13px;${sudahAda?'color:#aaa;':''}">
+                ${escapeHtml(j.nama_lengkap)}
+                ${sudahAda?'<span style="color:#10B981;font-size:11px;margin-left:4px;">✅ Sudah ada</span>':''}
+            </span>
+        </label>`;
+    }).join('');
+    updateJumlahDipilihKita();
+}
+
+function updateJumlahDipilihKita() {
+    const checked = document.querySelectorAll('#multiSelectJamaahKita input[type=checkbox]:checked:not(:disabled)');
+    const el = document.getElementById('jumlahDipilihKita');
+    if (el) el.textContent = checked.length > 0 ? `${checked.length} jamaah dipilih` : '';
+}
+
+function pilihSemuaJamaahKita() {
+    document.querySelectorAll('#multiSelectJamaahKita input[type=checkbox]:not(:disabled)').forEach(cb => cb.checked = true);
+    updateJumlahDipilihKita();
+}
+
+function hapusPilihanJamaahKita() {
+    document.querySelectorAll('#multiSelectJamaahKita input[type=checkbox]:not(:disabled)').forEach(cb => cb.checked = false);
+    updateJumlahDipilihKita();
+}
+
+function tambahJamaahKitaMulti() {
+    const checked = document.querySelectorAll('#multiSelectJamaahKita input[type=checkbox]:checked:not(:disabled)');
+    if (checked.length === 0) return showToast('Pilih minimal 1 jamaah!');
+    let berhasil = 0, duplikat = 0;
+    checked.forEach(cb => {
+        const jamaahId = parseInt(cb.value);
+        const jamaah = jamaahList.find(j => j.id === jamaahId);
+        if (!jamaah) return;
+        if (jamaahKitaList.some(j => j.jamaahId === jamaah.id)) { duplikat++; return; }
+        const additional = {};
+        // Auto-fill dari database
+        const dbFields = jamaah.additional_fields || {};
+        dynamicFieldsJamaahKita.forEach(field => {
+            let val = '';
+            if (dbFields[field.name] !== undefined && dbFields[field.name] !== '') {
+                val = dbFields[field.name];
+            } else {
+                const key = Object.keys(dbFields).find(k =>
+                    k.toLowerCase().replace(/[_\s]/g,'') === field.name.toLowerCase().replace(/[_\s]/g,'')
+                    || k.toLowerCase().includes(field.name.toLowerCase())
+                    || field.name.toLowerCase().includes(k.toLowerCase())
+                );
+                if (key) val = dbFields[key];
+            }
+            if (val) additional[field.name] = val;
+        });
+        if (!additional.whatsapp) {
+            additional.whatsapp = jamaah.additional_fields?.whatsapp || jamaah.additional_fields?.no_hp || jamaah.additional_fields?.telepon || '';
+        }
+        const now = new Date().toLocaleDateString('id-ID') + ' ' + new Date().toLocaleTimeString('id-ID');
+        jamaahKitaList.push({ id: Date.now() + berhasil, jamaahId: jamaah.id, nama_lengkap: jamaah.nama_lengkap, additional_fields: additional, created_at: now });
+        berhasil++;
     });
-    select.innerHTML = html;
+    if (berhasil > 0) {
+        saveJamaahKitaData();
+        renderJamaahKitaList();
+        filterPilihJamaahKita();
+        let msg = `✅ ${berhasil} jamaah berhasil ditambahkan!`;
+        if (duplikat > 0) msg += ` (${duplikat} sudah ada, dilewati)`;
+        showToast(msg);
+    } else {
+        showToast(`⚠️ ${duplikat} jamaah sudah ada di On Proses, tidak ada yang ditambahkan.`);
+    }
 }
 
 function renderJamaahKitaDynamicFieldsForm() {
@@ -5240,7 +5325,22 @@ function openFolderDetail(folderId) {
     const allJamaahFolder = JSON.parse(localStorage.getItem('safara_jamaah_list') || '[]');
     let jamaahInFolder = folder.jamaahIds.map(id => allJamaahFolder.find(j => j.id == id)).filter(j => j); 
     let availableJamaah = allJamaahFolder.filter(j => !folder.jamaahIds.includes(j.id)); 
-    let html = `<div class="card-premium"><div class="back-header" style="margin-bottom:15px;"><i class="fas fa-arrow-left" onclick="renderFolderList()" style="cursor:pointer;"></i><h3 style="flex:1; text-align:center;">📁 ${escapeHtml(folder.nama)}</h3><div style="width:30px;"></div></div><div class="input-group"><label>➕ Tambah Jamaah ke Folder</label><select id="addJamaahToFolderSelect"><option value="">-- Pilih Jamaah --</option>${availableJamaah.map(j => `<option value="${j.id}">${escapeHtml(j.nama_lengkap)}</option>`).join('')}</select><button class="btn btn-primary btn-small mt-2" onclick="addJamaahToFolder('${folderId}')">Tambah</button></div><div class="section-title">📋 Daftar Jamaah dalam Folder</div><div id="folderJamaahList">`; 
+    let html = `<div class="card-premium"><div class="back-header" style="margin-bottom:15px;"><i class="fas fa-arrow-left" onclick="renderFolderList()" style="cursor:pointer;"></i><h3 style="flex:1; text-align:center;">📁 ${escapeHtml(folder.nama)}</h3><div style="width:30px;"></div></div>
+    <div class="input-group"><label>➕ Tambah Jamaah ke Folder</label>
+    <input type="text" id="searchFolderJamaah" placeholder="🔍 Cari nama jamaah..." oninput="filterFolderJamaahSelect()" style="margin-bottom:8px;">
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <button onclick="pilihSemuaFolderJamaah()" style="flex:1;padding:8px;background:#0D5C4A;color:white;border:none;border-radius:8px;font-size:12px;cursor:pointer;">✅ Pilih Semua</button>
+        <button onclick="hapusPilihanFolderJamaah()" style="flex:1;padding:8px;background:#e2e8f0;color:#333;border:none;border-radius:8px;font-size:12px;cursor:pointer;">❌ Hapus Pilihan</button>
+    </div>
+    <div id="multiFolderJamaahSelect" style="max-height:200px;overflow-y:auto;border:1px solid #ddd;border-radius:10px;padding:8px;background:var(--card-bg);">${availableJamaah.map(j => `
+        <label style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid #eee;cursor:pointer;">
+            <input type="checkbox" value="${j.id}" onchange="updateJumlahDipilihFolder()" style="width:18px;height:18px;accent-color:#0D5C4A;cursor:pointer;">
+            <span style="font-size:13px;">${escapeHtml(j.nama_lengkap)}</span>
+        </label>`).join('')}</div>
+    <div id="jumlahDipilihFolder" style="font-size:12px;color:#0D5C4A;margin-top:6px;font-weight:bold;"></div>
+    <button class="btn btn-primary btn-small mt-2" onclick="addJamaahToFolderMulti('${folderId}')">➕ Tambahkan ke Folder</button>
+    </div>
+    <div class="section-title">📋 Daftar Jamaah dalam Folder</div><div id="folderJamaahList">`; 
     if(jamaahInFolder.length === 0) html += '<p class="text-center">Belum ada jamaah</p>'; 
     else jamaahInFolder.forEach(j => { 
         html += `<div class="jamaah-card"><div class="jamaah-header"><div class="jamaah-nama">👤 ${escapeHtml(j.nama_lengkap)}</div><button class="btn-delete-jamaah" onclick="removeJamaahFromFolder('${folderId}', ${j.id})">🗑️ Hapus dari folder</button></div></div>`; 
@@ -5270,8 +5370,60 @@ function openFolderDetail(folderId) {
     document.getElementById('folderListContainer').innerHTML = html; 
 }
 
+function filterFolderJamaahSelect() {
+    const q = (document.getElementById('searchFolderJamaah')?.value || '').toLowerCase();
+    document.querySelectorAll('#multiFolderJamaahSelect label').forEach(label => {
+        const nama = label.querySelector('span')?.textContent.toLowerCase() || '';
+        label.style.display = nama.includes(q) ? '' : 'none';
+    });
+}
+
+function pilihSemuaFolderJamaah() {
+    document.querySelectorAll('#multiFolderJamaahSelect input[type=checkbox]').forEach(cb => {
+        const label = cb.closest('label');
+        if (!label || label.style.display === 'none') return;
+        cb.checked = true;
+    });
+    updateJumlahDipilihFolder();
+}
+
+function hapusPilihanFolderJamaah() {
+    document.querySelectorAll('#multiFolderJamaahSelect input[type=checkbox]').forEach(cb => cb.checked = false);
+    updateJumlahDipilihFolder();
+}
+
+function updateJumlahDipilihFolder() {
+    const checked = document.querySelectorAll('#multiFolderJamaahSelect input[type=checkbox]:checked');
+    const el = document.getElementById('jumlahDipilihFolder');
+    if (el) el.textContent = checked.length > 0 ? `${checked.length} jamaah dipilih` : '';
+}
+
+function addJamaahToFolderMulti(folderId) {
+    const checked = document.querySelectorAll('#multiFolderJamaahSelect input[type=checkbox]:checked');
+    if (checked.length === 0) return showToast('Pilih minimal 1 jamaah!');
+    const folder = folderList.find(f => f.id == folderId);
+    if (!folder) return;
+    let berhasil = 0, duplikat = 0;
+    checked.forEach(cb => {
+        const jamaahId = parseInt(cb.value);
+        if (folder.jamaahIds.includes(jamaahId)) { duplikat++; return; }
+        folder.jamaahIds.push(jamaahId);
+        berhasil++;
+    });
+    if (berhasil > 0) {
+        saveFolderData();
+        openFolderDetail(folderId);
+        let msg = `✅ ${berhasil} jamaah ditambahkan ke folder!`;
+        if (duplikat > 0) msg += ` (${duplikat} sudah ada, dilewati)`;
+        showToast(msg);
+    } else {
+        showToast(`⚠️ Semua jamaah sudah ada di folder ini.`);
+    }
+}
+
 function addJamaahToFolder(folderId) { 
     const select = document.getElementById('addJamaahToFolderSelect'); 
+    if (!select) return;
     const jamaahId = parseInt(select.value); 
     if(!jamaahId) return showToast('Pilih jamaah!'); 
     const folder = folderList.find(f => f.id == folderId); 
@@ -7603,4 +7755,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-            </html>
+    </html>
