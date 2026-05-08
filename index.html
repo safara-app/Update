@@ -4234,13 +4234,23 @@ function printGroupedPDFJamaahKita() {
     });
     const sortedGroups = Object.keys(groups).sort((a, b) => { if (a === "Tidak diisi") return 1; if (b === "Tidak diisi") return -1; return a.localeCompare(b); });
     let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cetak Kelompok</title>
-    <style>body { font-family:Arial,sans-serif; padding:20px; } h1 { color:#0D5C4A; text-align:center; }
-    .date { text-align:center; margin-bottom:20px; color:#666; font-size:12px; }
-    .group { margin-bottom:30px; } .group-title { background:#0D5C4A; color:white; padding:8px 12px; border-radius:8px; margin-bottom:10px; font-weight:bold; }
-    table { width:100%; border-collapse:collapse; margin-bottom:20px; } th,td { border:1px solid #ddd; padding:8px; text-align:left; } th { background:#f0f0f0; }
-    .footer { text-align:center; margin-top:30px; font-size:11px; color:#999; border-top:1px solid #ddd; padding-top:10px; }
-    @media print { button { display:none; } }
-    </style></head><body>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:Arial,sans-serif;padding:20px;background:#f0f0f0;}
+        .box{background:white;max-width:900px;margin:0 auto;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,0.1);}
+        h1{color:#0D5C4A;text-align:center;font-size:22px;margin-bottom:6px;}
+        .date{text-align:center;margin-bottom:20px;color:#666;font-size:12px;}
+        .group{margin-bottom:24px;}
+        .group-title{background:#0D5C4A;color:white;padding:10px 14px;border-radius:8px;margin-bottom:10px;font-weight:bold;font-size:13px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+        table{width:100%;border-collapse:collapse;margin-bottom:8px;font-size:13px;}
+        th{background:#0D5C4A;color:white;padding:9px 8px;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+        td{border-bottom:1px solid #eee;padding:8px;}
+        tr:nth-child(even) td{background:#f9f9f9;}
+        .footer{text-align:center;margin-top:20px;font-size:11px;color:#999;border-top:1px solid #ddd;padding-top:10px;}
+        .no-print{text-align:center;margin-top:20px;}
+        .no-print button{padding:10px 28px;margin:0 6px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}
+        @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}body{background:white;padding:0;}.box{box-shadow:none;border-radius:0;}.no-print{display:none!important;}}
+    </style></head><body><div class="box">
     <h1>📋 DATA KELOMPOK JAMAAH</h1>
     <div class="date">Tanggal Cetak: ${new Date().toLocaleDateString("id-ID")}</div>
     <div class="date">Berdasarkan: ${groupField.icon || '📌'} ${escapeHtml(groupField.label)}</div>`;
@@ -4254,10 +4264,13 @@ function printGroupedPDFJamaahKita() {
         html += `</tbody></table></div>`;
     }
     html += `<div class="footer">Dicetak dari ${getKonfigurasiProData().instansi1.nama || 'Safara'}</div>
-    <div style="text-align:center;margin-top:20px;">
-        <button onclick="window.print()" style="padding:10px 30px;background:#0D5C4A;color:white;border:none;border-radius:8px;">🖨️ CETAK</button>
-        <button onclick="window.close()" style="padding:10px 30px;background:#ccc;border:none;border-radius:8px;margin-left:10px;">TUTUP</button>
-    </div></body></html>`;
+    </div>
+    <div class="no-print">
+        <button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button>
+        <button onclick="window.close()" style="background:#e2e8f0;color:#333;">TUTUP</button>
+    </div>
+    <script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script>
+    </body></html>`;
     const win = window.open("", "_blank");
     win.document.write(html);
     win.document.close();
@@ -5383,7 +5396,7 @@ async function exportFolderToPDF(folderId) {
     if(folder.fields && folder.fields.length > 0) {
         folder.fields.forEach(fd => { folderInfoHtml += `<div><strong>${fd.label}:</strong> ${fd.value}</div>`; });
     }
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Folder ${folder.nama}</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px;}.box{background:white;max-width:900px;margin:0 auto;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);}h2{color:#0D5C4A;font-size:20px;margin-bottom:4px;}.sub{color:#888;font-size:12px;margin-bottom:12px;}.folder-info{background:#f0f7f4;border-radius:10px;padding:12px;font-size:13px;line-height:1.9;margin-bottom:16px;color:#555;}table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px;}th{background:#0D5C4A;color:white;padding:10px 8px;text-align:left;}tr:nth-child(even) td{background:#f9f9f9;}.footer{text-align:center;font-size:11px;color:#999;margin-top:16px;}.no-print{text-align:center;margin-top:24px;}.no-print button{padding:12px 32px;margin:0 8px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}@media print{body{background:white;padding:0;}.box{box-shadow:none;border-radius:0;}.no-print{display:none!important;}}</style></head><body><div class="box"><h2>Folder: ${folder.nama}</h2><div class="sub">${namaInstansi} | Total: ${jamaahInFolder.length} jamaah | Dicetak: ${tanggal}</div>${folderInfoHtml?`<div class="folder-info">${folderInfoHtml}</div>`:''}<table><thead><tr>${thHtml}</tr></thead><tbody>${rowsHtml}</tbody></table><div class="footer">${namaInstansi} | ${tanggal}</div></div><div class="no-print"><button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button><button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button></div><script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script></body></html>`;
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Folder ${folder.nama}</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px;}.box{background:white;max-width:900px;margin:0 auto;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);}h2{color:#0D5C4A;font-size:20px;margin-bottom:4px;}.sub{color:#888;font-size:12px;margin-bottom:12px;}.folder-info{background:#f0f7f4;border-radius:10px;padding:12px;font-size:13px;line-height:1.9;margin-bottom:16px;color:#555;-webkit-print-color-adjust:exact;print-color-adjust:exact;}table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px;}th{background:#0D5C4A;color:white;padding:10px 8px;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact;}tr:nth-child(even) td{background:#f9f9f9;}.footer{text-align:center;font-size:11px;color:#999;margin-top:16px;}.no-print{text-align:center;margin-top:24px;}.no-print button{padding:12px 32px;margin:0 8px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}body{background:white;padding:0;}.box{box-shadow:none;border-radius:0;}.no-print{display:none!important;}}</style></head><body><div class="box"><h2>Folder: ${folder.nama}</h2><div class="sub">${namaInstansi} | Total: ${jamaahInFolder.length} jamaah | Dicetak: ${tanggal}</div>${folderInfoHtml?`<div class="folder-info">${folderInfoHtml}</div>`:''}<table><thead><tr>${thHtml}</tr></thead><tbody>${rowsHtml}</tbody></table><div class="footer">${namaInstansi} | ${tanggal}</div></div><div class="no-print"><button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button><button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button></div><script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script></body></html>`;
     const win = window.open('','_blank');
     if(!win) return showToast('Izinkan popup untuk cetak!');
     win.document.write(html);
@@ -7590,4 +7603,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-                                                                                </html>
+            </html>
