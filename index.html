@@ -2024,14 +2024,28 @@
             </div>
             <div style="margin-top:8px;">
                 <label style="font-size:12px;color:var(--gray);margin-bottom:4px;display:block;">Pilih Icon:</label>
-                <div id="iconPickerKita" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
-                    ${['📌','🛏️','🚌','🏨','📘','✈️','🗓️','👤','📞','🏷️','💳','🎫','🕌','📋','🔑','🌙','⭐','📍','🗺️','💼'].map(ic =>
-                        `<button type="button" onclick="selectIconKita('${ic}',this)"
-                            style="font-size:20px;padding:4px 8px;border:2px solid transparent;border-radius:8px;background:var(--card-bg);cursor:pointer;"
-                            data-icon="${ic}">${ic}</button>`
-                    ).join('')}
-                </div>
-                <div style="font-size:12px;color:var(--gray);">Icon dipilih: <span id="selectedIconKita" style="font-size:18px;">📌</span></div>
+                <select id="iconSelectKita" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;font-size:16px;margin-bottom:8px;">
+                    <option value="📌">📌 Pin (default)</option>
+                    <option value="🛏️">🛏️ Kamar</option>
+                    <option value="🚌">🚌 Bus</option>
+                    <option value="🏨">🏨 Hotel</option>
+                    <option value="📘">📘 Paspor/Dokumen</option>
+                    <option value="✈️">✈️ Penerbangan</option>
+                    <option value="🗓️">🗓️ Tanggal</option>
+                    <option value="👤">👤 Orang/Jamaah</option>
+                    <option value="📞">📞 Telepon</option>
+                    <option value="🏷️">🏷️ Label/Warna</option>
+                    <option value="💳">💳 Kartu</option>
+                    <option value="🎫">🎫 Tiket</option>
+                    <option value="🕌">🕌 Masjid</option>
+                    <option value="📋">📋 Daftar</option>
+                    <option value="🔑">🔑 Kunci/Akses</option>
+                    <option value="🌙">🌙 Malam</option>
+                    <option value="⭐">⭐ Bintang</option>
+                    <option value="📍">📍 Lokasi</option>
+                    <option value="🗺️">🗺️ Peta</option>
+                    <option value="💼">💼 Koper</option>
+                </select>
             </div>
             <button class="btn btn-primary btn-small mt-2" onclick="addJamaahKitaDynamicField()" style="width:100%;">+ Tambah Field</button>
             <div id="jamaahKitaFieldsListContainer" style="margin-top:12px;"></div>
@@ -4418,14 +4432,8 @@ function renderJamaahKitaFieldsList() {
     container.innerHTML = html;
 }
 
-function selectIconKita(icon, btn) {
-    document.querySelectorAll('#iconPickerKita button').forEach(b => b.style.borderColor = 'transparent');
-    btn.style.borderColor = '#0D5C4A';
-    document.getElementById('selectedIconKita').textContent = icon;
-}
-
 function getSelectedIconKita() {
-    return document.getElementById('selectedIconKita')?.textContent || '📌';
+    return document.getElementById('iconSelectKita')?.value || '📌';
 }
 
 function renderOnProsesFieldPrintSelector() {
@@ -4471,8 +4479,8 @@ function addJamaahKitaDynamicField() {
     document.getElementById('jamaahKitaNewFieldName').value = '';
     document.getElementById('jamaahKitaNewFieldLabel').value = '';
     // Reset icon ke default
-    document.querySelectorAll('#iconPickerKita button').forEach(b => b.style.borderColor = 'transparent');
-    if(document.getElementById('selectedIconKita')) document.getElementById('selectedIconKita').textContent = '📌';
+    const iconSelect = document.getElementById('iconSelectKita');
+    if(iconSelect) iconSelect.value = '📌';
     renderJamaahKitaFieldsList();
     renderJamaahKitaDynamicFieldsForm();
     renderOnProsesFieldPrintSelector();
