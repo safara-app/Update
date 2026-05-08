@@ -2021,12 +2021,27 @@
             <div class="row">
                 <input type="text" id="jamaahKitaNewFieldName" placeholder="Nama field (contoh: maskapai)" style="flex:2;">
                 <input type="text" id="jamaahKitaNewFieldLabel" placeholder="Label (contoh: Maskapai)" style="flex:2;">
-                <button class="btn btn-primary btn-small" onclick="addJamaahKitaDynamicField()" style="width:auto; padding:0 16px;">+ Tambah</button>
             </div>
+            <div style="margin-top:8px;">
+                <label style="font-size:12px;color:var(--gray);margin-bottom:4px;display:block;">Pilih Icon:</label>
+                <div id="iconPickerKita" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+                    ${['📌','🛏️','🚌','🏨','📘','✈️','🗓️','👤','📞','🏷️','💳','🎫','🕌','📋','🔑','🌙','⭐','📍','🗺️','💼'].map(ic =>
+                        `<button type="button" onclick="selectIconKita('${ic}',this)"
+                            style="font-size:20px;padding:4px 8px;border:2px solid transparent;border-radius:8px;background:var(--card-bg);cursor:pointer;"
+                            data-icon="${ic}">${ic}</button>`
+                    ).join('')}
+                </div>
+                <div style="font-size:12px;color:var(--gray);">Icon dipilih: <span id="selectedIconKita" style="font-size:18px;">📌</span></div>
+            </div>
+            <button class="btn btn-primary btn-small mt-2" onclick="addJamaahKitaDynamicField()" style="width:100%;">+ Tambah Field</button>
             <div id="jamaahKitaFieldsListContainer" style="margin-top:12px;"></div>
             <p style="font-size: 11px; color: var(--gray); margin-top: 12px;">
                 💡 Tips: Field WhatsApp tidak bisa dihapus. Yang lain bisa ditambah/dihapus.
             </p>
+            <div style="margin-top:16px;border-top:1px solid #eee;padding-top:12px;">
+                <div style="font-weight:bold;color:var(--primary);margin-bottom:8px;">📋 Pilih Field untuk Cetak</div>
+                <div id="onProsesFieldPrintSelector" style="display:flex;flex-direction:column;gap:8px;"></div>
+            </div>
             <button class="btn btn-danger btn-small mt-2" onclick="confirmDeleteAllJamaahKita()">🗑️ HAPUS SEMUA JAMAAH ON PROSES</button>
         </div>
         <div class="section-title"><span>📋 TAMBAH DATA</span></div>
@@ -2048,6 +2063,10 @@
         <div class="search-box">
             <input type="text" id="searchJamaahKitaInput" placeholder="Cari nama jamaah..." onkeyup="filterJamaahKitaList()">
             <button onclick="resetJamaahKitaFilter()" style="width:auto; padding:0 16px; background:var(--gray);">Reset</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+            <button onclick="pilihSemuaOnProses()" style="flex:1;padding:8px;background:#0D5C4A;color:white;border:none;border-radius:8px;font-size:12px;cursor:pointer;">✅ Pilih Semua</button>
+            <button onclick="hapusPilihanOnProses()" style="flex:1;padding:8px;background:#EF4444;color:white;border:none;border-radius:8px;font-size:12px;cursor:pointer;">🗑️ Hapus Dipilih</button>
         </div>
         <div id="jamaahKitaListContainer"></div>
         <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; align-items:stretch;">
@@ -2725,7 +2744,10 @@ function toggleAdminMode() {
     const jamaahPanel = document.getElementById('jamaahAdminPanel'); 
     if(jamaahPanel) jamaahPanel.style.display = isAdminModePremium ? 'block' : 'none'; 
     const jamaahKitaPanel = document.getElementById('jamaahKitaAdminPanel'); 
-    if(jamaahKitaPanel) jamaahKitaPanel.style.display = isAdminModePremium ? 'block' : 'none'; 
+    if(jamaahKitaPanel) {
+        jamaahKitaPanel.style.display = isAdminModePremium ? 'block' : 'none';
+        if(isAdminModePremium) renderOnProsesFieldPrintSelector();
+    }
     const masterPanel = document.getElementById('masterAdminPanel'); 
     if(masterPanel) masterPanel.style.display = isAdminModePremium ? 'block' : 'none'; 
     const dokumenPanel = document.getElementById('dokumenAdminPanel'); 
@@ -4138,6 +4160,22 @@ function renderJamaahKitaDetailFields(jk) {
 
 function filterJamaahKitaList() { renderJamaahKitaList(); }
 
+function pilihSemuaOnProses() {
+    document.querySelectorAll('#jamaahKitaListContainer input[type=checkbox]').forEach(cb => cb.checked = true);
+}
+
+function hapusPilihanOnProses() {
+    const checked = document.querySelectorAll('#jamaahKitaListContainer input[type=checkbox]:checked');
+    if (checked.length === 0) return showToast('Pilih jamaah yang mau dihapus dulu!');
+    if (!confirm(`Hapus ${checked.length} jamaah dari On Proses?`)) return;
+    const ids = Array.from(checked).map(cb => parseInt(cb.value));
+    jamaahKitaList = jamaahKitaList.filter(j => !ids.includes(j.id));
+    saveJamaahKitaData();
+    renderJamaahKitaList();
+    filterPilihJamaahKita();
+    showToast(`🗑️ ${ids.length} jamaah berhasil dihapus!`);
+}
+
 function resetJamaahKitaFilter() {
     document.getElementById('searchJamaahKitaInput').value = '';
     renderJamaahKitaList();
@@ -4311,6 +4349,11 @@ function printGroupedPDFJamaahKita() {
     const groupField = dynamicFieldsJamaahKita.find(f => f.name === fieldName);
     if (!groupField) { showToast('Field tidak ditemukan!'); closeGroupDialogJamaahKita(); return; }
     closeGroupDialogJamaahKita();
+
+    // Gunakan hanya field yang dipilih untuk dicetak
+    const printFieldNames = getOnProsesPrintFields();
+    const printFields = dynamicFieldsJamaahKita.filter(f => printFieldNames.includes(f.name));
+
     const groups = {};
     jamaahKitaList.forEach(jk => {
         const key = jk.additional_fields?.[groupField.name] || "Tidak diisi";
@@ -4342,9 +4385,9 @@ function printGroupedPDFJamaahKita() {
     for (const key of sortedGroups) {
         const members = groups[key];
         html += `<div class="group"><div class="group-title">${groupField.icon || '📌'} ${escapeHtml(groupField.label)}: ${escapeHtml(key)} (${members.length} orang)</div>
-        <table><thead><tr><th>No</th><th>Nama Jamaah</th>${dynamicFieldsJamaahKita.map(f => `<th>${f.icon || '📌'} ${escapeHtml(f.label)}</th>`).join("")}</tr></thead><tbody>`;
+        <table><thead><tr><th>No</th><th>Nama Jamaah</th>${printFields.map(f => `<th>${f.icon || '📌'} ${escapeHtml(f.label)}</th>`).join("")}</tr></thead><tbody>`;
         members.forEach((jk, i) => {
-            html += `<tr><td>${i+1}</td><td>${escapeHtml(jk.nama_lengkap)}</td>${dynamicFieldsJamaahKita.map(f => `<td>${escapeHtml(jk.additional_fields?.[f.name] || "-")}</td>`).join("")}</tr>`;
+            html += `<tr><td>${i+1}</td><td>${escapeHtml(jk.nama_lengkap)}</td>${printFields.map(f => `<td>${escapeHtml(jk.additional_fields?.[f.name] || "-")}</td>`).join("")}</tr>`;
         });
         html += `</tbody></table></div>`;
     }
@@ -4375,19 +4418,65 @@ function renderJamaahKitaFieldsList() {
     container.innerHTML = html;
 }
 
+function selectIconKita(icon, btn) {
+    document.querySelectorAll('#iconPickerKita button').forEach(b => b.style.borderColor = 'transparent');
+    btn.style.borderColor = '#0D5C4A';
+    document.getElementById('selectedIconKita').textContent = icon;
+}
+
+function getSelectedIconKita() {
+    return document.getElementById('selectedIconKita')?.textContent || '📌';
+}
+
+function renderOnProsesFieldPrintSelector() {
+    const container = document.getElementById('onProsesFieldPrintSelector');
+    if (!container) return;
+    const saved = JSON.parse(localStorage.getItem('safara_onproses_print_fields') || '[]');
+    if (dynamicFieldsJamaahKita.length === 0) {
+        container.innerHTML = '<div style="color:#999;font-size:13px;">Belum ada field dinamis.</div>';
+        return;
+    }
+    container.innerHTML = dynamicFieldsJamaahKita.map(f => {
+        const checked = saved.length === 0 || saved.includes(f.name);
+        return `<label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" value="${f.name}" ${checked?'checked':''}
+                onchange="saveOnProsesPrintFields()"
+                style="width:18px;height:18px;accent-color:#0D5C4A;cursor:pointer;">
+            <span>${f.icon||'📌'} ${f.label}</span>
+        </label>`;
+    }).join('');
+}
+
+function saveOnProsesPrintFields() {
+    const checked = Array.from(document.querySelectorAll('#onProsesFieldPrintSelector input:checked')).map(cb => cb.value);
+    localStorage.setItem('safara_onproses_print_fields', JSON.stringify(checked));
+    showToast('Pilihan field cetak disimpan!');
+}
+
+function getOnProsesPrintFields() {
+    const saved = JSON.parse(localStorage.getItem('safara_onproses_print_fields') || '[]');
+    if (saved.length === 0) return dynamicFieldsJamaahKita.map(f => f.name);
+    return saved;
+}
+
 function addJamaahKitaDynamicField() {
     const name = document.getElementById('jamaahKitaNewFieldName').value.trim().toLowerCase();
     const label = document.getElementById('jamaahKitaNewFieldLabel').value.trim();
+    const icon = getSelectedIconKita();
     if (!/^[a-z0-9_]+$/.test(name)) return showToast('Nama field: huruf kecil, angka, underscore!');
     if (!label) return showToast('Label harus diisi!');
     if (dynamicFieldsJamaahKita.some(f => f.name === name)) return showToast('Field sudah ada!');
-    dynamicFieldsJamaahKita.push({ name, label, type: 'text', icon: "📌", isRequired: false });
+    dynamicFieldsJamaahKita.push({ name, label, type: 'text', icon, isRequired: false });
     saveDynamicFieldsJamaahKita();
     document.getElementById('jamaahKitaNewFieldName').value = '';
     document.getElementById('jamaahKitaNewFieldLabel').value = '';
+    // Reset icon ke default
+    document.querySelectorAll('#iconPickerKita button').forEach(b => b.style.borderColor = 'transparent');
+    if(document.getElementById('selectedIconKita')) document.getElementById('selectedIconKita').textContent = '📌';
     renderJamaahKitaFieldsList();
     renderJamaahKitaDynamicFieldsForm();
-    showToast('Field ditambahkan');
+    renderOnProsesFieldPrintSelector();
+    showToast('Field ditambahkan!');
 }
 
 function confirmDeleteJamaahKitaDynamicField(idx) {
@@ -5340,10 +5429,15 @@ function openFolderDetail(folderId) {
     <div id="jumlahDipilihFolder" style="font-size:12px;color:#0D5C4A;margin-top:6px;font-weight:bold;"></div>
     <button class="btn btn-primary btn-small mt-2" onclick="addJamaahToFolderMulti('${folderId}')">➕ Tambahkan ke Folder</button>
     </div>
-    <div class="section-title">📋 Daftar Jamaah dalam Folder</div><div id="folderJamaahList">`; 
+    <div class="section-title">📋 Daftar Jamaah dalam Folder</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <button onclick="pilihSemuaFolderList('${folderId}')" style="flex:1;padding:8px;background:#0D5C4A;color:white;border:none;border-radius:8px;font-size:12px;cursor:pointer;">✅ Pilih Semua</button>
+        <button onclick="hapusPilihanFolder('${folderId}')" style="flex:1;padding:8px;background:#EF4444;color:white;border:none;border-radius:8px;font-size:12px;cursor:pointer;">🗑️ Hapus Dipilih</button>
+    </div>
+    <div id="folderJamaahList">`; 
     if(jamaahInFolder.length === 0) html += '<p class="text-center">Belum ada jamaah</p>'; 
     else jamaahInFolder.forEach(j => { 
-        html += `<div class="jamaah-card"><div class="jamaah-header"><div class="jamaah-nama">👤 ${escapeHtml(j.nama_lengkap)}</div><button class="btn-delete-jamaah" onclick="removeJamaahFromFolder('${folderId}', ${j.id})">🗑️ Hapus dari folder</button></div></div>`; 
+        html += `<div class="jamaah-card"><div class="jamaah-header"><label style="display:flex;align-items:center;gap:10px;cursor:pointer;flex:1;"><input type="checkbox" value="${j.id}" style="width:18px;height:18px;accent-color:#EF4444;cursor:pointer;"><div class="jamaah-nama">👤 ${escapeHtml(j.nama_lengkap)}</div></label><button class="btn-delete-jamaah" onclick="removeJamaahFromFolder('${folderId}', ${j.id})">🗑️ Hapus</button></div></div>`; 
     }); 
     html += `</div>`;
     // FIELD DINAMIS
@@ -5368,6 +5462,23 @@ function openFolderDetail(folderId) {
     }
     html += `</div><button class="btn btn-purple btn-small mt-2" onclick="exportFolderToPDF('${folderId}')"><i class="fas fa-file-pdf"></i> Export Folder ke PDF</button><button class="btn btn-teal btn-small mt-2" onclick="exportFolderToExcel('${folderId}')"><i class="fas fa-file-excel"></i> Export Folder ke Excel</button></div>`; 
     document.getElementById('folderListContainer').innerHTML = html; 
+}
+
+function pilihSemuaFolderList(folderId) {
+    document.querySelectorAll('#folderJamaahList input[type=checkbox]').forEach(cb => cb.checked = true);
+}
+
+function hapusPilihanFolder(folderId) {
+    const checked = document.querySelectorAll('#folderJamaahList input[type=checkbox]:checked');
+    if (checked.length === 0) return showToast('Pilih jamaah yang mau dihapus dulu!');
+    if (!confirm(`Hapus ${checked.length} jamaah dari folder ini?`)) return;
+    const ids = Array.from(checked).map(cb => parseInt(cb.value));
+    const folder = folderList.find(f => f.id == folderId);
+    if (!folder) return;
+    folder.jamaahIds = folder.jamaahIds.filter(id => !ids.includes(id));
+    saveFolderData();
+    openFolderDetail(folderId);
+    showToast(`🗑️ ${ids.length} jamaah berhasil dihapus dari folder!`);
 }
 
 function filterFolderJamaahSelect() {
