@@ -4397,12 +4397,28 @@ function printGroupedPDFJamaahKita() {
     const printFields = dynamicFieldsJamaahKita.filter(f => printFieldNames.includes(f.name));
 
     const groups = {};
+    const batas = getKonfigurasiProData().settings?.batas_lansia || 60;
     jamaahKitaList.forEach(jk => {
-        const key = jk.additional_fields?.[groupField.name] || "Tidak diisi";
+        const rawVal = jk.additional_fields?.[groupField.name] || "";
+        let key;
+        // Jika field adalah tanggal lahir → kelompokkan berdasarkan status Lansia
+        const isTglLahir = groupField.type === 'date' || groupField.name.includes('lahir');
+        if (isTglLahir && rawVal) {
+            const umur = hitungUmurDariTanggal(rawVal);
+            if (umur === null) key = "Tidak diisi";
+            else if (umur >= batas) key = `🔴 LANSIA (≥${batas} tahun)`;
+            else key = `🟢 TIDAK LANSIA (<${batas} tahun)`;
+        } else {
+            key = rawVal || "Tidak diisi";
+        }
         if (!groups[key]) groups[key] = [];
         groups[key].push(jk);
     });
-    const sortedGroups = Object.keys(groups).sort((a, b) => { if (a === "Tidak diisi") return 1; if (b === "Tidak diisi") return -1; return a.localeCompare(b); });
+    const sortedGroups = Object.keys(groups).sort((a, b) => {
+        if (a === "Tidak diisi") return 1;
+        if (b === "Tidak diisi") return -1;
+        return a.localeCompare(b);
+    });
     let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cetak Kelompok</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;}
@@ -7913,4 +7929,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-                                                      </html>
+    </html>
