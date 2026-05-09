@@ -2265,6 +2265,7 @@
         <div class="config-section"><h3><i class="fas fa-file-pdf"></i> Pengaturan Laporan</h3>
             <div class="row"><div class="config-row"><label>Header PDF</label><select id="cfg_header_mode"><option value="both">Keduanya</option><option value="instansi1">Instansi 1 saja</option><option value="instansi2">Instansi 2 saja</option><option value="none">Tidak ada</option></select></div><div class="config-row"><label>Tanda Tangan</label><select id="cfg_ttd_mode"><option value="both">Dua Pihak</option><option value="single">Satu Pihak</option></select></div></div>
             <div class="config-row"><label>Prefix Invoice / No. Dokumen</label><input type="text" id="cfg_invoice_prefix" value="INV/SAFARA"></div>
+            <div class="config-row"><label>🧓 Batas Usia Lansia (tahun)</label><input type="number" id="cfg_batas_lansia" placeholder="60" min="50" max="80" style="width:120px;"></div>
             <div class="config-row"><label style="font-weight:bold;color:var(--primary);margin-bottom:10px;display:block;">🖨️ Tampilkan di Header Cetak</label>
                 <div style="display:flex;flex-direction:column;gap:10px;">
                     <label style="display:flex;justify-content:space-between;align-items:center;font-weight:normal;"><span>Logo Instansi</span><label class="switch"><input type="checkbox" id="cfg_show_logo" checked><span class="slider"></span></label></label>
@@ -4161,11 +4162,38 @@ function renderJamaahKitaList() {
     updateJamaahKitaBatchBar();
 }
 
+function hitungUmurDariTanggal(tglLahir) {
+    if (!tglLahir) return null;
+    const lahir = new Date(tglLahir);
+    if (isNaN(lahir)) return null;
+    const today = new Date();
+    let umur = today.getFullYear() - lahir.getFullYear();
+    const m = today.getMonth() - lahir.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < lahir.getDate())) umur--;
+    return umur;
+}
+
+function getStatusLansia(umur) {
+    if (umur === null) return null;
+    const batas = getKonfigurasiProData().settings?.batas_lansia || 60;
+    return umur >= batas ? `🔴 LANSIA (${umur} th)` : `🟢 ${umur} th`;
+}
+
 function renderJamaahKitaDetailFields(jk) {
     let html = "";
     dynamicFieldsJamaahKita.forEach(field => {
         const val = jk.additional_fields?.[field.name] || "";
-        if (val && field.name !== "whatsapp") html += `<div class="jamaah-kita-detail-item">${field.icon || '📌'} ${escapeHtml(field.label)}: ${escapeHtml(val)}</div>`;
+        if (!val || field.name === "whatsapp") return;
+        // Cek apakah field ini adalah tanggal lahir
+        const isTglLahir = field.type === 'date' || field.name.includes('lahir') || field.name.includes('tgl_lahir');
+        if (isTglLahir) {
+            const umur = hitungUmurDariTanggal(val);
+            const statusLansia = getStatusLansia(umur);
+            html += `<div class="jamaah-kita-detail-item">${field.icon || '📌'} ${escapeHtml(field.label)}: ${escapeHtml(val)}</div>`;
+            if (statusLansia) html += `<div class="jamaah-kita-detail-item">🧓 Umur & Status: ${statusLansia}</div>`;
+        } else {
+            html += `<div class="jamaah-kita-detail-item">${field.icon || '📌'} ${escapeHtml(field.label)}: ${escapeHtml(val)}</div>`;
+        }
     });
     const wa = jk.additional_fields?.whatsapp || "";
     if (wa) html += `<div class="jamaah-kita-detail-item">📞 WhatsApp: ${escapeHtml(wa)}</div>`;
@@ -4401,7 +4429,16 @@ function printGroupedPDFJamaahKita() {
         html += `<div class="group"><div class="group-title">${groupField.icon || '📌'} ${escapeHtml(groupField.label)}: ${escapeHtml(key)} (${members.length} orang)</div>
         <table><thead><tr><th>No</th><th>Nama Jamaah</th>${printFields.map(f => `<th>${f.icon || '📌'} ${escapeHtml(f.label)}</th>`).join("")}</tr></thead><tbody>`;
         members.forEach((jk, i) => {
-            html += `<tr><td>${i+1}</td><td>${escapeHtml(jk.nama_lengkap)}</td>${printFields.map(f => `<td>${escapeHtml(jk.additional_fields?.[f.name] || "-")}</td>`).join("")}</tr>`;
+            html += `<tr><td>${i+1}</td><td>${escapeHtml(jk.nama_lengkap)}</td>${printFields.map(f => {
+                const val = jk.additional_fields?.[f.name] || '-';
+                const isTglLahir = f.type === 'date' || f.name.includes('lahir');
+                if (isTglLahir && val !== '-') {
+                    const umur = hitungUmurDariTanggal(val);
+                    const status = getStatusLansia(umur);
+                    return `<td>${escapeHtml(val)}<br><small>${status||''}</small></td>`;
+                }
+                return `<td>${escapeHtml(val)}</td>`;
+            }).join("")}</tr>`;
         });
         html += `</tbody></table></div>`;
     }
@@ -6526,7 +6563,7 @@ function getKonfigurasiProData() {
         instansi2: { aktif: true, nama: 'Safara', alamat: 'Jl. Siwalankerto Utara II No. 30, Wonocolo, Surabaya' },
         watermark: { enabled: true, text: 'DOKUMEN RESMI', opacity: 0.15, fontsize: 60, position: 'diagonal' },
         qr: { enabled: true, text: 'Dokumen Resmi - Divalidasi oleh Sistem Safara', size: 80 },
-        settings: { header_mode: 'both', ttd_mode: 'both', invoice_prefix: 'INV/SAFARA', show_logo: true, show_nama1: true, show_nama2: true, show_alamat: true, show_telp: true, show_email: false, show_web: false, show_npwp: false, show_izin: false, show_pimpinan: false }
+        settings: { header_mode: 'both', ttd_mode: 'both', invoice_prefix: 'INV/SAFARA', show_logo: true, show_nama1: true, show_nama2: true, show_alamat: true, show_telp: true, show_email: false, show_web: false, show_npwp: false, show_izin: false, show_pimpinan: false, batas_lansia: 60 }
     };
 }
 
@@ -7233,6 +7270,7 @@ function loadKonfigurasiPro() {
     document.getElementById('cfg_show_npwp').checked = s.show_npwp === true;
     document.getElementById('cfg_show_izin').checked = s.show_izin === true;
     document.getElementById('cfg_show_pimpinan').checked = s.show_pimpinan === true;
+    document.getElementById('cfg_batas_lansia').value = s.batas_lansia || 60;
     document.getElementById('cfg_wa_laporan').value = konfigurasiPro.wa_template.laporan || '';
     updateHeaderFromConfig();
 }
@@ -7286,7 +7324,8 @@ function saveKonfigurasiPro() {
         show_web: document.getElementById('cfg_show_web').checked,
         show_npwp: document.getElementById('cfg_show_npwp').checked,
         show_izin: document.getElementById('cfg_show_izin').checked,
-        show_pimpinan: document.getElementById('cfg_show_pimpinan').checked
+        show_pimpinan: document.getElementById('cfg_show_pimpinan').checked,
+        batas_lansia: parseInt(document.getElementById('cfg_batas_lansia').value) || 60
     };
     konfigurasiPro.wa_template = { laporan: document.getElementById('cfg_wa_laporan').value };
     localStorage.setItem('safara_konfigurasi_pro', JSON.stringify(konfigurasiPro));
@@ -7874,4 +7913,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-    </html>
+                                                      </html>
