@@ -3894,9 +3894,9 @@ function importJamaahFromExcel(input){
         const reader=new FileReader(); 
         reader.onload=function(e){ 
             const data=new Uint8Array(e.target.result); 
-            const workbook=XLSX.read(data,{type:'array'}); 
+            const workbook=XLSX.read(data,{type:'array',cellDates:true}); 
             const sheet=workbook.Sheets[workbook.SheetNames[0]]; 
-            const rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:""}); 
+            const rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:"",raw:false}); 
             if(!rows||rows.length<2){ 
                 showToast('File Excel kosong!'); 
                 input.value=''; 
@@ -3908,7 +3908,26 @@ function importJamaahFromExcel(input){
                 showToast('Header "Nama" tidak ditemukan!'); 
                 input.value=''; 
                 return; 
-            } 
+            }
+            // Fungsi konversi angka serial Excel ke tanggal YYYY-MM-DD
+            function excelSerialToDate(val) {
+                if (!val) return val;
+                const str = val.toString().trim();
+                // Jika sudah format tanggal valid, kembalikan apa adanya
+                if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.substring(0,10);
+                if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}/.test(str)) {
+                    const d = new Date(str);
+                    if (!isNaN(d)) return d.toISOString().substring(0,10);
+                }
+                // Jika angka serial Excel (biasanya 5 digit)
+                const num = parseFloat(str);
+                if (!isNaN(num) && num > 1000 && num < 100000) {
+                    // Excel serial: hari sejak 1 Jan 1900 (dengan bug tahun 1900)
+                    const d = new Date((num - 25569) * 86400 * 1000);
+                    if (!isNaN(d)) return d.toISOString().substring(0,10);
+                }
+                return str;
+            }
             let added=0; 
             const now=new Date().toLocaleDateString('id-ID')+' '+new Date().toLocaleTimeString('id-ID'); 
             for(let i=1;i<rows.length;i++){ 
@@ -3919,14 +3938,20 @@ function importJamaahFromExcel(input){
                 const additional={}; 
                 for(const field of dynamicFieldsJamaah){ 
                     const fieldIndex=headers.findIndex(h=>h&&(h.toLowerCase()===field.label.toLowerCase()||h.toLowerCase()===field.name.toLowerCase())); 
-                    if(fieldIndex!==-1&&row[fieldIndex]){ 
-                        additional[field.name]=row[fieldIndex].toString().trim(); 
+                    if(fieldIndex!==-1&&row[fieldIndex]!==''&&row[fieldIndex]!==undefined){ 
+                        let val = row[fieldIndex].toString().trim();
+                        // Konversi otomatis jika field bertipe date atau nama field mengandung 'lahir'/'tgl'
+                        if (field.type==='date' || field.name.includes('lahir') || field.name.includes('tgl')) {
+                            val = excelSerialToDate(val);
+                        }
+                        additional[field.name]=val; 
                     } 
                 } 
                 jamaahList.push({id:Date.now()+i, nama_lengkap:nama, additional_fields:additional, created_at:now}); 
                 added++; 
             } 
             saveJamaahData(); 
+            renderJamaahList();
             showToast(`✅ Import selesai! ${added} jamaah ditambahkan`); 
             input.value=''; 
         }; 
