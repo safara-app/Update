@@ -2361,8 +2361,21 @@
 <div id="page-etikettiket" class="page">
     <div class="header-premium header-premium-small"><div class="back-header"><i class="fas fa-arrow-left" onclick="showPage('fitur')"></i><h2> E-Tiket & QR</h2><div style="width:30px;"></div></div></div>
     <div class="container">
-        <div class="card-premium"><div class="input-group"><label> Pilih Jamaah</label><select id="tiketJamaahSelect" onchange="generateTiketQR()"></select></div>
-        <div id="tiketPreview" class="tiket-card" style="display:none;"><div class="tiket-header"><div class="tiket-title" id="tiketNama"></div><div id="tiketPaket" style="font-size:12px;"></div></div><div id="tiketQR" class="tiket-qr"></div><div class="row" style="margin-top:15px;"><button class="btn btn-primary btn-small" onclick="downloadTiketAsImage()"><i class="fas fa-download"></i> Simpan sebagai Gambar</button><button class="btn btn-wa btn-small" onclick="shareTiketWA()"><i class="fab fa-whatsapp"></i> Kirim ke WA</button><button class="btn btn-purple btn-small" onclick="cetakTiketLangsung()"><i class="fas fa-print"></i> CETAK TIKET</button></div></div></div>
+        <div class="card-premium">
+            <div class="input-group">
+                <label>Pilih Jamaah</label>
+                <input type="text" id="searchTiketJamaah" placeholder="🔍 Cari nama jamaah..." oninput="filterTiketJamaah()" style="margin-bottom:8px;">
+                <div style="display:flex;gap:8px;margin-bottom:8px;">
+                    <button onclick="pilihSemuaTiket()" style="flex:1;padding:8px;background:#0D5C4A;color:white;border:none;border-radius:8px;font-size:12px;cursor:pointer;">✅ Pilih Semua</button>
+                    <button onclick="hapusPilihanTiket()" style="flex:1;padding:8px;background:#e2e8f0;color:#333;border:none;border-radius:8px;font-size:12px;cursor:pointer;">❌ Hapus Pilihan</button>
+                </div>
+                <div id="multiTiketJamaahSelect" style="max-height:200px;overflow-y:auto;border:1px solid #ddd;border-radius:10px;padding:8px;background:var(--card-bg);"></div>
+                <div id="jumlahDipilihTiket" style="font-size:12px;color:#0D5C4A;margin-top:6px;font-weight:bold;"></div>
+            </div>
+            <button class="btn btn-primary mt-2" onclick="cetakTiketMulti()"><i class="fas fa-print"></i> CETAK TIKET</button>
+            <button class="btn btn-wa btn-small mt-2" onclick="shareTiketWAMulti()"><i class="fab fa-whatsapp"></i> Kirim ke WA</button>
+        </div>
+        <div id="tiketPreview" class="tiket-card" style="display:none;"><div class="tiket-header"><div class="tiket-title" id="tiketNama"></div><div id="tiketPaket" style="font-size:12px;"></div></div><div id="tiketQR" class="tiket-qr"></div><div class="row" style="margin-top:15px;"><button class="btn btn-primary btn-small" onclick="downloadTiketAsImage()"><i class="fas fa-download"></i> Simpan sebagai Gambar</button><button class="btn btn-wa btn-small" onclick="shareTiketWA()"><i class="fab fa-whatsapp"></i> Kirim ke WA</button><button class="btn btn-purple btn-small" onclick="cetakTiketLangsung()"><i class="fas fa-print"></i> CETAK TIKET</button></div></div>
     </div>
 </div>
 
@@ -2370,7 +2383,21 @@
 <div id="page-cetaklabel" class="page">
     <div class="header-premium header-premium-small"><div class="back-header"><i class="fas fa-arrow-left" onclick="showPage('fitur')"></i><h2> Cetak Label</h2><div style="width:30px;"></div></div></div>
     <div class="container">
-        <div class="card-premium"><div class="input-group"><label> Nama Acara / Rombongan</label><input type="text" id="labelEvent" placeholder="Umroh Syawal 2026"></div><div class="input-group"><label> Pilih Jamaah</label><select id="labelJamaahSelect" multiple style="height:100px;"></select></div><div class="row"><div class="input-group"><label>Ukuran Label</label><select id="labelSize"><option value="small">Kecil (40x30mm)</option><option value="medium" selected>Sedang (60x40mm)</option><option value="large">Besar (80x50mm)</option></select></div><div class="input-group"><label>Template</label><select id="labelTemplate"><option value="nametag">Name Tag</option><option value="luggage">Stiker Koper</option><option value="both">Name Tag + Koper</option></select></div></div><button class="btn btn-primary" onclick="cetakLabel()"><i class="fas fa-print"></i> CETAK LABEL</button></div>
+        <div class="card-premium">
+            <div class="input-group"><label>Nama Acara / Rombongan</label><input type="text" id="labelEvent" placeholder="Umroh Syawal 2026"></div>
+            <div class="input-group">
+                <label>Pilih Jamaah</label>
+                <input type="text" id="searchLabelJamaah" placeholder="🔍 Cari nama jamaah..." oninput="filterLabelJamaah()" style="margin-bottom:8px;">
+                <div style="display:flex;gap:8px;margin-bottom:8px;">
+                    <button onclick="pilihSemuaLabel()" style="flex:1;padding:8px;background:#0D5C4A;color:white;border:none;border-radius:8px;font-size:12px;cursor:pointer;">✅ Pilih Semua</button>
+                    <button onclick="hapusPilihanLabel()" style="flex:1;padding:8px;background:#e2e8f0;color:#333;border:none;border-radius:8px;font-size:12px;cursor:pointer;">❌ Hapus Pilihan</button>
+                </div>
+                <div id="multiLabelJamaahSelect" style="max-height:200px;overflow-y:auto;border:1px solid #ddd;border-radius:10px;padding:8px;background:var(--card-bg);"></div>
+                <div id="jumlahDipilihLabel" style="font-size:12px;color:#0D5C4A;margin-top:6px;font-weight:bold;"></div>
+            </div>
+            <div class="row"><div class="input-group"><label>Ukuran Label</label><select id="labelSize"><option value="small">Kecil (40x30mm)</option><option value="medium" selected>Sedang (60x40mm)</option><option value="large">Besar (80x50mm)</option></select></div><div class="input-group"><label>Template</label><select id="labelTemplate"><option value="nametag">Name Tag</option><option value="luggage">Stiker Koper</option><option value="both">Name Tag + Koper</option></select></div></div>
+            <button class="btn btn-primary" onclick="cetakLabel()"><i class="fas fa-print"></i> CETAK LABEL</button>
+        </div>
         <div id="labelPreviewContainer" class="card-premium" style="display:none;"><h4>Preview Label</h4><div id="labelPreview"></div><button class="btn btn-primary mt-2" onclick="printLabelPreview()"><i class="fas fa-print"></i> Cetak</button></div>
     </div>
 </div>
@@ -2482,32 +2509,40 @@ async function cetakSemuaDokumenJamaah(jamaahId, jamaahNama) {
             .dokumen-gambar img { max-width: 100%; max-height: 500px; object-fit: contain; }
             .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #999; }
             @media print {
-                body { background: white; padding: 0; margin: 0; }
+                * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: white; }
                 .no-print { display: none !important; }
-                .header { display: none !important; }
-                .footer { display: none !important; }
-                .dokumen-title { display: none !important; }
-                .dokumen-item { 
-                    background: white; 
-                    border-radius: 0; 
-                    padding: 0; 
-                    margin: 0; 
-                    box-shadow: none; 
+                .dokumen-item {
+                    width: 210mm;
+                    height: 297mm;
+                    margin: 0;
+                    padding: 8mm;
+                    box-shadow: none;
+                    border-radius: 0;
+                    background: white;
                     page-break-after: always;
                     break-after: page;
                     display: flex;
+                    flex-direction: column;
                     align-items: center;
                     justify-content: center;
-                    min-height: 100vh;
+                    overflow: hidden;
                 }
                 .dokumen-item:last-child { page-break-after: avoid; break-after: avoid; }
-                .dokumen-gambar { width: 100%; }
-                .dokumen-gambar img { 
-                    max-width: 100%; 
-                    max-height: 100vh; 
-                    width: auto; 
-                    height: auto; 
-                    object-fit: contain; 
+                .dokumen-label {
+                    font-size: 13px;
+                    font-weight: bold;
+                    color: #0D5C4A;
+                    margin-bottom: 8px;
+                    text-align: center;
+                }
+                .dokumen-gambar { width: 100%; flex: 1; display: flex; align-items: center; justify-content: center; }
+                .dokumen-gambar img {
+                    max-width: 100%;
+                    max-height: 270mm;
+                    width: auto;
+                    height: auto;
+                    object-fit: contain;
                     display: block;
                     margin: 0 auto;
                 }
@@ -2523,6 +2558,7 @@ async function cetakSemuaDokumenJamaah(jamaahId, jamaahNama) {
     for (const doc of dokumenYangAda) {
         html += `
         <div class="dokumen-item">
+            <div class="dokumen-label">${doc.icon} ${escapeHtml(doc.nama)} — ${escapeHtml(jamaahNama)}</div>
             <div class="dokumen-title no-print">${doc.icon} ${escapeHtml(doc.nama)}</div>
             <div class="dokumen-gambar"><img src="${doc.data}" alt="${doc.nama}"></div>
         </div>`;
@@ -2561,18 +2597,46 @@ async function cetakDokumenPerJenis(jamaahId, jenisId, jenisNama, jamaahNama) {
             .subtitle { color: #666; margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
             .gambar img { max-width: 100%; object-fit: contain; }
             @media print {
-                body { background: white; padding: 0; margin: 0; }
+                * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: white; }
                 .no-print { display: none !important; }
-                .card { box-shadow: none; border-radius: 0; padding: 0; max-width: 100%; margin: 0; }
-                .title { display: none !important; }
-                .subtitle { display: none !important; }
-                .gambar { width: 100%; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-                .gambar img { max-width: 100%; max-height: 100vh; width: auto; height: auto; display: block; margin: 0 auto; }
+                .card {
+                    box-shadow: none;
+                    border-radius: 0;
+                    padding: 8mm;
+                    max-width: 100%;
+                    margin: 0;
+                    width: 210mm;
+                    height: 297mm;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    overflow: hidden;
+                }
+                .doc-label {
+                    font-size: 13px;
+                    font-weight: bold;
+                    color: #0D5C4A;
+                    margin-bottom: 8px;
+                    text-align: center;
+                }
+                .gambar { width: 100%; flex: 1; display: flex; align-items: center; justify-content: center; }
+                .gambar img {
+                    max-width: 100%;
+                    max-height: 270mm;
+                    width: auto;
+                    height: auto;
+                    object-fit: contain;
+                    display: block;
+                    margin: 0 auto;
+                }
             }
         </style>
     </head>
     <body>
         <div class="card">
+            <div class="doc-label">${jenisNama} — ${escapeHtml(jamaahNama)}</div>
             <div class="title no-print">📄 ${escapeHtml(jenisNama)}</div>
             <div class="subtitle no-print">${escapeHtml(jamaahNama)}</div>
             <div class="gambar"><img src="${data}" alt="${jenisNama}"></div>
@@ -2581,6 +2645,7 @@ async function cetakDokumenPerJenis(jamaahId, jenisId, jenisNama, jamaahNama) {
                 <button onclick="window.close()" style="padding:10px 30px; background:#ccc; border:none; border-radius:8px; cursor:pointer;">TUTUP</button>
             </div>
         </div>
+        <script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script>
     </body>
     </html>`;
     printWindow.document.write(html);
@@ -3242,15 +3307,51 @@ async function cetakEstimasiPDFInternal() {
     const ttdHtml = buildPrintTandaTangan(cfg, tgl);
     const qrHtml = await buildPrintQR(cfg, `Estimasi Internal: ${lastCalculatedPaket}\nHarga Jual: ${f(lastCalculatedPrice)}\nTanggal: ${tgl}`);
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Estimasi Internal</title>
-    <style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px;}.box{background:white;max-width:520px;margin:0 auto;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);}h2{color:#0D5C4A;font-size:18px;margin-bottom:2px;}.konfidensial{color:#e74c3c;font-size:11px;font-style:italic;margin-bottom:16px;}.info{font-size:13px;color:#555;line-height:2;margin-bottom:16px;}table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px;}th{background:#0D5C4A;color:white;padding:10px 8px;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact;}th:last-child{text-align:right;}.summary{background:#f8f8f8;border-radius:10px;padding:16px;font-size:13px;line-height:2.2;}.harga-jual{font-size:18px;font-weight:bold;color:#0D5C4A;margin-top:12px;border-top:2px solid #0D5C4A;padding-top:12px;}.no-print{text-align:center;margin-top:24px;}.no-print button{padding:12px 32px;margin:0 8px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}body{background:white;padding:0;}.box{box-shadow:none;border-radius:0;}.no-print{display:none!important;}}
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px;}
+        .box{background:white;max-width:720px;margin:0 auto;border-radius:16px;padding:36px;box-shadow:0 2px 16px rgba(0,0,0,0.1);}
+        h2{color:#0D5C4A;font-size:22px;margin-bottom:4px;}
+        .konfidensial{color:#e74c3c;font-size:12px;font-style:italic;margin-bottom:20px;}
+        .info{font-size:14px;color:#555;line-height:2.2;margin-bottom:20px;background:#f8f8f8;border-radius:10px;padding:14px;}
+        table{width:100%;border-collapse:collapse;font-size:14px;margin-bottom:20px;}
+        th{background:#0D5C4A;color:white;padding:12px 10px;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+        th:last-child{text-align:right;}
+        td{padding:10px;border-bottom:1px solid #eee;}
+        tr:nth-child(even) td{background:#f9f9f9;}
+        .summary{background:#f8f8f8;border-radius:10px;padding:20px;font-size:14px;line-height:2.6;}
+        .harga-jual{font-size:20px;font-weight:bold;color:#0D5C4A;margin-top:14px;border-top:2px solid #0D5C4A;padding-top:14px;}
+        .no-print{text-align:center;margin-top:24px;}
+        .no-print button{padding:12px 32px;margin:0 8px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}
+        @media print{
+            *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+            body{background:white;padding:0;}
+            .box{box-shadow:none;border-radius:0;max-width:100%;padding:16mm 20mm;}
+            .no-print{display:none!important;}
+        }
     </style></head><body>
     <div class="box">
         ${headerHtml}
         <h2>RINCIAN ESTIMASI INTERNAL</h2>
         <div class="konfidensial">⚠️ Hanya Untuk Internal</div>
-        <div class="info"><div><strong>Paket :</strong> ${lastCalculatedPaket}</div><div><strong>Jamaah :</strong> ${nJam} orang (${nFoc} gratis, ${nTL} TL)</div><div><strong>Tanggal :</strong> ${tgl}</div></div>
-        <table><thead><tr><th>Komponen Biaya</th><th style="text-align:right;">Per Pax</th></tr></thead><tbody>${komponenHtml}<tr style="font-weight:bold;background:#f0f7f4;"><td style="padding:10px 8px;">Modal Pokok / Pax</td><td style="padding:10px 8px;text-align:right;">${f(sub)}</td></tr></tbody></table>
-        <div class="summary"><div>Profit (${est.profitPct||0}%) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong>${f(profitKotor)}</strong></div><div>Biaya TL (${nTL} orang) : <strong style="color:#e74c3c;">- ${f(biayaTL)}</strong></div><div>Profit Bersih &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong style="color:#10B981;">${f(profitBersih)}</strong></div><div>Profit Per Pax &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong style="color:#10B981;">${f(profitPerPax)}</strong></div><div class="harga-jual">HARGA JUAL PER PAX: ${f(lastCalculatedPrice)}</div></div>
+        <div class="info">
+            <div><strong>Paket &nbsp;&nbsp;:</strong> ${lastCalculatedPaket}</div>
+            <div><strong>Jamaah :</strong> ${nJam} orang (${nFoc} gratis, ${nTL} TL)</div>
+            <div><strong>Tanggal :</strong> ${tgl}</div>
+        </div>
+        <table><thead><tr><th>Komponen Biaya</th><th style="text-align:right;">Per Pax</th></tr></thead>
+        <tbody>${komponenHtml}
+        <tr style="font-weight:bold;background:#f0f7f4;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+            <td style="padding:12px 10px;">Modal Pokok / Pax</td>
+            <td style="padding:12px 10px;text-align:right;">${f(sub)}</td>
+        </tr></tbody></table>
+        <div class="summary">
+            <div>Profit (${est.profitPct||0}%) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong>${f(profitKotor)}</strong></div>
+            <div>Biaya TL (${nTL} orang) : <strong style="color:#e74c3c;">- ${f(biayaTL)}</strong></div>
+            <div>Profit Bersih &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong style="color:#10B981;">${f(profitBersih)}</strong></div>
+            <div>Profit Per Pax &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong style="color:#10B981;">${f(profitPerPax)}</strong></div>
+            <div class="harga-jual">HARGA JUAL PER PAX: ${f(lastCalculatedPrice)}</div>
+        </div>
         ${ttdHtml}
         ${qrHtml}
     </div>
@@ -4550,8 +4651,10 @@ function printGroupedPDFJamaahKita() {
         .group{margin-bottom:24px;}
         .group-title{background:#0D5C4A;color:white;padding:10px 14px;border-radius:8px;margin-bottom:10px;font-weight:bold;font-size:13px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
         table{width:100%;border-collapse:collapse;margin-bottom:8px;font-size:13px;}
+        thead{display:table-header-group;}
         th{background:#0D5C4A;color:white;padding:9px 8px;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
         td{border-bottom:1px solid #eee;padding:8px;}
+        tr{page-break-inside:avoid;}
         tr:nth-child(even) td{background:#f9f9f9;}
         .footer{text-align:center;margin-top:20px;font-size:11px;color:#999;border-top:1px solid #ddd;padding-top:10px;}
         .no-print{text-align:center;margin-top:20px;}
@@ -5899,7 +6002,7 @@ async function exportFolderToPDF(folderId) {
     thHtml += '<th>Tgl Input</th>';
     let rowsHtml = '';
     jamaahInFolder.forEach((j,i) => {
-        rowsHtml += `<tr><td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${i+1}</td><td style="padding:8px;border-bottom:1px solid #eee;">${j.nama_lengkap}</td>`;
+        rowsHtml += `<tr style="page-break-inside:avoid;"><td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${i+1}</td><td style="padding:8px;border-bottom:1px solid #eee;">${j.nama_lengkap}</td>`;
         chosenFields.forEach(fd => {
             const val = (j.additional_fields && j.additional_fields[fd.name]) ? j.additional_fields[fd.name] : '-';
             rowsHtml += `<td style="padding:8px;border-bottom:1px solid #eee;">${val}</td>`;
@@ -5910,7 +6013,33 @@ async function exportFolderToPDF(folderId) {
     if(folder.fields && folder.fields.length > 0) {
         folder.fields.forEach(fd => { folderInfoHtml += `<div><strong>${fd.label}:</strong> ${fd.value}</div>`; });
     }
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Folder ${folder.nama}</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px;}.box{background:white;max-width:900px;margin:0 auto;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);}h2{color:#0D5C4A;font-size:20px;margin-bottom:4px;}.sub{color:#888;font-size:12px;margin-bottom:12px;}.folder-info{background:#f0f7f4;border-radius:10px;padding:12px;font-size:13px;line-height:1.9;margin-bottom:16px;color:#555;-webkit-print-color-adjust:exact;print-color-adjust:exact;}table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px;}th{background:#0D5C4A;color:white;padding:10px 8px;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact;}tr:nth-child(even) td{background:#f9f9f9;}.footer{text-align:center;font-size:11px;color:#999;margin-top:16px;}.no-print{text-align:center;margin-top:24px;}.no-print button{padding:12px 32px;margin:0 8px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}body{background:white;padding:0;}.box{box-shadow:none;border-radius:0;}.no-print{display:none!important;}}</style></head><body><div class="box"><h2>Folder: ${folder.nama}</h2><div class="sub">${namaInstansi} | Total: ${jamaahInFolder.length} jamaah | Dicetak: ${tanggal}</div>${folderInfoHtml?`<div class="folder-info">${folderInfoHtml}</div>`:''}<table><thead><tr>${thHtml}</tr></thead><tbody>${rowsHtml}</tbody></table><div class="footer">${namaInstansi} | ${tanggal}</div></div><div class="no-print"><button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button><button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button></div><script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script></body></html>`;
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Folder ${folder.nama}</title><style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px;}
+        .box{background:white;max-width:900px;margin:0 auto;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);}
+        h2{color:#0D5C4A;font-size:20px;margin-bottom:4px;}
+        .sub{color:#888;font-size:12px;margin-bottom:12px;}
+        .folder-info{background:#f0f7f4;border-radius:10px;padding:12px;font-size:13px;line-height:1.9;margin-bottom:16px;color:#555;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+        table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px;}
+        thead{display:table-header-group;}
+        th{background:#0D5C4A;color:white;padding:10px 8px;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+        tr{page-break-inside:avoid;}
+        tr:nth-child(even) td{background:#f9f9f9;}
+        .footer{text-align:center;font-size:11px;color:#999;margin-top:16px;}
+        .no-print{text-align:center;margin-top:24px;}
+        .no-print button{padding:12px 32px;margin:0 8px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}
+        @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}body{background:white;padding:0;}.box{box-shadow:none;border-radius:0;}.no-print{display:none!important;}}
+    </style></head><body>
+    <div class="box">
+        <h2>Folder: ${folder.nama}</h2>
+        <div class="sub">${namaInstansi} | Total: ${jamaahInFolder.length} jamaah | Dicetak: ${tanggal}</div>
+        ${folderInfoHtml?`<div class="folder-info">${folderInfoHtml}</div>`:''}
+        <table><thead><tr>${thHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>
+        <div class="footer">${namaInstansi} | ${tanggal}</div>
+    </div>
+    <div class="no-print"><button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button><button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button></div>
+    <script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script>
+    </body></html>`;
     const win = window.open('','_blank');
     if(!win) return showToast('Izinkan popup untuk cetak!');
     win.document.write(html);
@@ -6402,21 +6531,115 @@ function backupToDrive() { showToast('🔐 Konfigurasi Google Drive belum lengka
 function restoreFromDrive() { showToast('🔐 Konfigurasi Google Drive belum lengkap'); }
 
 // ==================== CETAK LABEL ====================
-function populateLabelDropdown() { 
-    const select = document.getElementById('labelJamaahSelect'); 
-    if(!select) return; 
-    select.innerHTML = ''; 
-    jamaahList.forEach(j => { select.innerHTML += `<option value="${j.id}">${escapeHtml(j.nama_lengkap)}</option>`; }); 
+function populateLabelDropdown() {
+    renderMultiLabelJamaah();
+    renderMultiTiketJamaah();
+}
+
+function renderMultiLabelJamaah() {
+    const container = document.getElementById('multiLabelJamaahSelect');
+    if (!container) return;
+    container.innerHTML = jamaahList.map(j => `
+        <label style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid #eee;cursor:pointer;">
+            <input type="checkbox" value="${j.id}" onchange="updateJumlahDipilihLabel()"
+                style="width:18px;height:18px;accent-color:#0D5C4A;cursor:pointer;">
+            <span style="font-size:13px;">${escapeHtml(j.nama_lengkap)}</span>
+        </label>`).join('');
+}
+
+function filterLabelJamaah() {
+    const q = (document.getElementById('searchLabelJamaah')?.value || '').toLowerCase();
+    document.querySelectorAll('#multiLabelJamaahSelect label').forEach(label => {
+        label.style.display = label.querySelector('span')?.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+}
+
+function pilihSemuaLabel() {
+    document.querySelectorAll('#multiLabelJamaahSelect input[type=checkbox]').forEach(cb => {
+        if(cb.closest('label')?.style.display !== 'none') cb.checked = true;
+    });
+    updateJumlahDipilihLabel();
+}
+
+function hapusPilihanLabel() {
+    document.querySelectorAll('#multiLabelJamaahSelect input[type=checkbox]').forEach(cb => cb.checked = false);
+    updateJumlahDipilihLabel();
+}
+
+function updateJumlahDipilihLabel() {
+    const n = document.querySelectorAll('#multiLabelJamaahSelect input:checked').length;
+    const el = document.getElementById('jumlahDipilihLabel');
+    if(el) el.textContent = n > 0 ? `${n} jamaah dipilih` : '';
+}
+
+// ==================== E-TIKET ====================
+function renderMultiTiketJamaah() {
+    const container = document.getElementById('multiTiketJamaahSelect');
+    if (!container) return;
+    container.innerHTML = jamaahList.map(j => `
+        <label style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid #eee;cursor:pointer;">
+            <input type="checkbox" value="${j.id}" onchange="updateJumlahDipilihTiket()"
+                style="width:18px;height:18px;accent-color:#0D5C4A;cursor:pointer;">
+            <span style="font-size:13px;">${escapeHtml(j.nama_lengkap)}</span>
+        </label>`).join('');
+}
+
+function filterTiketJamaah() {
+    const q = (document.getElementById('searchTiketJamaah')?.value || '').toLowerCase();
+    document.querySelectorAll('#multiTiketJamaahSelect label').forEach(label => {
+        label.style.display = label.querySelector('span')?.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+}
+
+function pilihSemuaTiket() {
+    document.querySelectorAll('#multiTiketJamaahSelect input[type=checkbox]').forEach(cb => {
+        if(cb.closest('label')?.style.display !== 'none') cb.checked = true;
+    });
+    updateJumlahDipilihTiket();
+}
+
+function hapusPilihanTiket() {
+    document.querySelectorAll('#multiTiketJamaahSelect input[type=checkbox]').forEach(cb => cb.checked = false);
+    updateJumlahDipilihTiket();
+}
+
+function updateJumlahDipilihTiket() {
+    const n = document.querySelectorAll('#multiTiketJamaahSelect input:checked').length;
+    const el = document.getElementById('jumlahDipilihTiket');
+    if(el) el.textContent = n > 0 ? `${n} jamaah dipilih` : '';
+}
+
+async function cetakTiketMulti() {
+    const checked = document.querySelectorAll('#multiTiketJamaahSelect input:checked');
+    if(checked.length === 0) return showToast('Pilih minimal 1 jamaah!');
+    // Cetak tiket satu per satu untuk setiap jamaah yang dipilih
+    for(const cb of checked) {
+        const jamaah = jamaahList.find(j => j.id == cb.value);
+        if(!jamaah) continue;
+        // Trigger generate dan cetak tiket untuk jamaah ini
+        await generateAndCetakTiket(jamaah);
+    }
+}
+
+async function shareTiketWAMulti() {
+    const checked = document.querySelectorAll('#multiTiketJamaahSelect input:checked');
+    if(checked.length === 0) return showToast('Pilih minimal 1 jamaah!');
+    showToast(`Mengirim tiket untuk ${checked.length} jamaah...`);
+    for(const cb of checked) {
+        const jamaah = jamaahList.find(j => j.id == cb.value);
+        if(!jamaah) continue;
+        await generateAndShareTiketWA(jamaah);
+    }
 }
 
 function cetakLabel() { 
-    const selectedOptions = Array.from(document.getElementById('labelJamaahSelect').selectedOptions); 
-    if(selectedOptions.length === 0) return showToast('Pilih jamaah terlebih dahulu!'); 
+    const checked = document.querySelectorAll('#multiLabelJamaahSelect input:checked');
+    if(checked.length === 0) return showToast('Pilih jamaah terlebih dahulu!'); 
     const eventName = document.getElementById('labelEvent').value.trim() || 'Acara'; 
     const template = document.getElementById('labelTemplate').value; 
     let html = '<div style="display:flex; flex-wrap:wrap; gap:20px; padding:20px; justify-content:center;">'; 
-    selectedOptions.forEach(opt => { 
-        const j = jamaahList.find(j => j.id == opt.value); 
+    checked.forEach(cb => { 
+        const j = jamaahList.find(j => j.id == cb.value); 
         if(j) { 
             const paspor = j.additional_fields?.no_paspor || j.additional_fields?.paspor || '-'; 
             const whatsapp = j.additional_fields?.whatsapp || j.additional_fields?.wa || '-'; 
@@ -7139,13 +7362,37 @@ async function exportMasterPDF() {
     thHtml += '<th>Item</th>';
     let rowsHtml = '';
     masterDataList.forEach((item, i) => {
-        rowsHtml += `<tr><td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${i+1}</td><td style="padding:8px;border-bottom:1px solid #eee;">${item.nama}</td>`;
+        rowsHtml += `<tr style="page-break-inside:avoid;"><td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${i+1}</td><td style="padding:8px;border-bottom:1px solid #eee;">${item.nama}</td>`;
         masterDynamicFields.forEach(f => {
             rowsHtml += `<td style="padding:8px;border-bottom:1px solid #eee;">${item.additional_fields?.[f.name]||'-'}</td>`;
         });
         rowsHtml += `<td style="padding:8px;border-bottom:1px solid #eee;">${item.items?.join(', ')||'-'}</td></tr>`;
     });
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${judul}</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px;}.box{background:white;max-width:900px;margin:0 auto;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);}h2{color:#0D5C4A;font-size:20px;margin-bottom:4px;}.sub{color:#888;font-size:12px;margin-bottom:20px;}table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px;}th{background:#0D5C4A;color:white;padding:10px 8px;text-align:left;}tr:nth-child(even) td{background:#f9f9f9;}.footer{text-align:center;font-size:11px;color:#999;margin-top:16px;border-top:1px solid #eee;padding-top:12px;}.no-print{text-align:center;margin-top:24px;}.no-print button{padding:12px 32px;margin:0 8px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}@media print{body{background:white;padding:0;}.box{box-shadow:none;border-radius:0;}.no-print{display:none!important;}}</style></head><body><div class="box"><h2>${judul}</h2><div class="sub">${namaInstansi} | Total: ${masterDataList.length} data | Dicetak: ${tanggal}</div><table><thead><tr>${thHtml}</tr></thead><tbody>${rowsHtml}</tbody></table><div class="footer">${namaInstansi} | ${tanggal}</div></div><div class="no-print"><button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button><button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button></div><script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script></body></html>`;
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${judul}</title><style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px;}
+        .box{background:white;max-width:900px;margin:0 auto;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);}
+        h2{color:#0D5C4A;font-size:20px;margin-bottom:4px;}
+        .sub{color:#888;font-size:12px;margin-bottom:20px;}
+        table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px;}
+        thead{display:table-header-group;}
+        th{background:#0D5C4A;color:white;padding:10px 8px;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+        tr{page-break-inside:avoid;}
+        tr:nth-child(even) td{background:#f9f9f9;}
+        .footer{text-align:center;font-size:11px;color:#999;margin-top:16px;border-top:1px solid #eee;padding-top:12px;}
+        .no-print{text-align:center;margin-top:24px;}
+        .no-print button{padding:12px 32px;margin:0 8px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}
+        @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}body{background:white;padding:0;}.box{box-shadow:none;border-radius:0;}.no-print{display:none!important;}}
+    </style></head><body>
+    <div class="box">
+        <h2>${judul}</h2>
+        <div class="sub">${namaInstansi} | Total: ${masterDataList.length} data | Dicetak: ${tanggal}</div>
+        <table><thead><tr>${thHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>
+        <div class="footer">${namaInstansi} | ${tanggal}</div>
+    </div>
+    <div class="no-print"><button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button><button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button></div>
+    <script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script>
+    </body></html>`;
     const win = window.open('','_blank');
     if(!win) return showToast('Izinkan popup untuk cetak!');
     win.document.write(html);
