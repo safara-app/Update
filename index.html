@@ -3940,7 +3940,11 @@ function importJamaahFromExcel(input){
                     const fieldIndex=headers.findIndex(h=>h&&(h.toLowerCase()===field.label.toLowerCase()||h.toLowerCase()===field.name.toLowerCase())); 
                     if(fieldIndex!==-1&&row[fieldIndex]!==''&&row[fieldIndex]!==undefined){ 
                         let val = row[fieldIndex].toString().trim();
-                        // Konversi otomatis jika field bertipe date atau nama field mengandung 'lahir'/'tgl'
+                        // Konversi notasi ilmiah Excel (misal 6.28124E+12) ke angka utuh
+                        if (/^-?[\d.]+[eE][+\-]?\d+$/.test(val)) {
+                            val = Math.round(parseFloat(val)).toString();
+                        }
+                        // Konversi serial date Excel ke YYYY-MM-DD
                         if (field.type==='date' || field.name.includes('lahir') || field.name.includes('tgl')) {
                             val = excelSerialToDate(val);
                         }
