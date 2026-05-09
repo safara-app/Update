@@ -3533,7 +3533,27 @@ function saveJamaahData() {
 
 function loadDynamicFieldsJamaah() { 
     const saved=localStorage.getItem('safara_jamaah_fields'); 
-    dynamicFieldsJamaah=saved?JSON.parse(saved):[]; 
+    if (saved) {
+        dynamicFieldsJamaah = JSON.parse(saved);
+    } else {
+        // Default 12 field untuk user baru
+        dynamicFieldsJamaah = [
+            { name: 'kamar',        label: 'Kamar',         type: 'text', icon: '🛏️', isRequired: false },
+            { name: 'bus',          label: 'Bus',            type: 'text', icon: '🚌', isRequired: false },
+            { name: 'paspor',       label: 'Paspor',         type: 'text', icon: '📘', isRequired: false },
+            { name: 'whatsapp',     label: 'WhatsApp',       type: 'tel',  icon: '📞', isRequired: true  },
+            { name: 'hotel_makkah', label: 'Hotel Makkah',   type: 'text', icon: '🏨', isRequired: false },
+            { name: 'karu',         label: 'Karu',           type: 'text', icon: '👤', isRequired: false },
+            { name: 'rom',          label: 'Rom',            type: 'text', icon: '👤', isRequired: false },
+            { name: 'hotel_madinah',label: 'Hotel Madinah',  type: 'text', icon: '🏨', isRequired: false },
+            { name: 'visa',         label: 'Visa',           type: 'text', icon: '📘', isRequired: false },
+            { name: 'jk',          label: 'Jenis Kelamin',  type: 'text', icon: '👤', isRequired: false },
+            { name: 'warna',        label: 'Warna',          type: 'text', icon: '🏷️', isRequired: false },
+            { name: 'tgl_lahir',    label: 'Tgl Lahir',      type: 'date', icon: '🗓️', isRequired: false }
+        ];
+        // Simpan default ke storage
+        localStorage.setItem('safara_jamaah_fields', JSON.stringify(dynamicFieldsJamaah));
+    }
 }
 
 function saveDynamicFieldsJamaah() { 
@@ -3967,11 +3987,18 @@ function importJamaahFromExcel(input){
 let jamaahKitaList = [], dynamicFieldsJamaahKita = [], selectedJamaahKitaIds = [], editingJamaahKitaId = null;
 
 const defaultJamaahKitaFields = [
-    { name: "kamar", label: "Kamar", type: "text", icon: "🛏️", isRequired: false },
-    { name: "bus", label: "Bus", type: "text", icon: "🚌", isRequired: false },
-    { name: "hotel", label: "Hotel", type: "text", icon: "🏨", isRequired: false },
-    { name: "paspor", label: "No. Paspor", type: "text", icon: "📘", isRequired: false },
-    { name: "whatsapp", label: "WhatsApp", type: "tel", icon: "📞", isRequired: true }
+    { name: 'kamar',        label: 'Kamar',         type: 'text', icon: '🛏️', isRequired: false },
+    { name: 'bus',          label: 'Bus',            type: 'text', icon: '🚌', isRequired: false },
+    { name: 'paspor',       label: 'Paspor',         type: 'text', icon: '📘', isRequired: false },
+    { name: 'whatsapp',     label: 'WhatsApp',       type: 'tel',  icon: '📞', isRequired: true  },
+    { name: 'hotel_makkah', label: 'Hotel Makkah',   type: 'text', icon: '🏨', isRequired: false },
+    { name: 'karu',         label: 'Karu',           type: 'text', icon: '👤', isRequired: false },
+    { name: 'rom',          label: 'Rom',            type: 'text', icon: '👤', isRequired: false },
+    { name: 'hotel_madinah',label: 'Hotel Madinah',  type: 'text', icon: '🏨', isRequired: false },
+    { name: 'visa',         label: 'Visa',           type: 'text', icon: '📘', isRequired: false },
+    { name: 'jk',           label: 'Jenis Kelamin',  type: 'text', icon: '👤', isRequired: false },
+    { name: 'warna',        label: 'Warna',          type: 'text', icon: '🏷️', isRequired: false },
+    { name: 'tgl_lahir',    label: 'Tgl Lahir',      type: 'date', icon: '🗓️', isRequired: false }
 ];
 
 function loadJamaahKitaData() {
@@ -3980,16 +4007,22 @@ function loadJamaahKitaData() {
     jamaahKitaList = saved ? JSON.parse(saved) : [];
     dynamicFieldsJamaahKita = savedFields ? JSON.parse(savedFields) : defaultJamaahKitaFields;
 
-    // Sinkronkan urutan field On Proses mengikuti urutan Database Jamaah
+    // Sinkronkan urutan + icon + label field On Proses mengikuti Database Jamaah
     const dbFields = JSON.parse(localStorage.getItem('safara_jamaah_fields') || '[]');
     if (dbFields.length > 0) {
-        // Urutkan field On Proses sesuai urutan Database
         const dbOrder = dbFields.map(f => f.name);
+        // Update icon & label dari Database untuk field yang sama
+        dynamicFieldsJamaahKita = dynamicFieldsJamaahKita.map(kf => {
+            const dbField = dbFields.find(df => df.name === kf.name);
+            if (dbField) {
+                return { ...kf, icon: dbField.icon || kf.icon, label: dbField.label || kf.label };
+            }
+            return kf;
+        });
+        // Urutkan sesuai Database
         const inDb = dynamicFieldsJamaahKita.filter(f => dbOrder.includes(f.name));
         const notInDb = dynamicFieldsJamaahKita.filter(f => !dbOrder.includes(f.name));
-        // Urutkan yang ada di DB sesuai urutan DB
         inDb.sort((a, b) => dbOrder.indexOf(a.name) - dbOrder.indexOf(b.name));
-        // Field khusus On Proses (tidak ada di DB) tetap di belakang
         dynamicFieldsJamaahKita = [...inDb, ...notInDb];
     }
 }
@@ -4376,32 +4409,72 @@ function shareAllJamaahKitaToWA() {
 
 function cetakLabelJamaahKita() {
     if (jamaahKitaList.length === 0) return showToast('Tidak ada data untuk dicetak!');
-    let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cetak Label</title>
-    <style>* { margin:0; padding:0; box-sizing:border-box; } body { font-family:'Segoe UI',Arial,sans-serif; padding:20px; background:#f0f0f0; }
-    .print-area { display:flex; flex-wrap:wrap; gap:16px; justify-content:center; }
-    .label-card { background:white; border-radius:16px; padding:16px; width:260px; box-shadow:0 2px 12px rgba(0,0,0,0.1); border:1px solid #0D5C4A; page-break-inside:avoid; break-inside:avoid; }
-    .label-card h3 { color:#0D5C4A; font-size:16px; border-bottom:1px dashed #D4AF37; padding-bottom:8px; margin-bottom:12px; text-align:center; }
-    .label-field { margin:8px 0; font-size:12px; } .label-field strong { color:#0D5C4A; }
-    .label-wa { background:#f0f7f4; padding:8px; border-radius:12px; margin-top:10px; word-break:break-all; font-size:11px; }
-    .no-print { text-align:center; margin-top:20px; padding:20px; }
-    .no-print button { padding:10px 30px; margin:0 10px; background:#0D5C4A; color:white; border:none; border-radius:8px; cursor:pointer; }
-    @media print { body { background:white; padding:0; } .print-area { display:block; padding:10px; } .label-card { box-shadow:none; border:1px solid #ccc; margin-bottom:16px; } .no-print { display:none !important; } }
-    </style></head><body><div class="print-area">`;
+    const cfg = getKonfigurasiProData();
+    const logo = cfg.instansi1?.logo || '';
+    const namaInstansi = cfg.instansi2?.nama || cfg.instansi1?.nama || 'Safara';
+    const printFieldNames = getOnProsesPrintFields();
+    const printFields = dynamicFieldsJamaahKita.filter(f => printFieldNames.includes(f.name) && f.name !== 'whatsapp');
+    const logoHtml = logo
+        ? `<img src="${logo}" style="width:32px;height:32px;object-fit:contain;">`
+        : `<div style="font-size:18px;">🕌</div>`;
+
+    let cardsHtml = '';
     jamaahKitaList.forEach(j => {
         const f = j.additional_fields || {};
-        html += `<div class="label-card"><h3>${escapeHtml(j.nama_lengkap)}</h3>
-            ${f.bus ? `<div class="label-field"><strong>🚌 Bus</strong>: ${escapeHtml(f.bus)}</div>` : ''}
-            ${f.kamar ? `<div class="label-field"><strong>🛏️ Kamar</strong>: ${escapeHtml(f.kamar)}</div>` : ''}
-            ${f.hotel ? `<div class="label-field"><strong>🏨 Hotel</strong>: ${escapeHtml(f.hotel)}</div>` : ''}
-            ${f.paspor ? `<div class="label-field"><strong>📘 Paspor</strong>: ${escapeHtml(f.paspor)}</div>` : ''}
-            ${f.whatsapp ? `<div class="label-wa"><strong>📞 WA</strong><br>${escapeHtml(f.whatsapp)}</div>` : ''}
-            <div style="text-align:center;margin-top:12px;font-size:10px;color:#999;">${getKonfigurasiProData().instansi1.nama || 'Safara'}</div>
+        let fieldsHtml = '';
+        printFields.forEach(field => {
+            const val = f[field.name] || '';
+            if (!val) return;
+            const isTglLahir = field.type === 'date' || field.name.includes('lahir');
+            if (isTglLahir) {
+                const umur = hitungUmurDariTanggal(val);
+                const status = getStatusLansia(umur);
+                fieldsHtml += `<div class="field-row">${field.icon||'📌'} <b>${field.label}</b>: ${escapeHtml(val)} ${status||''}</div>`;
+            } else {
+                fieldsHtml += `<div class="field-row">${field.icon||'📌'} <b>${field.label}</b>: ${escapeHtml(val)}</div>`;
+            }
+        });
+        const wa = f.whatsapp || '';
+        cardsHtml += `<div class="label-card">
+            <div class="card-header">
+                ${logoHtml}
+                <div class="card-nama">${escapeHtml(j.nama_lengkap)}</div>
+            </div>
+            <div class="card-fields">${fieldsHtml}</div>
+            ${wa ? `<div class="card-wa">📞 ${escapeHtml(wa)}</div>` : ''}
+            <div class="card-footer">${namaInstansi}</div>
         </div>`;
     });
-    html += `</div><div class="no-print"><button onclick="window.print()">🖨️ CETAK</button><button onclick="window.close()">✕ TUTUP</button></div>
-    <script>window.onload = function() { setTimeout(function() { window.print(); }, 800); };<\/script>
+
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cetak Label</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Segoe UI',Arial,sans-serif;padding:12px;background:#f0f0f0;}
+        .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:780px;margin:0 auto;}
+        .label-card{background:white;border-radius:10px;padding:10px;border:1.5px solid #0D5C4A;page-break-inside:avoid;break-inside:avoid;}
+        .card-header{display:flex;align-items:center;gap:8px;border-bottom:1px dashed #D4AF37;padding-bottom:8px;margin-bottom:6px;}
+        .card-nama{font-size:12px;font-weight:bold;color:#0D5C4A;text-transform:uppercase;line-height:1.3;flex:1;}
+        .card-fields{margin-bottom:4px;}
+        .field-row{font-size:10px;color:#444;margin:2px 0;line-height:1.4;}
+        .card-wa{background:#f0f7f4;padding:4px 8px;border-radius:6px;margin-top:4px;font-size:10px;word-break:break-all;}
+        .card-footer{text-align:center;margin-top:6px;font-size:9px;color:#999;}
+        .no-print{text-align:center;margin-top:16px;padding:12px;}
+        .no-print button{padding:10px 28px;margin:0 6px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}
+        @media print{
+            *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+            body{background:white;padding:6px;}
+            .grid{gap:6px;}
+            .no-print{display:none!important;}
+        }
+    </style></head><body>
+    <div class="grid">${cardsHtml}</div>
+    <div class="no-print">
+        <button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button>
+        <button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button>
+    </div>
+    <script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script>
     </body></html>`;
-    const win = window.open("", "_blank");
+    const win = window.open('','_blank');
     if (!win) { showToast('Izinkan popup untuk cetak!'); return; }
     win.document.write(html);
     win.document.close();
