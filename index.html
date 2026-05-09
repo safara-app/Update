@@ -3979,6 +3979,19 @@ function loadJamaahKitaData() {
     const savedFields = localStorage.getItem('safara_jamaah_kita_fields');
     jamaahKitaList = saved ? JSON.parse(saved) : [];
     dynamicFieldsJamaahKita = savedFields ? JSON.parse(savedFields) : defaultJamaahKitaFields;
+
+    // Sinkronkan urutan field On Proses mengikuti urutan Database Jamaah
+    const dbFields = JSON.parse(localStorage.getItem('safara_jamaah_fields') || '[]');
+    if (dbFields.length > 0) {
+        // Urutkan field On Proses sesuai urutan Database
+        const dbOrder = dbFields.map(f => f.name);
+        const inDb = dynamicFieldsJamaahKita.filter(f => dbOrder.includes(f.name));
+        const notInDb = dynamicFieldsJamaahKita.filter(f => !dbOrder.includes(f.name));
+        // Urutkan yang ada di DB sesuai urutan DB
+        inDb.sort((a, b) => dbOrder.indexOf(a.name) - dbOrder.indexOf(b.name));
+        // Field khusus On Proses (tidak ada di DB) tetap di belakang
+        dynamicFieldsJamaahKita = [...inDb, ...notInDb];
+    }
 }
 
 // ===== STUB FUNGSI JAMAAH KITA COMPAT =====
@@ -5753,8 +5766,8 @@ function toggleFolderField(folderId, fieldKey, checked) {
     } else {
         folderList[folderIdx].selectedFields = folderList[folderIdx].selectedFields.filter(k => k !== fieldKey);
     }
+    // Simpan diam-diam tanpa toast agar tidak ganggu UI
     saveFolderData();
-    showToast(checked ? '✅ Field ditambahkan' : '❌ Field dihapus');
 }
 
 function addFolderField(folderId) {
