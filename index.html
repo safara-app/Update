@@ -4561,9 +4561,11 @@ function printGroupedPDFJamaahKita() {
     <h1>📋 DATA KELOMPOK JAMAAH</h1>
     <div class="date">Tanggal Cetak: ${new Date().toLocaleDateString("id-ID")}</div>
     <div class="date">Berdasarkan: ${groupField.icon || '📌'} ${escapeHtml(groupField.label)}</div>`;
-    for (const key of sortedGroups) {
+    sortedGroups.forEach((key, groupIdx) => {
         const members = groups[key];
-        html += `<div class="group"><div class="group-title">${groupField.icon || '📌'} ${escapeHtml(groupField.label)}: ${escapeHtml(key)} (${members.length} orang)</div>
+        const pageBreak = groupIdx > 0 ? 'page-break-before:always;' : '';
+        html += `<div class="group" style="${pageBreak}">
+        <div class="group-title">${groupField.icon || '📌'} ${escapeHtml(groupField.label)}: ${escapeHtml(key)} (${members.length} orang)</div>
         <table><thead><tr><th>No</th><th>Nama Jamaah</th>${printFields.map(f => `<th>${f.icon || '📌'} ${escapeHtml(f.label)}</th>`).join("")}</tr></thead><tbody>`;
         members.forEach((jk, i) => {
             html += `<tr><td>${i+1}</td><td>${escapeHtml(jk.nama_lengkap)}</td>${printFields.map(f => {
@@ -4578,7 +4580,7 @@ function printGroupedPDFJamaahKita() {
             }).join("")}</tr>`;
         });
         html += `</tbody></table></div>`;
-    }
+    });
     html += `<div class="footer">Dicetak dari ${getKonfigurasiProData().instansi1.nama || 'Safara'}</div>
     </div>
     <div class="no-print">
