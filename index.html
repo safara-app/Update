@@ -2363,7 +2363,21 @@
     <div class="container">
         <div class="card-premium">
             <div class="input-group">
-                <label>Pilih Jamaah</label>
+                <label>Pilih Jamaah (Satu - untuk QR Preview)</label>
+                <select id="tiketJamaahSelect" onchange="generateTiketQR()"></select>
+            </div>
+            <div id="tiketPreview" class="tiket-card" style="display:none;">
+                <div class="tiket-header"><div class="tiket-title" id="tiketNama"></div><div id="tiketPaket" style="font-size:12px;"></div></div>
+                <div id="tiketQR" class="tiket-qr"></div>
+                <div class="row" style="margin-top:15px;">
+                    <button class="btn btn-primary btn-small" onclick="downloadTiketAsImage()"><i class="fas fa-download"></i> Simpan sebagai Gambar</button>
+                    <button class="btn btn-wa btn-small" onclick="shareTiketWA()"><i class="fab fa-whatsapp"></i> Kirim ke WA</button>
+                    <button class="btn btn-purple btn-small" onclick="cetakTiketLangsung()"><i class="fas fa-print"></i> CETAK TIKET</button>
+                </div>
+            </div>
+            <hr style="margin:20px 0;border-color:#eee;">
+            <div class="input-group">
+                <label>Pilih Banyak Jamaah (Cetak/WA Massal)</label>
                 <input type="text" id="searchTiketJamaah" placeholder="🔍 Cari nama jamaah..." oninput="filterTiketJamaah()" style="margin-bottom:8px;">
                 <div style="display:flex;gap:8px;margin-bottom:8px;">
                     <button onclick="pilihSemuaTiket()" style="flex:1;padding:8px;background:#0D5C4A;color:white;border:none;border-radius:8px;font-size:12px;cursor:pointer;">✅ Pilih Semua</button>
@@ -2372,10 +2386,9 @@
                 <div id="multiTiketJamaahSelect" style="max-height:200px;overflow-y:auto;border:1px solid #ddd;border-radius:10px;padding:8px;background:var(--card-bg);"></div>
                 <div id="jumlahDipilihTiket" style="font-size:12px;color:#0D5C4A;margin-top:6px;font-weight:bold;"></div>
             </div>
-            <button class="btn btn-primary mt-2" onclick="cetakTiketMulti()"><i class="fas fa-print"></i> CETAK TIKET</button>
-            <button class="btn btn-wa btn-small mt-2" onclick="shareTiketWAMulti()"><i class="fab fa-whatsapp"></i> Kirim ke WA</button>
+            <button class="btn btn-primary mt-2" onclick="cetakTiketMulti()"><i class="fas fa-print"></i> CETAK TIKET MASSAL</button>
+            <button class="btn btn-wa mt-2" onclick="shareTiketWAMulti()"><i class="fab fa-whatsapp"></i> Kirim ke WA Massal</button>
         </div>
-        <div id="tiketPreview" class="tiket-card" style="display:none;"><div class="tiket-header"><div class="tiket-title" id="tiketNama"></div><div id="tiketPaket" style="font-size:12px;"></div></div><div id="tiketQR" class="tiket-qr"></div><div class="row" style="margin-top:15px;"><button class="btn btn-primary btn-small" onclick="downloadTiketAsImage()"><i class="fas fa-download"></i> Simpan sebagai Gambar</button><button class="btn btn-wa btn-small" onclick="shareTiketWA()"><i class="fab fa-whatsapp"></i> Kirim ke WA</button><button class="btn btn-purple btn-small" onclick="cetakTiketLangsung()"><i class="fas fa-print"></i> CETAK TIKET</button></div></div>
     </div>
 </div>
 
@@ -4641,11 +4654,15 @@ function printGroupedPDFJamaahKita() {
         if (b === "Tidak diisi") return -1;
         return a.localeCompare(b);
     });
+    const cfg = getKonfigurasiProData();
+    const watermarkHtml = buildPrintWatermark(cfg);
     let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cetak Kelompok</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;}
         body{font-family:Arial,sans-serif;padding:20px;background:#f0f0f0;}
-        .box{background:white;max-width:900px;margin:0 auto;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,0.1);}
+        .box{background:white;max-width:900px;margin:0 auto;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,0.1);position:relative;overflow:hidden;}
+        .watermark-wrap{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden;}
+        .content{position:relative;z-index:1;}
         h1{color:#0D5C4A;text-align:center;font-size:22px;margin-bottom:6px;}
         .date{text-align:center;margin-bottom:20px;color:#666;font-size:12px;}
         .group{margin-bottom:24px;}
@@ -4660,7 +4677,7 @@ function printGroupedPDFJamaahKita() {
         .no-print{text-align:center;margin-top:20px;}
         .no-print button{padding:10px 28px;margin:0 6px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}
         @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}body{background:white;padding:0;}.box{box-shadow:none;border-radius:0;}.no-print{display:none!important;}}
-    </style></head><body><div class="box">
+    </style></head><body><div class="box"><div class="watermark-wrap">${watermarkHtml}</div><div class="content">
     <h1>📋 DATA KELOMPOK JAMAAH</h1>
     <div class="date">Tanggal Cetak: ${new Date().toLocaleDateString("id-ID")}</div>
     <div class="date">Berdasarkan: ${groupField.icon || '📌'} ${escapeHtml(groupField.label)}</div>`;
@@ -4685,7 +4702,7 @@ function printGroupedPDFJamaahKita() {
         html += `</tbody></table></div>`;
     });
     html += `<div class="footer">Dicetak dari ${getKonfigurasiProData().instansi1.nama || 'Safara'}</div>
-    </div>
+    </div></div>
     <div class="no-print">
         <button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button>
         <button onclick="window.close()" style="background:#e2e8f0;color:#333;">TUTUP</button>
@@ -5992,7 +6009,9 @@ async function exportFolderToPDF(folderId) {
     const allJamaah = JSON.parse(localStorage.getItem('safara_jamaah_list') || '[]');
     const jamaahInFolder = folder.jamaahIds.map(id => allJamaah.find(j => j.id == id)).filter(j => j);
     if(jamaahInFolder.length === 0) { showToast('Tidak ada jamaah dalam folder ini'); return; }
-    const namaInstansi = getKonfigurasiProData().instansi1.nama || 'Safara';
+    const cfgFolder = getKonfigurasiProData();
+    const namaInstansi = cfgFolder.instansi1.nama || 'Safara';
+    const watermarkHtmlFolder = buildPrintWatermark(cfgFolder);
     const tanggal = new Date().toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
     const allDynFields = JSON.parse(localStorage.getItem('safara_jamaah_fields') || '[]');
     const selectedFields = folder.selectedFields || [];
@@ -6016,7 +6035,9 @@ async function exportFolderToPDF(folderId) {
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Folder ${folder.nama}</title><style>
         *{margin:0;padding:0;box-sizing:border-box;}
         body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px;}
-        .box{background:white;max-width:900px;margin:0 auto;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);}
+        .box{background:white;max-width:900px;margin:0 auto;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);position:relative;overflow:hidden;}
+        .watermark-wrap{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden;}
+        .content{position:relative;z-index:1;}
         h2{color:#0D5C4A;font-size:20px;margin-bottom:4px;}
         .sub{color:#888;font-size:12px;margin-bottom:12px;}
         .folder-info{background:#f0f7f4;border-radius:10px;padding:12px;font-size:13px;line-height:1.9;margin-bottom:16px;color:#555;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
@@ -6031,11 +6052,14 @@ async function exportFolderToPDF(folderId) {
         @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}body{background:white;padding:0;}.box{box-shadow:none;border-radius:0;}.no-print{display:none!important;}}
     </style></head><body>
     <div class="box">
-        <h2>Folder: ${folder.nama}</h2>
-        <div class="sub">${namaInstansi} | Total: ${jamaahInFolder.length} jamaah | Dicetak: ${tanggal}</div>
-        ${folderInfoHtml?`<div class="folder-info">${folderInfoHtml}</div>`:''}
-        <table><thead><tr>${thHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>
-        <div class="footer">${namaInstansi} | ${tanggal}</div>
+        <div class="watermark-wrap">${watermarkHtmlFolder}</div>
+        <div class="content">
+            <h2>Folder: ${folder.nama}</h2>
+            <div class="sub">${namaInstansi} | Total: ${jamaahInFolder.length} jamaah | Dicetak: ${tanggal}</div>
+            ${folderInfoHtml?`<div class="folder-info">${folderInfoHtml}</div>`:''}
+            <table><thead><tr>${thHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>
+            <div class="footer">${namaInstansi} | ${tanggal}</div>
+        </div>
     </div>
     <div class="no-print"><button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button><button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button></div>
     <script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script>
@@ -7354,8 +7378,10 @@ function shareAllMasterToWA() {
 
 async function exportMasterPDF() {
     if(masterDataList.length === 0) { showToast('Tidak ada data!'); return; }
+    const cfgMaster = getKonfigurasiProData();
     const judul = getMasterJudul();
-    const namaInstansi = getKonfigurasiProData().instansi1.nama || 'Safara';
+    const namaInstansi = cfgMaster.instansi1.nama || 'Safara';
+    const watermarkHtmlMaster = buildPrintWatermark(cfgMaster);
     const tanggal = new Date().toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
     let thHtml = '<th style="width:36px;">No</th><th>Nama Lengkap</th>';
     masterDynamicFields.forEach(f => { thHtml += `<th>${f.label}</th>`; });
@@ -7371,7 +7397,9 @@ async function exportMasterPDF() {
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${judul}</title><style>
         *{margin:0;padding:0;box-sizing:border-box;}
         body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px;}
-        .box{background:white;max-width:900px;margin:0 auto;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);}
+        .box{background:white;max-width:900px;margin:0 auto;border-radius:16px;padding:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);position:relative;overflow:hidden;}
+        .watermark-wrap{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden;}
+        .content{position:relative;z-index:1;}
         h2{color:#0D5C4A;font-size:20px;margin-bottom:4px;}
         .sub{color:#888;font-size:12px;margin-bottom:20px;}
         table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px;}
@@ -7385,10 +7413,13 @@ async function exportMasterPDF() {
         @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}body{background:white;padding:0;}.box{box-shadow:none;border-radius:0;}.no-print{display:none!important;}}
     </style></head><body>
     <div class="box">
-        <h2>${judul}</h2>
-        <div class="sub">${namaInstansi} | Total: ${masterDataList.length} data | Dicetak: ${tanggal}</div>
-        <table><thead><tr>${thHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>
-        <div class="footer">${namaInstansi} | ${tanggal}</div>
+        <div class="watermark-wrap">${watermarkHtmlMaster}</div>
+        <div class="content">
+            <h2>${judul}</h2>
+            <div class="sub">${namaInstansi} | Total: ${masterDataList.length} data | Dicetak: ${tanggal}</div>
+            <table><thead><tr>${thHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>
+            <div class="footer">${namaInstansi} | ${tanggal}</div>
+        </div>
     </div>
     <div class="no-print"><button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button><button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button></div>
     <script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script>
@@ -8366,4 +8397,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-    </html>
+        </html>
