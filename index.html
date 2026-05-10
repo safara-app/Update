@@ -6165,8 +6165,16 @@ function openIndexedDB() {
     return new Promise((resolve, reject) => { 
         if (db) { resolve(db); return; } 
         const request = indexedDB.open(DB_NAME, DB_VERSION); 
-        request.onerror = () => reject(request.error); 
+        request.onerror = (e) => { 
+            console.error('IndexedDB error:', e);
+            reject(request.error); 
+        }; 
         request.onsuccess = () => { db = request.result; resolve(db); }; 
+        request.onblocked = () => {
+            // Ada tab lain yang masih pakai DB versi lama
+            db = null;
+            window.location.reload();
+        };
         request.onupgradeneeded = (event) => { 
             const dbEvent = event.target.result; 
             if (!dbEvent.objectStoreNames.contains(STORE_NAME)) dbEvent.createObjectStore(STORE_NAME, { keyPath: 'id' }); 
@@ -6214,12 +6222,21 @@ function kompresiFoto(file, maxSize, callback) {
         img.onload = () => {
             const canvas = document.createElement('canvas');
             let w = img.width, h = img.height;
-            const max = maxSize || 400;
-            if (w > h && w > max) { h = h * max / w; w = max; }
-            else if (h > max) { w = w * max / h; h = max; }
+            const max = maxSize || 300;
+            if (w > h && w > max) { h = Math.round(h * max / w); w = max; }
+            else if (h > max) { w = Math.round(w * max / h); h = max; }
             canvas.width = w; canvas.height = h;
             canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-            callback(canvas.toDataURL('image/jpeg', 0.75));
+            // Kompres agresif sampai di bawah 80KB
+            let quality = 0.8;
+            let dataUrl = canvas.toDataURL('image/jpeg', quality);
+            while (dataUrl.length > 80000 && quality > 0.2) {
+                quality -= 0.1;
+                dataUrl = canvas.toDataURL('image/jpeg', quality);
+            }
+            const sizeKB = Math.round(dataUrl.length * 0.75 / 1024);
+            showToast('📷 Foto dikompres: ' + sizeKB + ' KB');
+            callback(dataUrl);
         };
         img.src = e.target.result;
     };
