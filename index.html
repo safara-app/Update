@@ -3626,18 +3626,26 @@ function loadDynamicFieldsJamaah() {
     } else {
         // Default 12 field untuk user baru
         dynamicFieldsJamaah = [
-            { name: 'kamar',        label: 'Kamar',         type: 'text', icon: '🛏️', isRequired: false },
-            { name: 'bus',          label: 'Bus',            type: 'text', icon: '🚌', isRequired: false },
-            { name: 'paspor',       label: 'Paspor',         type: 'text', icon: '📘', isRequired: false },
-            { name: 'whatsapp',     label: 'WhatsApp',       type: 'tel',  icon: '📞', isRequired: true  },
-            { name: 'hotel_makkah', label: 'Hotel Makkah',   type: 'text', icon: '🏨', isRequired: false },
-            { name: 'karu',         label: 'Karu',           type: 'text', icon: '👤', isRequired: false },
-            { name: 'rom',          label: 'Rom',            type: 'text', icon: '👤', isRequired: false },
-            { name: 'hotel_madinah',label: 'Hotel Madinah',  type: 'text', icon: '🏨', isRequired: false },
-            { name: 'visa',         label: 'Visa',           type: 'text', icon: '📘', isRequired: false },
-            { name: 'jk',          label: 'Jenis Kelamin',  type: 'text', icon: '👤', isRequired: false },
-            { name: 'warna',        label: 'Warna',          type: 'text', icon: '🏷️', isRequired: false },
-            { name: 'tgl_lahir',    label: 'Tgl Lahir',      type: 'date', icon: '🗓️', isRequired: false }
+            { name: 'nama_paspor',   label: 'Nama Paspor',   type: 'text',     icon: '👤', isRequired: false },
+            { name: 'no_porsi',      label: 'No Porsi',       type: 'text',     icon: '🔢', isRequired: false },
+            { name: 'jenis_kelamin', label: 'Jenis Kelamin',  type: 'text',     icon: '👤', isRequired: false },
+            { name: 'tempat_lahir',  label: 'Tempat Lahir',   type: 'text',     icon: '📍', isRequired: false },
+            { name: 'tgl_lahir',     label: 'Tanggal Lahir',  type: 'date',     icon: '🗓️', isRequired: false },
+            { name: 'no_paspor',     label: 'No Paspor',      type: 'text',     icon: '📘', isRequired: false },
+            { name: 'nik',           label: 'NIK',             type: 'text',     icon: '🪪', isRequired: false },
+            { name: 'kk',            label: 'KK',              type: 'text',     icon: '📋', isRequired: false },
+            { name: 'alamat_kec',    label: 'Alamat Kec',     type: 'text',     icon: '🏘️', isRequired: false },
+            { name: 'kota',          label: 'Kota',            type: 'text',     icon: '🏙️', isRequired: false },
+            { name: 'whatsapp',      label: 'WhatsApp',        type: 'tel',      icon: '📞', isRequired: true  },
+            { name: 'rombongan',     label: 'Rombongan',       type: 'text',     icon: '👥', isRequired: false },
+            { name: 'regu',          label: 'Regu',            type: 'text',     icon: '👥', isRequired: false },
+            { name: 'visa',          label: 'Visa',            type: 'text',     icon: '📘', isRequired: false },
+            { name: 'kamar',         label: 'Kamar',           type: 'text',     icon: '🛏️', isRequired: false },
+            { name: 'bus',           label: 'Bus',             type: 'text',     icon: '🚌', isRequired: false },
+            { name: 'hotel_makkah',  label: 'Hotel Makkah',   type: 'text',     icon: '🏨', isRequired: false },
+            { name: 'hotel_madinah', label: 'Hotel Madinah',  type: 'text',     icon: '🏨', isRequired: false },
+            { name: 'warna',         label: 'Warna',           type: 'text',     icon: '🏷️', isRequired: false },
+            { name: 'keterangan',    label: 'Keterangan',      type: 'textarea', icon: '📝', isRequired: false }
         ];
         // Simpan default ke storage
         localStorage.setItem('safara_jamaah_fields', JSON.stringify(dynamicFieldsJamaah));
@@ -4075,18 +4083,26 @@ function importJamaahFromExcel(input){
 let jamaahKitaList = [], dynamicFieldsJamaahKita = [], selectedJamaahKitaIds = [], editingJamaahKitaId = null;
 
 const defaultJamaahKitaFields = [
-    { name: 'kamar',        label: 'Kamar',         type: 'text', icon: '🛏️', isRequired: false },
-    { name: 'bus',          label: 'Bus',            type: 'text', icon: '🚌', isRequired: false },
-    { name: 'paspor',       label: 'Paspor',         type: 'text', icon: '📘', isRequired: false },
-    { name: 'whatsapp',     label: 'WhatsApp',       type: 'tel',  icon: '📞', isRequired: true  },
-    { name: 'hotel_makkah', label: 'Hotel Makkah',   type: 'text', icon: '🏨', isRequired: false },
-    { name: 'karu',         label: 'Karu',           type: 'text', icon: '👤', isRequired: false },
-    { name: 'rom',          label: 'Rom',            type: 'text', icon: '👤', isRequired: false },
-    { name: 'hotel_madinah',label: 'Hotel Madinah',  type: 'text', icon: '🏨', isRequired: false },
-    { name: 'visa',         label: 'Visa',           type: 'text', icon: '📘', isRequired: false },
-    { name: 'jk',           label: 'Jenis Kelamin',  type: 'text', icon: '👤', isRequired: false },
-    { name: 'warna',        label: 'Warna',          type: 'text', icon: '🏷️', isRequired: false },
-    { name: 'tgl_lahir',    label: 'Tgl Lahir',      type: 'date', icon: '🗓️', isRequired: false }
+    { name: 'nama_paspor',   label: 'Nama Paspor',   type: 'text',     icon: '👤', isRequired: false },
+    { name: 'no_porsi',      label: 'No Porsi',       type: 'text',     icon: '🔢', isRequired: false },
+    { name: 'jenis_kelamin', label: 'Jenis Kelamin',  type: 'text',     icon: '👤', isRequired: false },
+    { name: 'tempat_lahir',  label: 'Tempat Lahir',   type: 'text',     icon: '📍', isRequired: false },
+    { name: 'tgl_lahir',     label: 'Tanggal Lahir',  type: 'date',     icon: '🗓️', isRequired: false },
+    { name: 'no_paspor',     label: 'No Paspor',      type: 'text',     icon: '📘', isRequired: false },
+    { name: 'nik',           label: 'NIK',             type: 'text',     icon: '🪪', isRequired: false },
+    { name: 'kk',            label: 'KK',              type: 'text',     icon: '📋', isRequired: false },
+    { name: 'alamat_kec',    label: 'Alamat Kec',     type: 'text',     icon: '🏘️', isRequired: false },
+    { name: 'kota',          label: 'Kota',            type: 'text',     icon: '🏙️', isRequired: false },
+    { name: 'whatsapp',      label: 'WhatsApp',        type: 'tel',      icon: '📞', isRequired: true  },
+    { name: 'rombongan',     label: 'Rombongan',       type: 'text',     icon: '👥', isRequired: false },
+    { name: 'regu',          label: 'Regu',            type: 'text',     icon: '👥', isRequired: false },
+    { name: 'visa',          label: 'Visa',            type: 'text',     icon: '📘', isRequired: false },
+    { name: 'kamar',         label: 'Kamar',           type: 'text',     icon: '🛏️', isRequired: false },
+    { name: 'bus',           label: 'Bus',             type: 'text',     icon: '🚌', isRequired: false },
+    { name: 'hotel_makkah',  label: 'Hotel Makkah',   type: 'text',     icon: '🏨', isRequired: false },
+    { name: 'hotel_madinah', label: 'Hotel Madinah',  type: 'text',     icon: '🏨', isRequired: false },
+    { name: 'warna',         label: 'Warna',           type: 'text',     icon: '🏷️', isRequired: false },
+    { name: 'keterangan',    label: 'Keterangan',      type: 'textarea', icon: '📝', isRequired: false }
 ];
 
 function loadJamaahKitaData() {
@@ -4338,12 +4354,25 @@ function getStatusLansia(umur) {
     return umur >= batas ? `🔴 LANSIA (${umur} th)` : `🟢 ${umur} th`;
 }
 
+function getMergedJamaahKitaFields(jk) {
+    // Ambil data terbaru dari Database berdasarkan jamaahId
+    const dbJamaah = jamaahList.find(j => j.id === jk.jamaahId);
+    const dbFields = dbJamaah?.additional_fields || {};
+    // Gabungkan: Database sebagai sumber utama, field khusus On Proses sebagai tambahan
+    const merged = Object.assign({}, jk.additional_fields || {}, dbFields);
+    // Update nama dari database juga
+    if (dbJamaah && dbJamaah.nama_lengkap !== jk.nama_lengkap) {
+        jk.nama_lengkap = dbJamaah.nama_lengkap;
+    }
+    return merged;
+}
+
 function renderJamaahKitaDetailFields(jk) {
     let html = "";
+    const mergedFields = getMergedJamaahKitaFields(jk);
     dynamicFieldsJamaahKita.forEach(field => {
-        const val = jk.additional_fields?.[field.name] || "";
+        const val = mergedFields[field.name] || "";
         if (!val || field.name === "whatsapp") return;
-        // Cek apakah field ini adalah tanggal lahir
         const isTglLahir = field.type === 'date' || field.name.includes('lahir') || field.name.includes('tgl_lahir');
         if (isTglLahir) {
             const umur = hitungUmurDariTanggal(val);
@@ -4354,7 +4383,7 @@ function renderJamaahKitaDetailFields(jk) {
             html += `<div class="jamaah-kita-detail-item">${field.icon || '📌'} ${escapeHtml(field.label)}: ${escapeHtml(val)}</div>`;
         }
     });
-    const wa = jk.additional_fields?.whatsapp || "";
+    const wa = mergedFields.whatsapp || "";
     if (wa) html += `<div class="jamaah-kita-detail-item">📞 WhatsApp: ${escapeHtml(wa)}</div>`;
     return html;
 }
@@ -4411,9 +4440,10 @@ function sendBatchWA() {
     const printFields = dynamicFieldsJamaahKita.filter(f => printFieldNames.includes(f.name));
     let msg = "📋 *DATA JAMAAH ON PROSES*\n\n━━━━━━━━━━━━━━━━━━\n";
     selected.forEach((jk, i) => {
+        const mergedFields = getMergedJamaahKitaFields(jk);
         msg += `${i+1}. *${jk.nama_lengkap}*\n`;
         printFields.forEach(field => {
-            const val = jk.additional_fields?.[field.name] || "";
+            const val = mergedFields[field.name] || "";
             if (!val || field.name === "whatsapp") return;
             const isTglLahir = field.type === 'date' || field.name.includes('lahir');
             if (isTglLahir) {
@@ -4424,7 +4454,7 @@ function sendBatchWA() {
                 msg += `   ${field.icon || '📌'} ${field.label}: ${val}\n`;
             }
         });
-        const wa = jk.additional_fields?.whatsapp || "";
+        const wa = mergedFields.whatsapp || "";
         if (wa) msg += `   📞 WA: ${wa}\n`;
         msg += "\n";
     });
@@ -4608,7 +4638,8 @@ async function printGroupedPDFJamaahKita() {
     const groups = {};
     const batas = getKonfigurasiProData().settings?.batas_lansia || 60;
     jamaahKitaList.forEach(jk => {
-        const rawVal = jk.additional_fields?.[groupField.name] || "";
+        const mergedFields = getMergedJamaahKitaFields(jk);
+        const rawVal = mergedFields[groupField.name] || "";
         let key;
         // Jika field adalah tanggal lahir → kelompokkan berdasarkan status Lansia
         const isTglLahir = groupField.type === 'date' || groupField.name.includes('lahir');
@@ -4662,8 +4693,9 @@ async function printGroupedPDFJamaahKita() {
         <div class="group-title">${groupField.icon || '📌'} ${escapeHtml(groupField.label)}: ${escapeHtml(key)} (${members.length} orang)</div>
         <table><thead><tr><th>No</th><th>Nama Jamaah</th>${printFields.map(f => `<th>${f.icon || '📌'} ${escapeHtml(f.label)}</th>`).join("")}</tr></thead><tbody>`;
         members.forEach((jk, i) => {
+            const mergedFields = getMergedJamaahKitaFields(jk);
             html += `<tr><td>${i+1}</td><td>${escapeHtml(jk.nama_lengkap)}</td>${printFields.map(f => {
-                const val = jk.additional_fields?.[f.name] || '-';
+                const val = mergedFields[f.name] || '-';
                 const isTglLahir = f.type === 'date' || f.name.includes('lahir');
                 if (isTglLahir && val !== '-') {
                     const umur = hitungUmurDariTanggal(val);
@@ -8485,4 +8517,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-    </html>
+    </html>=
