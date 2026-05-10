@@ -6239,31 +6239,39 @@ async function hapusFotoProfil(jamaahId) {
 }
 
 function kompresiFoto(file, maxSize, callback) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let w = img.width, h = img.height;
-            const max = maxSize || 300;
-            if (w > h && w > max) { h = Math.round(h * max / w); w = max; }
-            else if (h > max) { w = Math.round(w * max / h); h = max; }
-            canvas.width = w; canvas.height = h;
-            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-            // Kompres agresif sampai di bawah 80KB
-            let quality = 0.8;
-            let dataUrl = canvas.toDataURL('image/jpeg', quality);
-            while (dataUrl.length > 80000 && quality > 0.2) {
-                quality -= 0.1;
-                dataUrl = canvas.toDataURL('image/jpeg', quality);
-            }
-            const sizeKB = Math.round(dataUrl.length * 0.75 / 1024);
-            showToast('📷 Foto dikompres: ' + sizeKB + ' KB');
-            callback(dataUrl);
-        };
-        img.src = e.target.result;
+    // Cek ukuran file - max 15MB
+    if (file.size > 15 * 1024 * 1024) {
+        showToast('❌ File terlalu besar! Max 15MB');
+        return;
+    }
+    // Pakai blob URL agar tidak crash memory untuk foto besar
+    const blobUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+        URL.revokeObjectURL(blobUrl); // Bebaskan memory
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        const max = maxSize || 300;
+        if (w > h && w > max) { h = Math.round(h * max / w); w = max; }
+        else if (h > max) { w = Math.round(w * max / h); h = max; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        // Kompres agresif sampai di bawah 80KB
+        let quality = 0.8;
+        let dataUrl = canvas.toDataURL('image/jpeg', quality);
+        while (dataUrl.length > 80000 && quality > 0.2) {
+            quality -= 0.1;
+            dataUrl = canvas.toDataURL('image/jpeg', quality);
+        }
+        const sizeKB = Math.round(dataUrl.length * 0.75 / 1024);
+        showToast('📷 Foto dikompres: ' + sizeKB + ' KB');
+        callback(dataUrl);
     };
-    reader.readAsDataURL(file);
+    img.onerror = () => {
+        URL.revokeObjectURL(blobUrl);
+        showToast('❌ Gagal baca foto!');
+    };
+    img.src = blobUrl;
 }
 
 function showFotoProfilModal(jamaahId, jamaahNama) {
@@ -8739,4 +8747,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-    </html>
+                                                                                                  </html>
