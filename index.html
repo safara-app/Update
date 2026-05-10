@@ -5822,7 +5822,12 @@ function openFolderDetail(folderId) {
     // Section pilih field untuk PDF/Excel
     const allDynFields = JSON.parse(localStorage.getItem('safara_jamaah_fields') || '[]');
     const selectedFields = folder.selectedFields || [];
-    html += `<div class="card-premium" style="padding:12px;margin-bottom:12px;"><div style="font-weight:bold;margin-bottom:10px;color:#0D5C4A;">📋 Pilih Field untuk PDF/Excel</div>`;
+    html += `<div class="card-premium" style="padding:12px;margin-bottom:12px;">
+        <div style="font-weight:bold;margin-bottom:10px;color:#0D5C4A;">📋 Pilih Field untuk PDF/Excel</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+            <button onclick="pilihSemuaFolderField('${folderId}')" style="flex:1;padding:8px;background:#0D5C4A;color:white;border:none;border-radius:8px;font-size:12px;cursor:pointer;">✅ Pilih Semua</button>
+            <button onclick="hapusPilihanFolderField('${folderId}')" style="flex:1;padding:8px;background:#e2e8f0;color:#333;border:none;border-radius:8px;font-size:12px;cursor:pointer;">❌ Hapus Pilihan</button>
+        </div>`;
     if(allDynFields.length === 0) {
         html += `<p style="color:#999;font-size:13px;">Belum ada field dinamis jamaah.</p>`;
     } else {
@@ -5953,6 +5958,24 @@ function confirmDeleteFolder(folderId) {
         saveFolderData(); 
         showToast('Folder dihapus'); 
     } 
+}
+
+function pilihSemuaFolderField(folderId) {
+    document.querySelectorAll(`input[id^="fld_${folderId}_"]`).forEach(cb => {
+        if(!cb.checked) {
+            cb.checked = true;
+            toggleFolderField(folderId, cb.value, true);
+        }
+    });
+}
+
+function hapusPilihanFolderField(folderId) {
+    document.querySelectorAll(`input[id^="fld_${folderId}_"]`).forEach(cb => {
+        if(cb.checked) {
+            cb.checked = false;
+            toggleFolderField(folderId, cb.value, false);
+        }
+    });
 }
 
 function toggleFolderField(folderId, fieldKey, checked) {
@@ -6641,13 +6664,49 @@ function updateJumlahDipilihTiket() {
 async function cetakTiketMulti() {
     const checked = document.querySelectorAll('#multiTiketJamaahSelect input:checked');
     if(checked.length === 0) return showToast('Pilih minimal 1 jamaah!');
-    // Cetak tiket satu per satu untuk setiap jamaah yang dipilih
+    showToast('Menyiapkan tiket...');
+    const namaInstansi = getKonfigurasiProData().instansi1.nama || 'Safara';
+    let cardsHtml = '';
     for(const cb of checked) {
         const jamaah = jamaahList.find(j => j.id == cb.value);
         if(!jamaah) continue;
-        // Trigger generate dan cetak tiket untuk jamaah ini
-        await generateAndCetakTiket(jamaah);
+        const paket = jamaah.paket || '-';
+        const canvas = document.createElement('canvas');
+        const qrText = 'Nama: ' + jamaah.nama_lengkap + '\nID: ' + jamaah.id + '\nPaket: ' + paket + '\nTanggal: ' + new Date().toLocaleDateString('id-ID') + '\nSafara';
+        await QRCode.toCanvas(canvas, qrText, { width: 120, height: 120 });
+        const qrDataUrl = canvas.toDataURL('image/png');
+        cardsHtml += '<div class="tiket-card">'
+            + '<div class="tiket-nama">' + escapeHtml(jamaah.nama_lengkap) + '</div>'
+            + '<div class="tiket-paket">\uD83D\uDCE6 Paket: ' + paket + '</div>'
+            + '<div class="tiket-qr"><img src="' + qrDataUrl + '" width="120" height="120"></div>'
+            + '<div class="tiket-footer">' + namaInstansi + '</div>'
+            + '</div>';
     }
+    const win = window.open('', '_blank');
+    if(!win) { showToast('Izinkan popup untuk cetak!'); return; }
+    const htmlAll = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cetak Tiket Massal</title>'
+        + '<style>'
+        + '*{margin:0;padding:0;box-sizing:border-box;}'
+        + 'body{font-family:Arial,sans-serif;padding:16px;background:#f0f0f0;}'
+        + '.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:780px;margin:0 auto;}'
+        + '.tiket-card{background:white;border:2px solid #0D5C4A;border-radius:12px;padding:16px;text-align:center;page-break-inside:avoid;break-inside:avoid;}'
+        + '.tiket-nama{font-size:13px;font-weight:bold;color:#0D5C4A;text-transform:uppercase;margin-bottom:6px;}'
+        + '.tiket-paket{font-size:11px;color:#888;border-bottom:1px dashed #ccc;padding-bottom:8px;margin-bottom:10px;}'
+        + '.tiket-qr img{display:block;margin:0 auto;}'
+        + '.tiket-footer{margin-top:8px;font-size:10px;color:#999;}'
+        + '.no-print{text-align:center;margin-top:20px;padding:12px;}'
+        + '.no-print button{padding:10px 28px;margin:0 6px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}'
+        + '@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}body{background:white;padding:6px;}.no-print{display:none!important;}}'
+        + '</style></head><body>'
+        + '<div class="grid">' + cardsHtml + '</div>'
+        + '<div class="no-print">'
+        + '<button onclick="window.print()" style="background:#0D5C4A;color:white;">\uD83D\uDDA8\uFE0F CETAK</button>'
+        + '<button onclick="window.close()" style="background:#e2e8f0;color:#333;">\u2715 TUTUP</button>'
+        + '</div>'
+        + '<scr' + 'ipt>window.onload=function(){setTimeout(function(){window.print();},800);};</scr' + 'ipt>'
+        + '</body></html>';
+    win.document.write(htmlAll);
+    win.document.close();
 }
 
 async function shareTiketWAMulti() {
@@ -8451,4 +8510,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-                    </html>
+    </html>
