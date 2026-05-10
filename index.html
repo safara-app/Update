@@ -1861,6 +1861,11 @@
 <div id="splashLoading" style="width:100%; max-width:320px;">
 <div style="width:200px; height:4px; background:rgba(255,255,255,0.2); border-radius:2px; margin:0 auto; overflow:hidden;">
 <div style="height:100%; width:100%; background:var(--accent); border-radius:2px;"></div></div>
+<div style="text-align:center;margin-top:30px;">
+<button onclick="resetIndexedDBDarurat()" style="background:rgba(255,255,255,0.15);color:white;border:1px solid rgba(255,255,255,0.3);padding:10px 20px;border-radius:10px;font-size:12px;cursor:pointer;">
+🔧 Aplikasi tidak terbuka? Klik disini
+</button>
+</div>
 </div>
 <div id="splashChoice" style="display:none; width:100%; max-width:320px;">
 <button onclick="pilihLoginGoogle()" style="width:100%; padding:16px; background:white; color:#333; border:none; border-radius:16px; font-size:16px; font-weight:600; cursor:pointer; margin-bottom:14px; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 4px 20px rgba(0,0,0,0.15);">
@@ -6160,6 +6165,24 @@ function exportFolderToExcel(folderId) {
 // ==================== UPLOAD DOKUMEN ====================
 let dokumenJenisList = [], dokumenData = {}, db = null;
 const DB_NAME = 'SafaraDokumenDB', DB_VERSION = 3, STORE_NAME = 'dokumen', JENIS_STORE_NAME = 'dokumenJenis', FOTO_PROFIL_STORE = 'fotoProfil';
+
+function resetIndexedDBDarurat() {
+    if (!confirm('Reset database foto? Data teks jamaah TIDAK akan terhapus. Hanya foto profil yang direset.')) return;
+    // Hapus IndexedDB lama
+    const req = indexedDB.deleteDatabase('SafaraDokumenDB');
+    req.onsuccess = () => {
+        db = null;
+        showToast('✅ Database direset! Memuat ulang...');
+        setTimeout(() => window.location.reload(), 1000);
+    };
+    req.onerror = () => {
+        showToast('Gagal reset, coba refresh manual');
+        window.location.reload();
+    };
+    req.onblocked = () => {
+        window.location.reload();
+    };
+}
 
 function openIndexedDB() { 
     return new Promise((resolve, reject) => { 
