@@ -6303,6 +6303,8 @@ function renderDokumenList() {
                 <div>
                     ${hasDoc ? `<button class="btn-preview-doc" onclick="previewDokumen(${j.id}, '${jenis.id}')"><i class="fas fa-eye"></i></button>
                     <button class="btn-print-doc" onclick="cetakDokumenPerJenis(${j.id}, '${jenis.id}', '${escapeHtml(jenis.nama)}', '${escapeHtml(j.nama_lengkap)}')"><i class="fas fa-print"></i></button>
+                    <button class="btn-share-wa" onclick="downloadDokumen(${j.id}, '${jenis.id}', '${escapeHtml(jenis.nama)}', '${escapeHtml(j.nama_lengkap)}')" title="Download"><i class="fas fa-download"></i></button>
+                    <button class="btn-edit-jamaah" onclick="bagikanDokumen(${j.id}, '${jenis.id}', '${escapeHtml(jenis.nama)}', '${escapeHtml(j.nama_lengkap)}')" title="Bagikan"><i class="fas fa-share-alt"></i></button>
                     <button class="btn-delete-doc" onclick="confirmDeleteDokumen(${j.id}, '${jenis.id}', '${escapeHtml(jenis.nama)}')"><i class="fas fa-trash-alt"></i></button>` : ''}
                     <button class="btn-upload-doc" onclick="uploadDokumen(${j.id}, '${jenis.id}', '${escapeHtml(jenis.nama)}')"><i class="fas fa-upload"></i></button>
                 </div>
@@ -6328,6 +6330,66 @@ function getStatusKelengkapanDokumen(jamaahId) {
     let total = dokumenJenisList.length, ada = 0; 
     for(const jenis of dokumenJenisList) { if(docs[jenis.id] && docs[jenis.id] !== '') ada++; } 
     return { ada, total, lengkap: ada === total }; 
+}
+
+async function downloadDokumen(jamaahId, jenisId, jenisNama, jamaahNama) {
+    try {
+        const database = await openIndexedDB();
+        const tx = database.transaction([STORE_NAME], 'readonly');
+        const req = tx.objectStore(STORE_NAME).get(jamaahId + '_' + jenisId);
+        req.onsuccess = () => {
+            const data = req.result?.data;
+            if (!data) return showToast('Dokumen tidak ditemukan!');
+            const a = document.createElement('a');
+            a.href = data;
+            // Tentukan ekstensi dari data URL
+            const ext = data.startsWith('data:image/png') ? 'png' : 
+                        data.startsWith('data:image/gif') ? 'gif' : 'jpg';
+            a.download = jenisNama + '_' + jamaahNama.replace(/ /g,'_') + '.' + ext;
+            a.click();
+            showToast('⬇️ Dokumen didownload!');
+        };
+        req.onerror = () => showToast('Gagal download dokumen!');
+    } catch(e) {
+        showToast('Error: ' + e.message);
+    }
+}
+
+async function bagikanDokumen(jamaahId, jenisId, jenisNama, jamaahNama) {
+    try {
+        const database = await openIndexedDB();
+        const tx = database.transaction([STORE_NAME], 'readonly');
+        const req = tx.objectStore(STORE_NAME).get(jamaahId + '_' + jenisId);
+        req.onsuccess = async () => {
+            const data = req.result?.data;
+            if (!data) return showToast('Dokumen tidak ditemukan!');
+            try {
+                const res = await fetch(data);
+                const blob = await res.blob();
+                const ext = blob.type.includes('png') ? 'png' : blob.type.includes('gif') ? 'gif' : 'jpg';
+                const file = new File([blob], jenisNama + '_' + jamaahNama + '.' + ext, { type: blob.type });
+                if (navigator.share && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: jenisNama + ' - ' + jamaahNama,
+                        text: jenisNama + ' atas nama ' + jamaahNama
+                    });
+                } else {
+                    // Fallback ke download jika share tidak didukung
+                    const a = document.createElement('a');
+                    a.href = data;
+                    a.download = jenisNama + '_' + jamaahNama.replace(/ /g,'_') + '.' + ext;
+                    a.click();
+                    showToast('Share tidak didukung, dokumen didownload');
+                }
+            } catch(err) {
+                if (err.name !== 'AbortError') showToast('Gagal membagikan dokumen!');
+            }
+        };
+        req.onerror = () => showToast('Gagal membaca dokumen!');
+    } catch(e) {
+        showToast('Error: ' + e.message);
+    }
 }
 
 function previewDokumen(jamaahId, jenisId) { 
