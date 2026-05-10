@@ -6333,62 +6333,40 @@ function getStatusKelengkapanDokumen(jamaahId) {
 }
 
 async function downloadDokumen(jamaahId, jenisId, jenisNama, jamaahNama) {
-    try {
-        const database = await openIndexedDB();
-        const tx = database.transaction([STORE_NAME], 'readonly');
-        const req = tx.objectStore(STORE_NAME).get(jamaahId + '_' + jenisId);
-        req.onsuccess = () => {
-            const data = req.result?.data;
-            if (!data) return showToast('Dokumen tidak ditemukan!');
-            const a = document.createElement('a');
-            a.href = data;
-            // Tentukan ekstensi dari data URL
-            const ext = data.startsWith('data:image/png') ? 'png' : 
-                        data.startsWith('data:image/gif') ? 'gif' : 'jpg';
-            a.download = jenisNama + '_' + jamaahNama.replace(/ /g,'_') + '.' + ext;
-            a.click();
-            showToast('⬇️ Dokumen didownload!');
-        };
-        req.onerror = () => showToast('Gagal download dokumen!');
-    } catch(e) {
-        showToast('Error: ' + e.message);
-    }
+    const data = dokumenData[jamaahId]?.[jenisId];
+    if (!data) return showToast('Dokumen tidak ditemukan!');
+    const ext = data.startsWith('data:image/png') ? 'png' : data.startsWith('data:image/gif') ? 'gif' : 'jpg';
+    const a = document.createElement('a');
+    a.href = data;
+    a.download = jenisNama + '_' + jamaahNama.replace(/ /g,'_') + '.' + ext;
+    a.click();
+    showToast('⬇️ Dokumen didownload!');
 }
 
 async function bagikanDokumen(jamaahId, jenisId, jenisNama, jamaahNama) {
+    const data = dokumenData[jamaahId]?.[jenisId];
+    if (!data) return showToast('Dokumen tidak ditemukan!');
     try {
-        const database = await openIndexedDB();
-        const tx = database.transaction([STORE_NAME], 'readonly');
-        const req = tx.objectStore(STORE_NAME).get(jamaahId + '_' + jenisId);
-        req.onsuccess = async () => {
-            const data = req.result?.data;
-            if (!data) return showToast('Dokumen tidak ditemukan!');
-            try {
-                const res = await fetch(data);
-                const blob = await res.blob();
-                const ext = blob.type.includes('png') ? 'png' : blob.type.includes('gif') ? 'gif' : 'jpg';
-                const file = new File([blob], jenisNama + '_' + jamaahNama + '.' + ext, { type: blob.type });
-                if (navigator.share && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        files: [file],
-                        title: jenisNama + ' - ' + jamaahNama,
-                        text: jenisNama + ' atas nama ' + jamaahNama
-                    });
-                } else {
-                    // Fallback ke download jika share tidak didukung
-                    const a = document.createElement('a');
-                    a.href = data;
-                    a.download = jenisNama + '_' + jamaahNama.replace(/ /g,'_') + '.' + ext;
-                    a.click();
-                    showToast('Share tidak didukung, dokumen didownload');
-                }
-            } catch(err) {
-                if (err.name !== 'AbortError') showToast('Gagal membagikan dokumen!');
-            }
-        };
-        req.onerror = () => showToast('Gagal membaca dokumen!');
-    } catch(e) {
-        showToast('Error: ' + e.message);
+        const res = await fetch(data);
+        const blob = await res.blob();
+        const ext = blob.type.includes('png') ? 'png' : blob.type.includes('gif') ? 'gif' : 'jpg';
+        const file = new File([blob], jenisNama + '_' + jamaahNama + '.' + ext, { type: blob.type });
+        if (navigator.share && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                files: [file],
+                title: jenisNama + ' - ' + jamaahNama,
+                text: jenisNama + ' atas nama ' + jamaahNama
+            });
+        } else {
+            // Fallback ke download
+            const a = document.createElement('a');
+            a.href = data;
+            a.download = jenisNama + '_' + jamaahNama.replace(/ /g,'_') + '.' + ext;
+            a.click();
+            showToast('Bagikan tidak didukung, dokumen didownload');
+        }
+    } catch(err) {
+        if (err.name !== 'AbortError') showToast('Gagal membagikan dokumen!');
     }
 }
 
@@ -8618,4 +8596,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-    </html>
+                        </html>
