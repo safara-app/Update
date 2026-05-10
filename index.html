@@ -4619,7 +4619,7 @@ function closeGroupDialogJamaahKita() {
     if (dialog) dialog.remove();
 }
 
-function printGroupedPDFJamaahKita() {
+async function printGroupedPDFJamaahKita() {
     const select = document.getElementById("groupFieldSelectJamaahKita");
     if (!select) return;
     const fieldName = select.value;
@@ -5828,7 +5828,12 @@ function openFolderDetail(folderId) {
     } else {
         allDynFields.forEach(fd => {
             const checked = selectedFields.includes(fd.name) ? 'checked' : '';
-            html += `<label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;"><input type="checkbox" value="${fd.name}" ${checked} onchange="toggleFolderField('${folderId}', '${fd.name}', this.checked)" style="width:18px;height:18px;cursor:pointer;accent-color:#0D5C4A;"><span style="font-weight:bold;">${escapeHtml(fd.label)}</span></label>`;
+            html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;" onclick="event.stopPropagation();">
+                <input type="checkbox" id="fld_${folderId}_${fd.name}" value="${fd.name}" ${checked}
+                    onchange="toggleFolderField('${folderId}', '${fd.name}', this.checked); event.stopPropagation();"
+                    style="width:18px;height:18px;cursor:pointer;accent-color:#0D5C4A;flex-shrink:0;">
+                <label for="fld_${folderId}_${fd.name}" style="font-weight:bold;cursor:pointer;margin:0;">${escapeHtml(fd.label)}</label>
+            </div>`;
         });
     }
     html += `</div><button class="btn btn-purple btn-small mt-2" onclick="exportFolderToPDF('${folderId}')"><i class="fas fa-file-pdf"></i> Export Folder ke PDF</button><button class="btn btn-teal btn-small mt-2" onclick="exportFolderToExcel('${folderId}')"><i class="fas fa-file-excel"></i> Export Folder ke Excel</button></div>`; 
@@ -5961,7 +5966,7 @@ function toggleFolderField(folderId, fieldKey, checked) {
     } else {
         folderList[folderIdx].selectedFields = folderList[folderIdx].selectedFields.filter(k => k !== fieldKey);
     }
-    // Simpan diam-diam tanpa toast agar tidak ganggu UI
+    // Simpan diam-diam tanpa render ulang agar posisi scroll tidak berubah
     saveFolderData();
 }
 
@@ -7043,6 +7048,55 @@ async function generateTiketQR() {
     await QRCode.toCanvas(canvas, qrText, { width: 150, height: 150 });
     qrContainer.appendChild(canvas);
     document.getElementById('tiketPreview').style.display = 'block';
+}
+
+async function generateAndCetakTiket(jamaah) {
+    const paket = jamaah.paket || '-';
+    const canvas = document.createElement('canvas');
+    const qrText = 'Nama: ' + jamaah.nama_lengkap + '\nID: ' + jamaah.id + '\nPaket: ' + paket + '\nTanggal: ' + new Date().toLocaleDateString('id-ID') + '\nSafara';
+    await QRCode.toCanvas(canvas, qrText, { width: 150, height: 150 });
+    const qrDataUrl = canvas.toDataURL('image/png');
+    const namaInstansi = getKonfigurasiProData().instansi1.nama || 'Safara';
+    const win = window.open('', '_blank');
+    if(!win) { showToast('Izinkan popup untuk cetak!'); return; }
+    const htmlTiket = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Tiket - ' + escapeHtml(jamaah.nama_lengkap) + '</title>'
+        + '<style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;background:white;padding:20px;}'
+        + '.card{max-width:360px;width:100%;border:2px solid #0D5C4A;border-radius:24px;padding:24px;text-align:center;}'
+        + '.nama{font-size:20px;font-weight:bold;color:#0D5C4A;margin-bottom:8px;}'
+        + '.paket{font-size:13px;color:#888;border-bottom:2px dashed #ccc;padding-bottom:12px;margin-bottom:16px;}'
+        + '.qr img{width:150px;height:150px;}'
+        + '.footer{margin-top:16px;font-size:11px;color:#999;}'
+        + '.no-print{text-align:center;margin-top:20px;}'
+        + '.no-print button{padding:10px 28px;margin:0 6px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}'
+        + '@media print{.no-print{display:none!important;}}'
+        + '</style></head><body>'
+        + '<div class="card">'
+        + '<div class="nama">' + escapeHtml(jamaah.nama_lengkap) + '</div>'
+        + '<div class="paket">\uD83D\uDCE6 Paket: ' + paket + '</div>'
+        + '<div class="qr"><img src="' + qrDataUrl + '"></div>'
+        + '<div class="footer">' + namaInstansi + ' | ' + new Date().toLocaleDateString('id-ID') + '</div>'
+        + '</div>'
+        + '<div class="no-print">'
+        + '<button onclick="window.print()" style="background:#0D5C4A;color:white;">\uD83D\uDDA8\uFE0F CETAK</button>'
+        + '<button onclick="window.close()" style="background:#e2e8f0;color:#333;">\u2715 TUTUP</button>'
+        + '</div>'
+        + '<scr' + 'ipt>window.onload=function(){setTimeout(function(){window.print();},800);};</scr' + 'ipt>'
+        + '</body></html>';
+    win.document.write(htmlTiket);
+    win.document.close();
+}
+
+async function generateAndShareTiketWA(jamaah) {
+    let waNumber = '';
+    if(jamaah.additional_fields?.whatsapp) {
+        let num = jamaah.additional_fields.whatsapp.replace(/\D/g, '');
+        if(num.startsWith('0')) num = '62' + num.substring(1);
+        if(num.length >= 10) waNumber = num;
+    }
+    if(!waNumber) { showToast(`${jamaah.nama_lengkap}: No WA tidak ada, dilewati`); return; }
+    const text = `🎫 *E-TIKET ${jamaah.nama_lengkap}*\n\n👤 Nama: ${jamaah.nama_lengkap}\n📦 Paket: ${jamaah.paket || '-'}\n📅 Tanggal: ${new Date().toLocaleDateString('id-ID')}\n\n#${getKonfigurasiProData().instansi1.nama || 'Safara'}`;
+    window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`, '_blank');
+    await new Promise(r => setTimeout(r, 1000));
 }
 
 function downloadTiketAsImage() {
@@ -8397,4 +8451,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-        </html>
+                    </html>
