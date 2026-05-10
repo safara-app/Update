@@ -2603,47 +2603,21 @@ async function cetakDokumenPerJenis(jamaahId, jenisId, jenisNama, jamaahNama) {
         <meta charset="UTF-8">
         <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+            body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f0f0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
             .no-print { display: block; }
-            .card { background: white; border-radius: 20px; padding: 30px; max-width: 600px; margin: 0 auto; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-            .title { font-size: 20px; font-weight: bold; color: #0D5C4A; margin-bottom: 10px; }
-            .subtitle { color: #666; margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
-            .gambar img { max-width: 100%; object-fit: contain; }
+            .card { background: white; border-radius: 20px; padding: 20px; width: 100%; max-width: 600px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; }
+            .title { font-size: 18px; font-weight: bold; color: #0D5C4A; margin-bottom: 8px; }
+            .subtitle { color: #666; margin-bottom: 12px; border-bottom: 1px solid #ddd; padding-bottom: 10px; width: 100%; }
+            .doc-label { font-size: 12px; font-weight: bold; color: #0D5C4A; margin-bottom: 8px; }
+            .gambar { width: 100%; }
+            .gambar img { max-width: 100%; height: auto; display: block; margin: 0 auto; object-fit: contain; }
             @media print {
                 * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-                html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: white; }
+                html, body { margin: 0; padding: 0; width: 210mm; height: 297mm; background: white; display: block; }
                 .no-print { display: none !important; }
-                .card {
-                    box-shadow: none;
-                    border-radius: 0;
-                    padding: 8mm;
-                    max-width: 100%;
-                    margin: 0;
-                    width: 210mm;
-                    height: 297mm;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    overflow: hidden;
-                }
-                .doc-label {
-                    font-size: 13px;
-                    font-weight: bold;
-                    color: #0D5C4A;
-                    margin-bottom: 8px;
-                    text-align: center;
-                }
+                .card { box-shadow: none; border-radius: 0; padding: 10mm; width: 210mm; height: 297mm; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
                 .gambar { width: 100%; flex: 1; display: flex; align-items: center; justify-content: center; }
-                .gambar img {
-                    max-width: 100%;
-                    max-height: 270mm;
-                    width: auto;
-                    height: auto;
-                    object-fit: contain;
-                    display: block;
-                    margin: 0 auto;
-                }
+                .gambar img { max-width: 190mm; max-height: 270mm; width: auto; height: auto; object-fit: contain; display: block; margin: 0 auto; }
             }
         </style>
     </head>
@@ -8511,4 +8485,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-        </html>
+    </html>
