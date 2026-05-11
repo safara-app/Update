@@ -2720,10 +2720,10 @@ function showToast(msg) {
 
 function updateHomeStats() {
     document.getElementById('homeDate').innerHTML = new Date().toLocaleDateString('id-ID', { weekday: 'long', year:'numeric', month:'long', day:'numeric' });
-    const kasData = JSON.parse(localStorage.getItem('safara_kas_data') || '[]');
+    const kasData = dataKas;
     const totalKas = kasData.reduce((s,i) => s + (i.tipe === 'masuk' ? i.nom : -i.nom), 0);
     document.getElementById('homeStatKas').innerHTML = 'Rp ' + totalKas.toLocaleString('id-ID');
-    const jamaahData = JSON.parse(localStorage.getItem('safara_jamaah_list') || '[]');
+    const jamaahData = jamaahList;
     document.getElementById('homeStatJamaah').innerHTML = jamaahData.length;
     const lastZakatTotal = localStorage.getItem('safara_last_zakat_total');
     if (lastZakatTotal && lastZakatTotal !== '0') document.getElementById('homeStatZakat').innerHTML = 'Rp ' + formatRupiah(parseInt(lastZakatTotal));
@@ -2911,12 +2911,12 @@ function updateHeaderFromConfig() {
 let kasChart = null, paymentChart = null;
 
 function renderDashboard() {
-    const kasData = JSON.parse(localStorage.getItem('safara_kas_data') || '[]');
+    const kasData = dataKas;
     const totalKas = kasData.reduce((s,i) => s + (i.tipe === 'masuk' ? i.nom : -i.nom), 0);
     document.getElementById('dashTotalKas').innerHTML = 'Rp ' + formatRupiah(totalKas);
-    const jamaahData = JSON.parse(localStorage.getItem('safara_jamaah_list') || '[]');
+    const jamaahData = jamaahList;
     document.getElementById('dashTotalJamaah').innerHTML = jamaahData.length;
-    const paymentData = JSON.parse(localStorage.getItem('safara_pembayaran_transaksi') || '[]');
+    const paymentData = paymentTransaksiList;
     let lunasCount = 0, totalPiutang = 0;
     jamaahData.forEach(j => {
         const totalBayar = paymentData.filter(t => t.id_jamaah == j.id).reduce((s,t) => s + t.nominal, 0);
@@ -3043,10 +3043,10 @@ function renderDashboard() {
 }
 
 async function printDashboard() {
-    const kasData = JSON.parse(localStorage.getItem('safara_kas_data') || '[]');
+    const kasData = dataKas;
     const totalKas = kasData.reduce((s,i) => s + (i.tipe === 'masuk' ? i.nom : -i.nom), 0);
-    const jamaahData = JSON.parse(localStorage.getItem('safara_jamaah_list') || '[]');
-    const paymentData = JSON.parse(localStorage.getItem('safara_pembayaran_transaksi') || '[]');
+    const jamaahData = jamaahList;
+    const paymentData = paymentTransaksiList;
     const totalJamaah = jamaahData.length;
     let totalLunas = 0, totalPiutang = 0;
     jamaahData.forEach(j => {
@@ -3135,9 +3135,9 @@ function exportDashboardPDF() {
             doc.setFontSize(16);
             doc.setTextColor(26, 93, 74);
             doc.text('DASHBOARD APLIKASI SAFARA', 148.5, 65, { align: 'center' });
-            const kasData = JSON.parse(localStorage.getItem('safara_kas_data') || '[]');
+            const kasData = dataKas;
             const totalKas = kasData.reduce((s,i) => s + (i.tipe === 'masuk' ? i.nom : -i.nom), 0);
-            const jamaahData = JSON.parse(localStorage.getItem('safara_jamaah_list') || '[]');
+            const jamaahData = jamaahList;
             doc.setFontSize(12);
             doc.setTextColor(0,0,0);
             doc.text(`Total Kas: Rp ${formatRupiah(totalKas)}`, 20, 80);
@@ -3149,9 +3149,9 @@ function exportDashboardPDF() {
 }
 
 function exportDashboardExcel() {
-    const jamaahData = JSON.parse(localStorage.getItem('safara_jamaah_list') || '[]');
-    const kasData = JSON.parse(localStorage.getItem('safara_kas_data') || '[]');
-    const paymentData = JSON.parse(localStorage.getItem('safara_pembayaran_transaksi') || '[]');
+    const jamaahData = jamaahList;
+    const kasData = dataKas;
+    const paymentData = paymentTransaksiList;
     const wsJamaah = XLSX.utils.json_to_sheet(jamaahData.map(j => ({ Nama: j.nama_lengkap, Tanggal: j.created_at })));
     const wsKas = XLSX.utils.json_to_sheet(kasData);
     const wsPayment = XLSX.utils.json_to_sheet(paymentData);
@@ -3381,7 +3381,7 @@ let dataKas=[], lastWAText='';
 
 async function loadKasData() { 
     let saved = await idbGet(STORE_KAS, 'kas_data');
-    if (!saved) saved = JSON.parse(localStorage.getItem('safara_kas_data') || '[]');
+    if (!saved) saved = dataKas;
     dataKas = saved || [];
     renderKasTable(); 
     updateSaldoKas(); 
@@ -3616,7 +3616,7 @@ let jamaahList=[], dynamicFieldsJamaah=[], ingJamaahId=null, currentJamaahPage=1
 
 async function loadJamaahData() { 
     let saved = await idbGet(STORE_JAMAAH, 'jamaah_list');
-    if (!saved) saved = JSON.parse(localStorage.getItem('safara_jamaah_list') || '[]');
+    if (!saved) saved = jamaahList;
     jamaahList = saved || [];
     applyJamaahFilterAndSort(); 
 }
@@ -5306,7 +5306,7 @@ let paymentTransaksiList = [], currentInvoiceJamaahId = null, currentInvoiceText
 
 async function loadPaymentData() { 
     let saved = await idbGet(STORE_PEMBAYARAN, 'pembayaran_list');
-    if (!saved) saved = JSON.parse(localStorage.getItem('safara_pembayaran_transaksi') || '[]');
+    if (!saved) saved = paymentTransaksiList;
     paymentTransaksiList = saved || []; 
 }
 
@@ -5938,7 +5938,7 @@ let folderList = [];
 
 async function loadFolderData() { 
     let saved = await idbGet(STORE_FOLDER, 'folder_list');
-    if (!saved) saved = JSON.parse(localStorage.getItem('safara_folder_list') || '[]');
+    if (!saved) saved = folderList;
     folderList = saved || []; 
     renderFolderList(); 
 }
@@ -5976,9 +5976,9 @@ function renderFolderList() {
 function openFolderDetail(folderId) { 
     const folder = folderList.find(f => f.id == folderId); 
     if(!folder) return; 
-    const allJamaahFolder = JSON.parse(localStorage.getItem('safara_jamaah_list') || '[]');
-    let jamaahInFolder = folder.jamaahIds.map(id => allJamaahFolder.find(j => j.id == id)).filter(j => j); 
-    let availableJamaah = allJamaahFolder.filter(j => !folder.jamaahIds.includes(j.id)); 
+    // Gunakan jamaahList yang sudah ada di memory (sudah di-load dari IndexedDB)
+    let jamaahInFolder = folder.jamaahIds.map(id => jamaahList.find(j => j.id == id)).filter(j => j); 
+    let availableJamaah = jamaahList.filter(j => !folder.jamaahIds.includes(j.id)); 
     let html = `<div class="card-premium"><div class="back-header" style="margin-bottom:15px;"><i class="fas fa-arrow-left" onclick="renderFolderList()" style="cursor:pointer;"></i><h3 style="flex:1; text-align:center;">📁 ${escapeHtml(folder.nama)}</h3><div style="width:30px;"></div></div>
     <div class="input-group"><label>➕ Tambah Jamaah ke Folder</label>
     <input type="text" id="searchFolderJamaah" placeholder="🔍 Cari nama jamaah..." oninput="filterFolderJamaahSelect()" style="margin-bottom:8px;">
@@ -6229,7 +6229,7 @@ function deleteFolderField(folderId, index) {
 async function exportFolderToPDF(folderId) {
     const folder = folderList.find(f => f.id == folderId);
     if(!folder) return;
-    const allJamaah = JSON.parse(localStorage.getItem('safara_jamaah_list') || '[]');
+    const allJamaah = jamaahList;
     const jamaahInFolder = folder.jamaahIds.map(id => allJamaah.find(j => j.id == id)).filter(j => j);
     if(jamaahInFolder.length === 0) { showToast('Tidak ada jamaah dalam folder ini'); return; }
     const cfgFolder = getKonfigurasiProData();
@@ -6297,7 +6297,7 @@ function exportFolderToExcel(folderId) {
     const folder = folderList.find(f => f.id == folderId); 
     if(!folder) return; 
     // Ambil langsung dari localStorage supaya data selalu fresh
-    const allJamaah = JSON.parse(localStorage.getItem('safara_jamaah_list') || '[]');
+    const allJamaah = jamaahList;
     const jamaahInFolder = folder.jamaahIds.map(id => allJamaah.find(j => j.id == id)).filter(j => j); 
     if(jamaahInFolder.length === 0) { showToast('Tidak ada jamaah dalam folder ini'); return; } 
     const fields = folder.fields || [];
@@ -6794,10 +6794,10 @@ async function downloadFullZip() {
     showToast('Mempersiapkan data...'); 
     try { 
         const zip = new JSZip(); 
-        const jamaahData = JSON.parse(localStorage.getItem('safara_jamaah_list') || '[]'); 
-        const kasData = JSON.parse(localStorage.getItem('safara_kas_data') || '[]'); 
-        const paymentData = JSON.parse(localStorage.getItem('safara_pembayaran_transaksi') || '[]'); 
-        const masterData = JSON.parse(localStorage.getItem('safara_master_data') || '[]'); 
+        const jamaahData = jamaahList; 
+        const kasData = dataKas; 
+        const paymentData = paymentTransaksiList; 
+        const masterData = masterDataList; 
         const catatanData = JSON.parse(localStorage.getItem('safara_catatan_list') || '[]'); 
         zip.file('jamaah.json', JSON.stringify(jamaahData, null, 2)); 
         zip.file('kas.json', JSON.stringify(kasData, null, 2)); 
@@ -7562,7 +7562,7 @@ let masterDataList = [], masterDynamicFields = [], masterItemList = ['Kain Ihram
 
 async function loadMasterData() {
     let saved = await idbGet(STORE_MASTER, 'master_data');
-    if (!saved) saved = JSON.parse(localStorage.getItem('safara_master_data') || '[]');
+    if (!saved) saved = masterDataList;
     masterDataList = saved || [];
     let savedFields = await idbGet(STORE_MASTER, 'master_fields');
     if (!savedFields) savedFields = JSON.parse(localStorage.getItem('safara_master_fields') || 'null');
@@ -7990,11 +7990,10 @@ function closeCopyModal() { document.getElementById('copyModal').classList.remov
 
 function executeCopyFromJamaah() {
     const category = document.getElementById('copyCategory').value;
-    const jamaahData = JSON.parse(localStorage.getItem('safara_jamaah_list')) || [];
-    if(jamaahData.length === 0) { showToast('Tidak ada data di database!'); closeCopyModal(); return; }
+    if(jamaahList.length === 0) { showToast('Tidak ada data di database!'); closeCopyModal(); return; }
     let copiedCount = 0;
     const now = new Date().toLocaleDateString('id-ID') + ' ' + new Date().toLocaleTimeString('id-ID');
-    for(const j of jamaahData) {
+    for(const j of jamaahList) {
         const existing = masterDataList.find(m => m.nama === j.nama_lengkap);
         if(existing) continue;
         const additional = {};
