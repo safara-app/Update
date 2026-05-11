@@ -3379,17 +3379,18 @@ function resetEstimasiToDefault() {
 // ==================== KAS ====================
 let dataKas=[], lastWAText='';
 
-function loadKasData() { 
-    const saved=localStorage.getItem('safara_kas_data'); 
-    dataKas=saved?JSON.parse(saved):[]; 
+async function loadKasData() { 
+    let saved = await idbGet(STORE_KAS, 'kas_data');
+    if (!saved) saved = JSON.parse(localStorage.getItem('safara_kas_data') || '[]');
+    dataKas = saved || [];
     renderKasTable(); 
     updateSaldoKas(); 
-    const savedKegiatan=localStorage.getItem('safara_kegiatan'); 
-    if(savedKegiatan) document.getElementById('kegiatan').value=savedKegiatan; 
+    const savedKegiatan = await idbGet(STORE_KAS, 'kegiatan') || localStorage.getItem('safara_kegiatan') || '';
+    if(savedKegiatan && document.getElementById('kegiatan')) document.getElementById('kegiatan').value = savedKegiatan;
 }
 
-function saveKasData() { 
-    localStorage.setItem('safara_kas_data',JSON.stringify(dataKas)); 
+async function saveKasData() { 
+    await idbSet(STORE_KAS, 'kas_data', dataKas);
     renderKasTable(); 
     updateSaldoKas(); 
 }
@@ -3613,23 +3614,24 @@ function confirmResetKas() {
 // ==================== DATABASE JAMAAH ====================
 let jamaahList=[], dynamicFieldsJamaah=[], ingJamaahId=null, currentJamaahPage=1, perPageJamaah=10, jamaahFilteredList=[], currentSort='urutan_asli', currentSearch='';
 
-function loadJamaahData() { 
-    const saved=localStorage.getItem('safara_jamaah_list'); 
-    jamaahList=saved?JSON.parse(saved):[]; 
+async function loadJamaahData() { 
+    let saved = await idbGet(STORE_JAMAAH, 'jamaah_list');
+    if (!saved) saved = JSON.parse(localStorage.getItem('safara_jamaah_list') || '[]');
+    jamaahList = saved || [];
     applyJamaahFilterAndSort(); 
 }
 
-function saveJamaahData() { 
-    localStorage.setItem('safara_jamaah_list',JSON.stringify(jamaahList)); 
+async function saveJamaahData() { 
+    await idbSet(STORE_JAMAAH, 'jamaah_list', jamaahList);
     applyJamaahFilterAndSort(); 
 }
 
-function loadDynamicFieldsJamaah() { 
-    const saved=localStorage.getItem('safara_jamaah_fields'); 
+async function loadDynamicFieldsJamaah() { 
+    let saved = await idbGet(STORE_JAMAAH, 'jamaah_fields');
+    if (!saved) saved = JSON.parse(localStorage.getItem('safara_jamaah_fields') || 'null');
     if (saved) {
-        dynamicFieldsJamaah = JSON.parse(saved);
+        dynamicFieldsJamaah = saved;
     } else {
-        // Default 12 field untuk user baru
         dynamicFieldsJamaah = [
             { name: 'nama_paspor',   label: 'Nama Paspor',   type: 'text',     icon: '👤', isRequired: false },
             { name: 'no_porsi',      label: 'No Porsi',       type: 'text',     icon: '🔢', isRequired: false },
@@ -3652,13 +3654,12 @@ function loadDynamicFieldsJamaah() {
             { name: 'warna',         label: 'Warna',           type: 'text',     icon: '🏷️', isRequired: false },
             { name: 'keterangan',    label: 'Keterangan',      type: 'textarea', icon: '📝', isRequired: false }
         ];
-        // Simpan default ke storage
-        localStorage.setItem('safara_jamaah_fields', JSON.stringify(dynamicFieldsJamaah));
+        await idbSet(STORE_JAMAAH, 'jamaah_fields', dynamicFieldsJamaah);
     }
 }
 
-function saveDynamicFieldsJamaah() { 
-    localStorage.setItem('safara_jamaah_fields',JSON.stringify(dynamicFieldsJamaah)); 
+async function saveDynamicFieldsJamaah() { 
+    await idbSet(STORE_JAMAAH, 'jamaah_fields', dynamicFieldsJamaah);
 }
 
 function applyJamaahFilterAndSort() { 
@@ -3689,7 +3690,7 @@ function renderJamaahListWithPagination() {
     let html=`<div style="margin-bottom:10px; font-size:0.8rem; color:var(--accent);"> Total: ${jamaahFilteredList.length} jamaah (halaman ${currentJamaahPage} dari ${totalPages})</div>`; 
     pageData.forEach((j,idx)=>{ 
         const displayNum=start+idx+1; 
-        html+=`<div class="jamaah-card"><div class="jamaah-header"><div style="display:flex;align-items:center;gap:10px;flex:1;"><div id="foto_thumb_${j.id}" style="width:40px;height:40px;border-radius:50%;background:#f0f0f0;border:2px solid #0D5C4A;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;" onclick="editJamaahById('${j.id}')"><span style="font-size:20px;">👤</span></div><div><div class="jamaah-nama"><span style="background:var(--primary); color:white; display:inline-block; width:28px; height:28px; border-radius:50%; text-align:center; line-height:28px; font-size:13px; margin-right:10px;">${displayNum}</span> ${escapeHtml(j.nama_lengkap)}</div><div class="jamaah-tgl"> ${j.created_at||'-'}</div></div></div><div class="jamaah-actions"><button class="btn-share-wa" onclick="shareSingleJamaahById('${j.id}')"><i class="fab fa-whatsapp"></i></button><button class="btn-edit-jamaah" onclick="editJamaahById('${j.id}')"><i class="fas fa-edit"></i></button><button class="btn-delete-jamaah" onclick="confirmDeleteJamaahById('${j.id}')"><i class="fas fa-trash"></i></button></div></div><div class="jamaah-detail">`; 
+        html+=`<div class="jamaah-card"><div class="jamaah-header"><div style="display:flex;align-items:center;gap:10px;flex:1;"><div id="foto_thumb_${j.id}" style="width:44px;height:44px;border-radius:50%;background:#f0f0f0;border:2px solid #0D5C4A;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;" onclick="showFotoProfilModal(${j.id},'${escapeHtml(j.nama_lengkap).replace(/'/g,"\\'")}')"><span style="font-size:22px;">👤</span></div><div><div class="jamaah-nama"><span style="background:var(--primary); color:white; display:inline-block; width:28px; height:28px; border-radius:50%; text-align:center; line-height:28px; font-size:13px; margin-right:10px;">${displayNum}</span> ${escapeHtml(j.nama_lengkap)}</div><div class="jamaah-tgl"> ${j.created_at||'-'}</div></div></div><div class="jamaah-actions"><button class="btn-share-wa" onclick="shareSingleJamaahById('${j.id}')"><i class="fab fa-whatsapp"></i></button><button class="btn-edit-jamaah" onclick="editJamaahById('${j.id}')"><i class="fas fa-edit"></i></button><button class="btn-delete-jamaah" onclick="confirmDeleteJamaahById('${j.id}')"><i class="fas fa-trash"></i></button></div></div><div class="jamaah-detail">`; 
         for(const field of dynamicFieldsJamaah){ 
             const val=j.additional_fields?.[field.name]||''; 
             if(val) html+=`<div class="jamaah-detail-item"><strong>${escapeHtml(field.label)}:</strong> ${escapeHtml(val)}</div>`; 
@@ -3705,7 +3706,11 @@ function renderJamaahListWithPagination() {
         } 
         paginationHtml+=`<button onclick="goToJamaahPage(${currentJamaahPage+1})" ${currentJamaahPage===totalPages?'disabled':''}>›</button><button onclick="goToJamaahPage(${totalPages})" ${currentJamaahPage===totalPages?'disabled':''}>»</button>`; 
     } 
-    document.getElementById('paginationContainer').innerHTML=paginationHtml; 
+    document.getElementById('paginationContainer').innerHTML=paginationHtml;
+    // Lazy load foto thumbnail hanya untuk halaman ini
+    setTimeout(() => {
+        pageItems.forEach(j => loadFotoThumbnail(j.id));
+    }, 50);
 }
 
 function renderJamaahList() { renderJamaahListWithPagination(); }
@@ -3724,6 +3729,183 @@ function changePerPage(){
 function filterJamaahList(){ 
     currentSearch=document.getElementById('searchJamaahInput').value; 
     applyJamaahFilterAndSort(); 
+}
+
+// ==================== FOTO PROFIL JAMAAH ====================
+let _fotoPreviewData = null;
+
+function kompresiFoto(file, maxPx, quality, callback) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let w = img.width, h = img.height;
+            if (w > h && w > maxPx) { h = Math.round(h * maxPx / w); w = maxPx; }
+            else if (h > maxPx) { w = Math.round(w * maxPx / h); h = maxPx; }
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            callback(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+async function loadFotoThumbnail(jamaahId) {
+    const dataUrl = await idbGet(STORE_FOTO, 'foto_' + jamaahId);
+    const el = document.getElementById('foto_thumb_' + jamaahId);
+    if (!el) return;
+    if (dataUrl) {
+        el.innerHTML = '<img src="' + dataUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+    }
+}
+
+function showFotoProfilModal(jamaahId, jamaahNama) {
+    document.getElementById('fotoProfilModal')?.remove();
+    const modal = document.createElement('div');
+    modal.id = 'fotoProfilModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    modal.innerHTML = `
+        <div style="background:var(--card-bg);border-radius:20px;padding:24px;width:100%;max-width:360px;text-align:center;">
+            <h3 style="color:var(--primary);margin-bottom:6px;">📷 Foto Profil</h3>
+            <div style="font-size:12px;color:#888;margin-bottom:16px;">${escapeHtml(jamaahNama)}</div>
+            <div id="fotoPreviewArea" style="width:150px;height:150px;border-radius:50%;background:#f0f0f0;margin:0 auto 12px;overflow:hidden;border:3px solid #0D5C4A;display:flex;align-items:center;justify-content:center;">
+                <span id="fotoPlaceholder" style="font-size:52px;">👤</span>
+                <img id="fotoPreviewImg" style="display:none;width:100%;height:100%;object-fit:cover;">
+            </div>
+            <div id="fotoStatusText" style="font-size:12px;color:#888;margin-bottom:14px;">Belum ada foto</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                <label style="background:#0D5C4A;color:white;padding:11px;border-radius:10px;cursor:pointer;font-weight:bold;font-size:14px;">
+                    📤 Pilih Foto
+                    <input type="file" accept="image/*" style="display:none;" onchange="previewFotoProfil(event,${jamaahId})">
+                </label>
+                <button id="btnSimpanFoto" onclick="simpanFotoProfil(${jamaahId})" style="display:none;background:#10B981;color:white;border:none;padding:11px;border-radius:10px;cursor:pointer;font-weight:bold;font-size:14px;">✅ Simpan Foto</button>
+                <button id="btnBatalFoto" onclick="batalPreviewFoto(${jamaahId})" style="display:none;background:#6B7280;color:white;border:none;padding:11px;border-radius:10px;cursor:pointer;font-size:14px;">✕ Batal</button>
+                <button id="btnBagikanFoto" onclick="bagikanFotoProfil(${jamaahId},'${escapeHtml(jamaahNama).replace(/'/g,"\\'")}');" style="display:none;background:#3B82F6;color:white;border:none;padding:11px;border-radius:10px;cursor:pointer;font-weight:bold;font-size:14px;">📤 Bagikan</button>
+                <button id="btnDownloadFoto" onclick="downloadFotoProfil('${escapeHtml(jamaahNama).replace(/'/g,"\\'")}');" style="display:none;background:#8B5CF6;color:white;border:none;padding:11px;border-radius:10px;cursor:pointer;font-weight:bold;font-size:14px;">⬇️ Download</button>
+                <button id="btnHapusFoto" onclick="konfirmasiHapusFoto(${jamaahId})" style="display:none;background:#EF4444;color:white;border:none;padding:11px;border-radius:10px;cursor:pointer;font-weight:bold;font-size:14px;">🗑️ Hapus Foto</button>
+                <button onclick="document.getElementById('fotoProfilModal').remove();_fotoPreviewData=null;" style="background:#e2e8f0;color:#333;border:none;padding:11px;border-radius:10px;cursor:pointer;font-size:14px;">✕ Tutup</button>
+            </div>
+        </div>`;
+    document.body.appendChild(modal);
+    // Load foto yang sudah ada
+    idbGet(STORE_FOTO, 'foto_' + jamaahId).then(dataUrl => {
+        if (dataUrl) {
+            window._currentFotoData = dataUrl;
+            document.getElementById('fotoPreviewImg').src = dataUrl;
+            document.getElementById('fotoPreviewImg').style.display = 'block';
+            document.getElementById('fotoPlaceholder').style.display = 'none';
+            document.getElementById('fotoStatusText').textContent = 'Foto tersimpan ✅';
+            document.getElementById('btnHapusFoto').style.display = 'block';
+            document.getElementById('btnBagikanFoto').style.display = 'block';
+            document.getElementById('btnDownloadFoto').style.display = 'block';
+        }
+    });
+}
+
+function previewFotoProfil(event, jamaahId) {
+    const file = event.target.files[0];
+    if (!file) return;
+    document.getElementById('fotoStatusText').textContent = 'Mengompres foto...';
+    kompresiFoto(file, 300, 0.70, (dataUrl) => {
+        _fotoPreviewData = dataUrl;
+        window._currentFotoData = dataUrl;
+        document.getElementById('fotoPreviewImg').src = dataUrl;
+        document.getElementById('fotoPreviewImg').style.display = 'block';
+        document.getElementById('fotoPlaceholder').style.display = 'none';
+        // Tampilkan ukuran setelah kompres
+        const kb = Math.round(dataUrl.length * 0.75 / 1024);
+        document.getElementById('fotoStatusText').textContent = 'Preview (' + kb + ' KB) — belum disimpan';
+        document.getElementById('btnSimpanFoto').style.display = 'block';
+        document.getElementById('btnBatalFoto').style.display = 'block';
+        document.getElementById('btnHapusFoto').style.display = 'none';
+        document.getElementById('btnBagikanFoto').style.display = 'none';
+        document.getElementById('btnDownloadFoto').style.display = 'none';
+    });
+}
+
+function batalPreviewFoto(jamaahId) {
+    _fotoPreviewData = null;
+    document.getElementById('btnSimpanFoto').style.display = 'none';
+    document.getElementById('btnBatalFoto').style.display = 'none';
+    // Kembalikan ke foto lama atau placeholder
+    idbGet(STORE_FOTO, 'foto_' + jamaahId).then(dataUrl => {
+        if (dataUrl) {
+            window._currentFotoData = dataUrl;
+            document.getElementById('fotoPreviewImg').src = dataUrl;
+            document.getElementById('fotoPreviewImg').style.display = 'block';
+            document.getElementById('fotoPlaceholder').style.display = 'none';
+            document.getElementById('fotoStatusText').textContent = 'Foto tersimpan ✅';
+            document.getElementById('btnHapusFoto').style.display = 'block';
+            document.getElementById('btnBagikanFoto').style.display = 'block';
+            document.getElementById('btnDownloadFoto').style.display = 'block';
+        } else {
+            document.getElementById('fotoPreviewImg').style.display = 'none';
+            document.getElementById('fotoPlaceholder').style.display = 'block';
+            document.getElementById('fotoStatusText').textContent = 'Belum ada foto';
+        }
+    });
+}
+
+async function simpanFotoProfil(jamaahId) {
+    if (!_fotoPreviewData) return showToast('Pilih foto dulu!');
+    await idbSet(STORE_FOTO, 'foto_' + jamaahId, _fotoPreviewData);
+    _fotoPreviewData = null;
+    const kb = Math.round(window._currentFotoData.length * 0.75 / 1024);
+    document.getElementById('fotoStatusText').textContent = 'Foto tersimpan ✅ (' + kb + ' KB)';
+    document.getElementById('btnSimpanFoto').style.display = 'none';
+    document.getElementById('btnBatalFoto').style.display = 'none';
+    document.getElementById('btnHapusFoto').style.display = 'block';
+    document.getElementById('btnBagikanFoto').style.display = 'block';
+    document.getElementById('btnDownloadFoto').style.display = 'block';
+    // Update thumbnail di kartu
+    loadFotoThumbnail(jamaahId);
+    showToast('✅ Foto berhasil disimpan!');
+}
+
+async function konfirmasiHapusFoto(jamaahId) {
+    if (!confirm('Hapus foto profil?')) return;
+    await idbDelete(STORE_FOTO, 'foto_' + jamaahId);
+    window._currentFotoData = null;
+    document.getElementById('fotoPreviewImg').style.display = 'none';
+    document.getElementById('fotoPlaceholder').style.display = 'block';
+    document.getElementById('fotoStatusText').textContent = 'Foto dihapus';
+    document.getElementById('btnHapusFoto').style.display = 'none';
+    document.getElementById('btnBagikanFoto').style.display = 'none';
+    document.getElementById('btnDownloadFoto').style.display = 'none';
+    // Reset thumbnail
+    const el = document.getElementById('foto_thumb_' + jamaahId);
+    if (el) el.innerHTML = '<span style="font-size:22px;">👤</span>';
+    showToast('🗑️ Foto dihapus!');
+}
+
+function downloadFotoProfil(jamaahNama) {
+    const dataUrl = window._currentFotoData;
+    if (!dataUrl) return showToast('Tidak ada foto!');
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = 'foto_' + jamaahNama.replace(/ /g,'_') + '.jpg';
+    a.click();
+    showToast('⬇️ Foto didownload!');
+}
+
+async function bagikanFotoProfil(jamaahId, jamaahNama) {
+    const dataUrl = window._currentFotoData;
+    if (!dataUrl) return showToast('Tidak ada foto!');
+    try {
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        const file = new File([blob], 'foto_' + jamaahNama + '.jpg', { type: 'image/jpeg' });
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: 'Foto ' + jamaahNama, text: jamaahNama });
+        } else {
+            downloadFotoProfil(jamaahNama);
+            showToast('Share tidak didukung, foto didownload');
+        }
+    } catch(err) {
+        if (err.name !== 'AbortError') downloadFotoProfil(jamaahNama);
+    }
 }
 
 function sortJamaahList(){ 
@@ -4112,25 +4294,24 @@ const defaultJamaahKitaFields = [
     { name: 'keterangan',    label: 'Keterangan',      type: 'textarea', icon: '📝', isRequired: false }
 ];
 
-function loadJamaahKitaData() {
-    const saved = localStorage.getItem('safara_jamaah_kita_list');
-    const savedFields = localStorage.getItem('safara_jamaah_kita_fields');
-    jamaahKitaList = saved ? JSON.parse(saved) : [];
-    dynamicFieldsJamaahKita = savedFields ? JSON.parse(savedFields) : defaultJamaahKitaFields;
+async function loadJamaahKitaData() {
+    let saved = await idbGet(STORE_JAMAAH_KITA, 'kita_list');
+    if (!saved) saved = JSON.parse(localStorage.getItem('safara_jamaah_kita_list') || '[]');
+    let savedFields = await idbGet(STORE_JAMAAH_KITA, 'kita_fields');
+    if (!savedFields) savedFields = JSON.parse(localStorage.getItem('safara_jamaah_kita_fields') || 'null');
+    jamaahKitaList = saved || [];
+    dynamicFieldsJamaahKita = savedFields || defaultJamaahKitaFields;
 
     // Sinkronkan urutan + icon + label field On Proses mengikuti Database Jamaah
-    const dbFields = JSON.parse(localStorage.getItem('safara_jamaah_fields') || '[]');
+    const dbFields = dynamicFieldsJamaah.length > 0 ? dynamicFieldsJamaah : 
+        JSON.parse(localStorage.getItem('safara_jamaah_fields') || '[]');
     if (dbFields.length > 0) {
         const dbOrder = dbFields.map(f => f.name);
-        // Update icon & label dari Database untuk field yang sama
         dynamicFieldsJamaahKita = dynamicFieldsJamaahKita.map(kf => {
             const dbField = dbFields.find(df => df.name === kf.name);
-            if (dbField) {
-                return { ...kf, icon: dbField.icon || kf.icon, label: dbField.label || kf.label };
-            }
+            if (dbField) return { ...kf, icon: dbField.icon || kf.icon, label: dbField.label || kf.label };
             return kf;
         });
-        // Urutkan sesuai Database
         const inDb = dynamicFieldsJamaahKita.filter(f => dbOrder.includes(f.name));
         const notInDb = dynamicFieldsJamaahKita.filter(f => !dbOrder.includes(f.name));
         inDb.sort((a, b) => dbOrder.indexOf(a.name) - dbOrder.indexOf(b.name));
@@ -4138,18 +4319,16 @@ function loadJamaahKitaData() {
     }
 }
 
-// ===== STUB FUNGSI JAMAAH KITA COMPAT =====
 function loadDynamicFieldsJamaahKita() { loadJamaahKitaData(); }
 
-
-function saveJamaahKitaData() {
-    localStorage.setItem('safara_jamaah_kita_list', JSON.stringify(jamaahKitaList));
-    localStorage.setItem('safara_jamaah_kita_fields', JSON.stringify(dynamicFieldsJamaahKita));
+async function saveJamaahKitaData() {
+    await idbSet(STORE_JAMAAH_KITA, 'kita_list', jamaahKitaList);
+    await idbSet(STORE_JAMAAH_KITA, 'kita_fields', dynamicFieldsJamaahKita);
     renderJamaahKitaList();
 }
 
-function saveDynamicFieldsJamaahKita() {
-    localStorage.setItem('safara_jamaah_kita_fields', JSON.stringify(dynamicFieldsJamaahKita));
+async function saveDynamicFieldsJamaahKita() {
+    await idbSet(STORE_JAMAAH_KITA, 'kita_fields', dynamicFieldsJamaahKita);
 }
 
 function renderPilihJamaahKita() {
@@ -5125,13 +5304,14 @@ function salinFallback(text) {
 // ==================== PEMBAYARAN ====================
 let paymentTransaksiList = [], currentInvoiceJamaahId = null, currentInvoiceText = '', currentEditJamaahId = null, currentRiwayatJamaahId = null, currentPaymentFilter = 'semua', currentPaymentSearch = '';
 
-function loadPaymentData() { 
-    const saved = localStorage.getItem('safara_pembayaran_transaksi'); 
-    paymentTransaksiList = saved ? JSON.parse(saved) : []; 
+async function loadPaymentData() { 
+    let saved = await idbGet(STORE_PEMBAYARAN, 'pembayaran_list');
+    if (!saved) saved = JSON.parse(localStorage.getItem('safara_pembayaran_transaksi') || '[]');
+    paymentTransaksiList = saved || []; 
 }
 
-function savePaymentData() { 
-    localStorage.setItem('safara_pembayaran_transaksi', JSON.stringify(paymentTransaksiList)); 
+async function savePaymentData() { 
+    await idbSet(STORE_PEMBAYARAN, 'pembayaran_list', paymentTransaksiList);
 }
 
 function getTotalHargaPaket(jamaah) { 
@@ -5756,14 +5936,15 @@ function closeDetailModal() {
 // ==================== FOLDER VIRTUAL ====================
 let folderList = [];
 
-function loadFolderData() { 
-    const saved = localStorage.getItem('safara_folder_list'); 
-    folderList = saved ? JSON.parse(saved) : []; 
+async function loadFolderData() { 
+    let saved = await idbGet(STORE_FOLDER, 'folder_list');
+    if (!saved) saved = JSON.parse(localStorage.getItem('safara_folder_list') || '[]');
+    folderList = saved || []; 
     renderFolderList(); 
 }
 
-function saveFolderData() { 
-    localStorage.setItem('safara_folder_list', JSON.stringify(folderList)); 
+async function saveFolderData() { 
+    await idbSet(STORE_FOLDER, 'folder_list', folderList);
     renderFolderList(); 
 }
 
@@ -6152,46 +6333,81 @@ function exportFolderToExcel(folderId) {
 
 // ==================== UPLOAD DOKUMEN ====================
 let dokumenJenisList = [], dokumenData = {}, db = null;
-const DB_NAME = 'SafaraDokumenDB', DB_VERSION = 2, STORE_NAME = 'dokumen', JENIS_STORE_NAME = 'dokumenJenis';
+// ==================== INDEXEDDB TERPUSAT ====================
+const DB_NAME = 'SafaraDB', DB_VERSION = 3, 
+    STORE_NAME = 'dokumen', 
+    JENIS_STORE_NAME = 'dokumenJenis',
+    STORE_JAMAAH = 'jamaahData',
+    STORE_JAMAAH_KITA = 'jamaahKitaData', 
+    STORE_FOLDER = 'folderData',
+    STORE_KAS = 'kasData',
+    STORE_PEMBAYARAN = 'pembayaranData',
+    STORE_KONFIGURASI = 'konfigurasiData',
+    STORE_MASTER = 'masterData',
+    STORE_FOTO = 'fotoProfil';
 
 function resetIndexedDBDarurat() {
-    if (!confirm('Reset database foto? Data teks jamaah TIDAK akan terhapus. Hanya foto profil yang direset.')) return;
-    // Hapus IndexedDB lama
-    const req = indexedDB.deleteDatabase('SafaraDokumenDB');
-    req.onsuccess = () => {
+    if (!confirm('Reset database? Data akan direset.')) return;
+    const req = indexedDB.deleteDatabase('SafaraDB');
+    const req2 = indexedDB.deleteDatabase('SafaraDokumenDB');
+    req.onsuccess = req2.onsuccess = () => {
         db = null;
         showToast('✅ Database direset! Memuat ulang...');
         setTimeout(() => window.location.reload(), 1000);
     };
-    req.onerror = () => {
-        showToast('Gagal reset, coba refresh manual');
-        window.location.reload();
-    };
-    req.onblocked = () => {
-        window.location.reload();
-    };
+    req.onerror = () => { showToast('Gagal reset'); window.location.reload(); };
+    req.onblocked = req2.onblocked = () => window.location.reload();
 }
 
 function openIndexedDB() { 
     return new Promise((resolve, reject) => { 
         if (db) { resolve(db); return; } 
         const request = indexedDB.open(DB_NAME, DB_VERSION); 
-        request.onerror = (e) => { 
-            console.error('IndexedDB error:', e);
-            reject(request.error); 
-        }; 
+        request.onerror = (e) => { console.error('IndexedDB error:', e); reject(request.error); }; 
         request.onsuccess = () => { db = request.result; resolve(db); }; 
-        request.onblocked = () => {
-            // Ada tab lain yang masih pakai DB versi lama
-            db = null;
-            window.location.reload();
-        };
+        request.onblocked = () => { db = null; window.location.reload(); };
         request.onupgradeneeded = (event) => { 
-            const dbEvent = event.target.result; 
-            if (!dbEvent.objectStoreNames.contains(STORE_NAME)) dbEvent.createObjectStore(STORE_NAME, { keyPath: 'id' }); 
-            if (!dbEvent.objectStoreNames.contains(JENIS_STORE_NAME)) dbEvent.createObjectStore(JENIS_STORE_NAME, { keyPath: 'id' }); 
+            const d = event.target.result; 
+            [STORE_NAME, JENIS_STORE_NAME, STORE_JAMAAH, STORE_JAMAAH_KITA, 
+             STORE_FOLDER, STORE_KAS, STORE_PEMBAYARAN, STORE_KONFIGURASI, 
+             STORE_MASTER, STORE_FOTO].forEach(name => {
+                if (!d.objectStoreNames.contains(name)) d.createObjectStore(name, { keyPath: 'id' });
+            });
         }; 
     }); 
+}
+
+// Helper: simpan ke IndexedDB
+async function idbSet(storeName, key, value) {
+    const d = await openIndexedDB();
+    return new Promise((resolve, reject) => {
+        const tx = d.transaction([storeName], 'readwrite');
+        tx.objectStore(storeName).put({ id: key, data: value });
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+    });
+}
+
+// Helper: baca dari IndexedDB
+async function idbGet(storeName, key) {
+    const d = await openIndexedDB();
+    return new Promise((resolve) => {
+        const tx = d.transaction([storeName], 'readonly');
+        const req = tx.objectStore(storeName).get(key);
+        req.onsuccess = () => resolve(req.result?.data ?? null);
+        req.onerror = () => resolve(null);
+    });
+}
+
+// Helper: hapus dari IndexedDB  
+async function idbDelete(storeName, key) {
+    const d = await openIndexedDB();
+    return new Promise((resolve) => {
+        const tx = d.transaction([storeName], 'readwrite');
+        tx.objectStore(storeName).delete(key);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => resolve();
+    });
 }
 
 async function loadDokumenJenisFromIndexedDB() { 
@@ -7344,21 +7560,24 @@ function cetakTiketLangsung() {
 // ==================== MULTI EVENT (SINGKAT) ====================
 let masterDataList = [], masterDynamicFields = [], masterItemList = ['Kain Ihram', 'Sendal', 'Obat-obatan', 'Tas', 'Air Zamzam', 'Kopyah'], editingMasterId = null, availableModes = ['Semua', 'Haji', 'Toko', 'Sekolah', 'Umroh', 'Donasi'], activeModes = ['Semua', 'Haji', 'Toko', 'Sekolah', 'Umroh', 'Donasi'], currentDisplayMode = 'Semua';
 
-function loadMasterData() {
-    const saved = localStorage.getItem('safara_master_data');
-    masterDataList = saved ? JSON.parse(saved) : [];
-    const savedFields = localStorage.getItem('safara_master_fields');
-    if(savedFields) masterDynamicFields = JSON.parse(savedFields);
-    const savedItems = localStorage.getItem('safara_master_items');
-    if(savedItems) masterItemList = JSON.parse(savedItems);
+async function loadMasterData() {
+    let saved = await idbGet(STORE_MASTER, 'master_data');
+    if (!saved) saved = JSON.parse(localStorage.getItem('safara_master_data') || '[]');
+    masterDataList = saved || [];
+    let savedFields = await idbGet(STORE_MASTER, 'master_fields');
+    if (!savedFields) savedFields = JSON.parse(localStorage.getItem('safara_master_fields') || 'null');
+    if(savedFields) masterDynamicFields = savedFields;
+    let savedItems = await idbGet(STORE_MASTER, 'master_items');
+    if (!savedItems) savedItems = JSON.parse(localStorage.getItem('safara_master_items') || 'null');
+    if(savedItems) masterItemList = savedItems;
     renderMasterForm();
     renderMasterTable();
 }
 
-function saveMasterDataToLocal() {
-    localStorage.setItem('safara_master_data', JSON.stringify(masterDataList));
-    localStorage.setItem('safara_master_fields', JSON.stringify(masterDynamicFields));
-    localStorage.setItem('safara_master_items', JSON.stringify(masterItemList));
+async function saveMasterDataToLocal() {
+    await idbSet(STORE_MASTER, 'master_data', masterDataList);
+    await idbSet(STORE_MASTER, 'master_fields', masterDynamicFields);
+    await idbSet(STORE_MASTER, 'master_items', masterItemList);
 }
 
 function getMasterJudul() { return document.getElementById('masterJudul')?.value.trim() || 'Multi Event'; }
@@ -7902,9 +8121,10 @@ let konfigurasiPro = {
     wa_template: { laporan: '📊 *LAPORAN KAS KANTOR*\n\n💰 Saldo: [saldo]\n📈 Pemasukan: [masuk]\n📉 Pengeluaran: [keluar]\n\nTerima kasih.' }
 };
 
-function loadKonfigurasiPro() {
-    const saved = localStorage.getItem('safara_konfigurasi_pro');
-    if(saved) { try { const parsed = JSON.parse(saved); konfigurasiPro = { ...konfigurasiPro, ...parsed }; } catch(e) {} }
+async function loadKonfigurasiPro() {
+    let saved = await idbGet(STORE_KONFIGURASI, 'konfigurasi_pro');
+    if (!saved) saved = JSON.parse(localStorage.getItem('safara_konfigurasi_pro') || 'null');
+    if(saved) { try { konfigurasiPro = { ...konfigurasiPro, ...saved }; } catch(e) {} }
     document.getElementById('cfg_nama1').value = konfigurasiPro.instansi1.nama || '';
     document.getElementById('cfg_alamat1').value = konfigurasiPro.instansi1.alamat || '';
     document.getElementById('cfg_telp1').value = konfigurasiPro.instansi1.telp || '';
@@ -7952,7 +8172,7 @@ function loadKonfigurasiPro() {
     updateHeaderFromConfig();
 }
 
-function saveKonfigurasiPro() {
+async function saveKonfigurasiPro() {
     konfigurasiPro.instansi1 = {
         nama: document.getElementById('cfg_nama1').value,
         alamat: document.getElementById('cfg_alamat1').value,
@@ -8005,7 +8225,8 @@ function saveKonfigurasiPro() {
         batas_lansia: parseInt(document.getElementById('cfg_batas_lansia').value) || 60
     };
     konfigurasiPro.wa_template = { laporan: document.getElementById('cfg_wa_laporan').value };
-    localStorage.setItem('safara_konfigurasi_pro', JSON.stringify(konfigurasiPro));
+    localStorage.setItem('safara_konfigurasi_pro', JSON.stringify(konfigurasiPro)); // keep for compat
+    await idbSet(STORE_KONFIGURASI, 'konfigurasi_pro', konfigurasiPro);
     showToast('✅ Konfigurasi berhasil disimpan!');
     updateHeaderFromConfig();
 }
@@ -8013,6 +8234,7 @@ function saveKonfigurasiPro() {
 function resetKonfigurasiPro() {
     if(confirm('Reset semua konfigurasi ke default?')) {
         localStorage.removeItem('safara_konfigurasi_pro');
+        idbDelete(STORE_KONFIGURASI, 'konfigurasi_pro');
         location.reload();
     }
 }
@@ -8207,19 +8429,20 @@ async function initPremium() {
     
     updateHomeStats();
     loadEstimasiData();
-    loadKasData();
-    loadJamaahData();
-    loadDynamicFieldsJamaah();
-    loadJamaahKitaData();
-    // loadDynamicFieldsJamaahKita sudah include di loadJamaahKitaData()
-    loadPaymentData();
-    loadMasterData();
+    // Load semua data dari IndexedDB secara berurutan
+    await openIndexedDB(); // Pastikan DB terbuka dulu
+    await loadKonfigurasiPro();
+    await loadDynamicFieldsJamaah();
+    await loadJamaahData();
+    await loadJamaahKitaData();
+    await loadKasData();
+    await loadPaymentData();
+    await loadMasterData();
+    await loadFolderData();
     loadModesFromStorage();
     renderDynamicModeSwitcher();
-    loadKonfigurasiPro();
     loadCatatanData();
     await loadDokumenData();
-    loadFolderData();
     loadPengingatData();
     loadSumberHartaList();
     
@@ -8596,4 +8819,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-                        </html>
+    </html>
