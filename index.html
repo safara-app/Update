@@ -1847,6 +1847,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 </head>
 <body>
 
@@ -2328,6 +2329,7 @@
             <div class="fitur-card" onclick="showPage('foldervirtual')"><div class="fitur-icon">📂</div><div class="fitur-title">Folder Virtual</div><div class="fitur-desc">Pisah per rombongan</div></div>
             <div class="fitur-card" onclick="showPage('pengingatwa')"><div class="fitur-icon">📲</div><div class="fitur-title">Pengingat WA</div><div class="fitur-desc">Kirim pengingat otomatis</div></div>
             <div class="fitur-card" onclick="showPage('etikettiket')"><div class="fitur-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="48" height="48"><rect x="4" y="14" width="56" height="36" rx="6" fill="#f5a623"/><rect x="4" y="14" width="56" height="10" rx="4" fill="#e08000"/><circle cx="20" cy="38" r="4" fill="white"/><rect x="28" y="30" width="20" height="3" rx="2" fill="white"/><rect x="28" y="36" width="14" height="3" rx="2" fill="white"/><rect x="28" y="42" width="17" height="3" rx="2" fill="white"/></svg></div><div class="fitur-title">E-Tiket & QR</div><div class="fitur-desc">Tiket digital dengan QR</div></div>
+            <div class="fitur-card" onclick="showPage('scanqr')"><div class="fitur-icon" style="font-size:40px;">📷</div><div class="fitur-title">Scan QR</div><div class="fitur-desc">Absensi & cek data jamaah</div></div>
             <div class="fitur-card" onclick="showPage('cetaklabel')"><div class="fitur-icon">🏷️</div><div class="fitur-title">Cetak Label</div><div class="fitur-desc">Name tag / stiker koper</div></div>
             <div class="fitur-card" onclick="showPage('cloudstorage')"><div class="fitur-icon">☁️</div><div class="fitur-title">Cloud Storage</div><div class="fitur-desc">Backup & Restore data</div></div>
             <div class="fitur-card" onclick="showPage('dashboard')"><div class="fitur-icon">📈</div><div class="fitur-title">Dashboard</div><div class="fitur-desc">Grafik statistik data</div></div>
@@ -2363,6 +2365,78 @@
 </div>
 
 <!-- E-TIKET & QR PAGE -->
+<div id="page-scanqr" class="page">
+    <div class="header-premium header-premium-small"><div class="back-header"><i class="fas fa-arrow-left" onclick="showPage('fitur');stopScanner();"></i><h2>📷 Scan QR Absensi</h2><div style="width:30px;"></div></div></div>
+    <div class="container">
+
+        <!-- Kelola Sesi -->
+        <div class="card-premium">
+            <div style="font-weight:bold;color:var(--primary);margin-bottom:10px;">📅 Sesi Absensi</div>
+            <div id="sesiAktifInfo" style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:10px;font-size:13px;">
+                <span style="color:#888;">Belum ada sesi aktif</span>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button onclick="showBuatSesiModal()" style="flex:1;padding:10px;background:#0D5C4A;color:white;border:none;border-radius:8px;font-size:13px;cursor:pointer;">➕ Buat Sesi Baru</button>
+                <button onclick="showPilihSesiModal()" style="flex:1;padding:10px;background:#3B82F6;color:white;border:none;border-radius:8px;font-size:13px;cursor:pointer;">📋 Pilih Sesi</button>
+            </div>
+        </div>
+
+        <!-- Scanner -->
+        <div class="card-premium" style="text-align:center;">
+            <div id="scannerArea" style="position:relative;width:100%;max-width:340px;margin:0 auto;border-radius:16px;overflow:hidden;background:#000;">
+                <video id="scannerVideo" style="width:100%;display:block;" playsinline></video>
+                <canvas id="scannerCanvas" style="display:none;"></canvas>
+                <div style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;">
+                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:200px;border:3px solid #0D5C4A;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,0.4);"></div>
+                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:200px;">
+                        <div style="position:absolute;top:0;left:0;width:30px;height:30px;border-top:4px solid #FFD700;border-left:4px solid #FFD700;border-radius:4px 0 0 0;"></div>
+                        <div style="position:absolute;top:0;right:0;width:30px;height:30px;border-top:4px solid #FFD700;border-right:4px solid #FFD700;border-radius:0 4px 0 0;"></div>
+                        <div style="position:absolute;bottom:0;left:0;width:30px;height:30px;border-bottom:4px solid #FFD700;border-left:4px solid #FFD700;border-radius:0 0 0 4px;"></div>
+                        <div style="position:absolute;bottom:0;right:0;width:30px;height:30px;border-bottom:4px solid #FFD700;border-right:4px solid #FFD700;border-radius:0 0 4px 0;"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="scannerStatus" style="margin:12px 0;font-size:13px;color:#888;">Pilih atau buat sesi dulu</div>
+            <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;">
+                <button id="btnStartScan" onclick="startScanner()" class="btn btn-primary" style="flex:1;">📷 Mulai Scan</button>
+                <button id="btnStopScan" onclick="stopScanner()" class="btn" style="flex:1;display:none;background:#EF4444;color:white;">⏹ Stop</button>
+            </div>
+        </div>
+
+        <!-- Hasil Scan -->
+        <div id="hasilScanCard" style="display:none;" class="card-premium">
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+                <div id="hasilFotoProfil" style="width:70px;height:70px;border-radius:50%;background:#f0f0f0;border:3px solid #0D5C4A;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <span style="font-size:32px;">👤</span>
+                </div>
+                <div>
+                    <div id="hasilNama" style="font-size:18px;font-weight:bold;color:var(--primary);"></div>
+                    <div id="hasilNoPorsi" style="font-size:13px;color:#888;"></div>
+                    <div id="hasilStatusAbsen" style="font-size:13px;font-weight:bold;margin-top:4px;"></div>
+                </div>
+            </div>
+            <div id="hasilDataJamaah" style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;line-height:2;"></div>
+            <div style="display:flex;gap:8px;">
+                <button id="btnTandaiHadir" onclick="tandaiHadir()" style="flex:1;padding:12px;background:#10B981;color:white;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;">✅ Tandai Hadir</button>
+                <button onclick="resetScanResult()" style="flex:1;padding:12px;background:#e2e8f0;color:#333;border:none;border-radius:10px;cursor:pointer;">🔄 Scan Lagi</button>
+            </div>
+        </div>
+
+        <!-- Rekap Absensi -->
+        <div class="card-premium">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <div style="font-weight:bold;color:var(--primary);">📋 Rekap Sesi Aktif</div>
+                <div style="display:flex;gap:6px;">
+                    <button onclick="eksporAbsensi()" style="padding:6px 10px;background:#0D5C4A;color:white;border:none;border-radius:8px;font-size:11px;cursor:pointer;">🖨️ PDF</button>
+                    <button onclick="eksporAbsensiExcel()" style="padding:6px 10px;background:#1D6F42;color:white;border:none;border-radius:8px;font-size:11px;cursor:pointer;">📊 Excel</button>
+                    <button onclick="eksporAbsensiCSV()" style="padding:6px 10px;background:#3B82F6;color:white;border:none;border-radius:8px;font-size:11px;cursor:pointer;">📄 CSV</button>
+                </div>
+            </div>
+            <div id="rekapAbsensi" style="font-size:13px;"></div>
+        </div>
+    </div>
+</div>
+
 <div id="page-etikettiket" class="page">
     <div class="header-premium header-premium-small"><div class="back-header"><i class="fas fa-arrow-left" onclick="showPage('fitur')"></i><h2> E-Tiket & QR</h2><div style="width:30px;"></div></div></div>
     <div class="container">
@@ -2686,6 +2760,7 @@ function internalShowPage(pageId) {
     }
     if (pageId === 'foldervirtual') { if(window.renderFolderList) window.renderFolderList(); }
     if (pageId === 'pengingatwa') { if(window.loadPengingatData) window.loadPengingatData(); }
+    if (pageId === 'scanqr') { renderSesiAktifInfo(); renderRekapAbsensi(); }
     if (pageId === 'etikettiket') { if(window.populateTiketDropdown) window.populateTiketDropdown(); }
     if (pageId === 'cetaklabel') { if(window.populateLabelDropdown) window.populateLabelDropdown(); }
     if (pageId === 'cloudstorage') { if(window.updateStorageInfo) window.updateStorageInfo(); }
@@ -2697,7 +2772,7 @@ window.addEventListener('popstate', function(event) {
     let pageId = 'home';
     if (event.state && event.state.page) pageId = event.state.page;
     else { const hash = window.location.hash; if (hash && hash.startsWith('#page-')) pageId = hash.replace('#page-', ''); }
-    const validPages = ['home', 'estimasi', 'kas', 'jamaah', 'jamaahkita', 'catatan', 'zakat', 'pembayaran', 'datamaster', 'konfigurasi', 'setting', 'fitur', 'uploaddokumen', 'foldervirtual', 'pengingatwa', 'etikettiket', 'cetaklabel', 'cloudstorage', 'dashboard'];
+    const validPages = ['home', 'estimasi', 'kas', 'jamaah', 'jamaahkita', 'catatan', 'zakat', 'pembayaran', 'datamaster', 'konfigurasi', 'setting', 'fitur', 'uploaddokumen', 'foldervirtual', 'pengingatwa', 'etikettiket', 'cetaklabel', 'cloudstorage', 'dashboard', 'scanqr'];
     if (!validPages.includes(pageId)) pageId = 'home';
     internalShowPage(pageId);
     document.querySelectorAll('.nav-item-premium').forEach(nav => { nav.classList.remove('active'); if (nav.getAttribute('data-page') === pageId) nav.classList.add('active'); });
@@ -3732,7 +3807,597 @@ function filterJamaahList(){
     applyJamaahFilterAndSort(); 
 }
 
-// ==================== FOTO PROFIL JAMAAH ====================
+// ==================== SCAN QR ABSENSI ====================
+let scannerStream = null;
+let scannerAnimFrame = null;
+let lastScannedResult = null;
+let absensiList = []; // semua sesi
+let sesiAktifId = null; // id sesi yang sedang aktif
+
+async function loadAbsensiData() {
+    const saved = await idbGet(STORE_ABSENSI, 'absensi_sesi');
+    absensiList = saved || [];
+    const savedSesiId = await idbGet(STORE_ABSENSI, 'sesi_aktif_id');
+    sesiAktifId = savedSesiId || null;
+}
+
+async function saveAbsensiData() {
+    await idbSet(STORE_ABSENSI, 'absensi_sesi', absensiList);
+    await idbSet(STORE_ABSENSI, 'sesi_aktif_id', sesiAktifId);
+}
+
+function getSesiAktif() {
+    if (!sesiAktifId) return null;
+    return absensiList.find(s => s.id === sesiAktifId) || null;
+}
+
+function getAbsensiSesiAktif() {
+    const sesi = getSesiAktif();
+    return sesi ? sesi.absensi : [];
+}
+
+function renderSesiAktifInfo() {
+    const el = document.getElementById('sesiAktifInfo');
+    if (!el) return;
+    const sesi = getSesiAktif();
+    if (!sesi) {
+        el.innerHTML = '<span style="color:#888;">Belum ada sesi aktif — buat sesi baru untuk mulai absensi</span>';
+    } else {
+        const jmlHadir = sesi.absensi.length;
+        el.innerHTML = `
+            <div style="font-weight:bold;color:var(--primary);font-size:14px;">📅 ${escapeHtml(sesi.nama)}</div>
+            <div style="color:#888;font-size:12px;margin-top:2px;">${sesi.tanggal} | ${jmlHadir} jamaah hadir</div>
+            <button onclick="tutupSesiAktif()" style="margin-top:8px;padding:6px 12px;background:#EF4444;color:white;border:none;border-radius:8px;font-size:12px;cursor:pointer;">⏹ Tutup Sesi</button>`;
+    }
+}
+
+function showBuatSesiModal() {
+    document.getElementById('buatSesiModal')?.remove();
+    const modal = document.createElement('div');
+    modal.id = 'buatSesiModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    modal.innerHTML = `
+        <div style="background:var(--card-bg);border-radius:16px;padding:24px;width:100%;max-width:360px;">
+            <h3 style="color:var(--primary);margin-bottom:16px;">➕ Buat Sesi Absensi</h3>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:13px;">Nama Acara / Sesi</label>
+                <input type="text" id="inputNamaSesi" placeholder="Contoh: Manasik Haji 10 Mei 2026"
+                    style="width:100%;padding:12px;border-radius:8px;border:1px solid #ddd;margin-top:6px;font-size:14px;background:var(--input-bg);color:var(--text);">
+            </div>
+            <button onclick="buatSesiBaru()" style="width:100%;padding:12px;background:#0D5C4A;color:white;border:none;border-radius:10px;margin-bottom:8px;cursor:pointer;font-weight:bold;font-size:14px;">✅ Buat & Aktifkan</button>
+            <button onclick="document.getElementById('buatSesiModal').remove()" style="width:100%;padding:12px;background:#e2e8f0;color:#333;border:none;border-radius:10px;cursor:pointer;">Batal</button>
+        </div>`;
+    document.body.appendChild(modal);
+    setTimeout(() => document.getElementById('inputNamaSesi')?.focus(), 100);
+}
+
+async function buatSesiBaru() {
+    const nama = document.getElementById('inputNamaSesi')?.value.trim();
+    if (!nama) return showToast('Isi nama sesi/acara!');
+    const sesi = {
+        id: Date.now().toString(),
+        nama,
+        tanggal: new Date().toLocaleDateString('id-ID'),
+        absensi: []
+    };
+    absensiList.push(sesi);
+    sesiAktifId = sesi.id;
+    await saveAbsensiData();
+    document.getElementById('buatSesiModal')?.remove();
+    renderSesiAktifInfo();
+    renderRekapAbsensi();
+    document.getElementById('scannerStatus').textContent = 'Sesi aktif! Tekan Mulai Scan';
+    document.getElementById('scannerStatus').style.color = '#0D5C4A';
+    showToast('✅ Sesi "' + nama + '" dibuat!');
+}
+
+function showPilihSesiModal() {
+    document.getElementById('pilihSesiModal')?.remove();
+    if (absensiList.length === 0) return showToast('Belum ada sesi. Buat sesi baru dulu!');
+    const modal = document.createElement('div');
+    modal.id = 'pilihSesiModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    let listHtml = absensiList.slice().reverse().map(s => `
+        <div style="padding:12px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;">
+            <div style="cursor:pointer;flex:1;" onclick="pilihSesi('${s.id}')">
+                <div style="font-weight:bold;${s.id===sesiAktifId?'color:#0D5C4A;':''}">${s.id===sesiAktifId?'▶ ':''}${escapeHtml(s.nama)}</div>
+                <div style="font-size:11px;color:#888;">${s.tanggal} | ${s.absensi.length} hadir</div>
+            </div>
+            <button onclick="hapusSesi('${s.id}')" style="padding:4px 8px;background:#EF4444;color:white;border:none;border-radius:6px;font-size:11px;cursor:pointer;margin-left:8px;">🗑️</button>
+        </div>`).join('');
+    modal.innerHTML = `
+        <div style="background:var(--card-bg);border-radius:16px;padding:24px;width:100%;max-width:360px;max-height:80vh;overflow-y:auto;">
+            <h3 style="color:var(--primary);margin-bottom:12px;">📋 Pilih Sesi</h3>
+            <div style="border:1px solid #eee;border-radius:10px;overflow:hidden;margin-bottom:12px;">${listHtml}</div>
+            <button onclick="document.getElementById('pilihSesiModal').remove()" style="width:100%;padding:12px;background:#e2e8f0;color:#333;border:none;border-radius:10px;cursor:pointer;">Tutup</button>
+        </div>`;
+    document.body.appendChild(modal);
+}
+
+async function pilihSesi(sesiId) {
+    sesiAktifId = sesiId;
+    await saveAbsensiData();
+    document.getElementById('pilihSesiModal')?.remove();
+    renderSesiAktifInfo();
+    renderRekapAbsensi();
+    const sesi = getSesiAktif();
+    showToast('✅ Sesi "' + sesi.nama + '" diaktifkan!');
+    document.getElementById('scannerStatus').textContent = 'Sesi aktif! Tekan Mulai Scan';
+    document.getElementById('scannerStatus').style.color = '#0D5C4A';
+}
+
+async function hapusSesi(sesiId) {
+    if (!confirm('Hapus sesi ini? Data absensi akan hilang!')) return;
+    absensiList = absensiList.filter(s => s.id !== sesiId);
+    if (sesiAktifId === sesiId) sesiAktifId = null;
+    await saveAbsensiData();
+    document.getElementById('pilihSesiModal')?.remove();
+    showPilihSesiModal();
+    renderSesiAktifInfo();
+    renderRekapAbsensi();
+    showToast('🗑️ Sesi dihapus!');
+}
+
+async function tutupSesiAktif() {
+    if (!confirm('Tutup sesi aktif? Bisa dibuka lagi lewat Pilih Sesi.')) return;
+    sesiAktifId = null;
+    await saveAbsensiData();
+    renderSesiAktifInfo();
+    renderRekapAbsensi();
+    document.getElementById('scannerStatus').textContent = 'Pilih atau buat sesi dulu';
+    document.getElementById('scannerStatus').style.color = '#888';
+    showToast('Sesi ditutup!');
+}
+
+async function startScanner() {
+    if (!sesiAktifId) return showToast('Pilih atau buat sesi absensi dulu!');
+    const video = document.getElementById('scannerVideo');
+    const statusEl = document.getElementById('scannerStatus');
+    if (!video) return;
+    try {
+        scannerStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+        });
+        video.srcObject = scannerStream;
+        video.play();
+        document.getElementById('btnStartScan').style.display = 'none';
+        document.getElementById('btnStopScan').style.display = 'block';
+        statusEl.textContent = '🔍 Arahkan ke QR Code...';
+        statusEl.style.color = '#0D5C4A';
+        scanFrames();
+    } catch(e) {
+        statusEl.textContent = '❌ Izinkan akses kamera!';
+        statusEl.style.color = '#EF4444';
+    }
+}
+
+function stopScanner() {
+    if (scannerStream) { scannerStream.getTracks().forEach(t => t.stop()); scannerStream = null; }
+    if (scannerAnimFrame) { cancelAnimationFrame(scannerAnimFrame); scannerAnimFrame = null; }
+    const video = document.getElementById('scannerVideo');
+    if (video) video.srcObject = null;
+    document.getElementById('btnStartScan').style.display = 'block';
+    document.getElementById('btnStopScan').style.display = 'none';
+    const statusEl = document.getElementById('scannerStatus');
+    if (statusEl) { statusEl.textContent = 'Scanner dihentikan'; statusEl.style.color = '#888'; }
+}
+
+function scanFrames() {
+    const video = document.getElementById('scannerVideo');
+    const canvas = document.getElementById('scannerCanvas');
+    if (!video || !canvas || !scannerStream) return;
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+        if (code && code.data) { prosesHasilScan(code.data); return; }
+    }
+    scannerAnimFrame = requestAnimationFrame(scanFrames);
+}
+
+async function prosesHasilScan(qrData) {
+    stopScanner();
+    const statusEl = document.getElementById('scannerStatus');
+    statusEl.textContent = '✅ QR terbaca! Mencari data...';
+    statusEl.style.color = '#10B981';
+    const noPorsi = qrData.trim();
+    const jamaah = jamaahList.find(j =>
+        (j.additional_fields?.no_porsi || '').trim().toLowerCase() === noPorsi.toLowerCase()
+    );
+    if (!jamaah) {
+        statusEl.textContent = '❌ Jamaah tidak ditemukan! No Porsi: ' + noPorsi;
+        statusEl.style.color = '#EF4444';
+        document.getElementById('hasilScanCard').style.display = 'none';
+        return;
+    }
+    lastScannedResult = jamaah;
+    await tampilHasilScan(jamaah);
+}
+
+async function tampilHasilScan(jamaah) {
+    const fotoEl = document.getElementById('hasilFotoProfil');
+    const foto = await idbGet(STORE_FOTO, 'foto_' + jamaah.id);
+    fotoEl.innerHTML = foto
+        ? '<img src="' + foto + '" style="width:100%;height:100%;object-fit:cover;">'
+        : '<span style="font-size:32px;">👤</span>';
+    document.getElementById('hasilNama').textContent = jamaah.nama_lengkap;
+    document.getElementById('hasilNoPorsi').textContent = 'No Porsi: ' + (jamaah.additional_fields?.no_porsi || '-');
+    const absensiSesi = getAbsensiSesiAktif();
+    const sudahHadir = absensiSesi.find(a => a.jamaahId === jamaah.id);
+    const statusEl = document.getElementById('hasilStatusAbsen');
+    const btnHadir = document.getElementById('btnTandaiHadir');
+    if (sudahHadir) {
+        statusEl.textContent = '✅ Sudah Hadir — ' + sudahHadir.waktu;
+        statusEl.style.color = '#10B981';
+        btnHadir.textContent = '❌ Batalkan Hadir';
+        btnHadir.style.background = '#EF4444';
+        btnHadir.disabled = false;
+        btnHadir.onclick = () => batalkanHadir(jamaah.id);
+    } else {
+        statusEl.textContent = '⏳ Belum Hadir';
+        statusEl.style.color = '#F59E0B';
+        btnHadir.textContent = '✅ Tandai Hadir';
+        btnHadir.style.background = '#10B981';
+        btnHadir.disabled = false;
+        btnHadir.onclick = tandaiHadir;
+    }
+    const fields = jamaah.additional_fields || {};
+    let dataHtml = '';
+    dynamicFieldsJamaah.forEach(f => {
+        const val = fields[f.name];
+        if (val && f.name !== 'no_porsi') dataHtml += `<div><span style="color:#888;">${f.icon||'📌'} ${f.label}:</span> <strong>${escapeHtml(val)}</strong></div>`;
+    });
+    document.getElementById('hasilDataJamaah').innerHTML = dataHtml || '<div style="color:#888;">Tidak ada data tambahan</div>';
+    document.getElementById('hasilScanCard').style.display = 'block';
+}
+
+async function tandaiHadir() {
+    if (!lastScannedResult) return;
+    if (!sesiAktifId) return showToast('Pilih sesi absensi dulu!');
+    const jamaah = lastScannedResult;
+    const sesi = getSesiAktif();
+    if (!sesi) return;
+    if (sesi.absensi.find(a => a.jamaahId === jamaah.id)) return showToast('Sudah tercatat hadir!');
+    sesi.absensi.push({
+        jamaahId: jamaah.id,
+        nama: jamaah.nama_lengkap,
+        no_porsi: jamaah.additional_fields?.no_porsi || '-',
+        waktu: new Date().toLocaleString('id-ID'),
+        kamar: jamaah.additional_fields?.kamar || '-',
+        bus: jamaah.additional_fields?.bus || '-',
+        rombongan: jamaah.additional_fields?.rombongan || '-'
+    });
+    await saveAbsensiData();
+    showToast('✅ ' + jamaah.nama_lengkap + ' ditandai hadir!');
+    await tampilHasilScan(jamaah);
+    renderRekapAbsensi();
+    renderSesiAktifInfo();
+}
+
+async function batalkanHadir(jamaahId) {
+    if (!confirm('Batalkan kehadiran jamaah ini?')) return;
+    const sesi = getSesiAktif();
+    if (!sesi) return;
+    sesi.absensi = sesi.absensi.filter(a => a.jamaahId !== jamaahId);
+    await saveAbsensiData();
+    showToast('❌ Kehadiran dibatalkan!');
+    if (lastScannedResult) await tampilHasilScan(lastScannedResult);
+    renderRekapAbsensi();
+    renderSesiAktifInfo();
+}
+
+function resetScanResult() {
+    lastScannedResult = null;
+    document.getElementById('hasilScanCard').style.display = 'none';
+    document.getElementById('scannerStatus').textContent = 'Tekan Mulai Scan';
+    document.getElementById('scannerStatus').style.color = '#0D5C4A';
+    startScanner();
+}
+
+function renderRekapAbsensi() {
+    const el = document.getElementById('rekapAbsensi');
+    if (!el) return;
+    const sesi = getSesiAktif();
+    if (!sesi) {
+        el.innerHTML = '<div style="text-align:center;color:#888;padding:16px;">Pilih atau buat sesi untuk melihat rekap</div>';
+        return;
+    }
+    const total = jamaahList.length;
+    const hadir = sesi.absensi.length;
+    const belum = total - hadir;
+    let html = `<div style="display:flex;gap:8px;margin-bottom:12px;">
+        <div style="flex:1;background:#f0fdf4;border-radius:8px;padding:10px;text-align:center;">
+            <div style="font-size:20px;font-weight:bold;color:#10B981;">${hadir}</div>
+            <div style="font-size:11px;color:#888;">Hadir</div>
+        </div>
+        <div style="flex:1;background:#fff7ed;border-radius:8px;padding:10px;text-align:center;">
+            <div style="font-size:20px;font-weight:bold;color:#F59E0B;">${belum}</div>
+            <div style="font-size:11px;color:#888;">Belum</div>
+        </div>
+        <div style="flex:1;background:#f0f7ff;border-radius:8px;padding:10px;text-align:center;">
+            <div style="font-size:20px;font-weight:bold;color:#3B82F6;">${total}</div>
+            <div style="font-size:11px;color:#888;">Total</div>
+        </div>
+    </div>`;
+    if (sesi.absensi.length > 0) {
+        html += '<div style="font-size:12px;font-weight:bold;margin-bottom:8px;">Daftar Hadir:</div>';
+        sesi.absensi.slice().reverse().forEach(a => {
+            html += `<div style="padding:8px;border-bottom:1px solid #eee;font-size:12px;display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-weight:bold;">✅ ${escapeHtml(a.nama)}</div>
+                    <div style="color:#888;">No Porsi: ${a.no_porsi} | ${a.waktu}</div>
+                </div>
+                <button onclick="batalkanHadir(${a.jamaahId})" style="padding:4px 8px;background:#EF4444;color:white;border:none;border-radius:6px;font-size:11px;cursor:pointer;flex-shrink:0;">Batal</button>
+            </div>`;
+        });
+    } else {
+        html += '<div style="text-align:center;color:#888;padding:16px;">Belum ada absensi</div>';
+    }
+    el.innerHTML = html;
+}
+
+function eksporAbsensi() {
+    const sesi = getSesiAktif();
+    if (!sesi) return showToast('Pilih sesi dulu!');
+    if (sesi.absensi.length === 0) return showToast('Belum ada data absensi!');
+    const namaInstansi = getKonfigurasiProData().instansi1.nama || 'Safara';
+    let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Rekap Absensi</title>
+    <style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;padding:20px;}
+    h2{color:#0D5C4A;margin-bottom:4px;}.sub{color:#888;font-size:12px;margin-bottom:16px;}
+    table{width:100%;border-collapse:collapse;font-size:13px;}thead{display:table-header-group;}
+    th{background:#0D5C4A;color:white;padding:10px 8px;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    td{padding:9px 8px;border-bottom:1px solid #eee;}tr:nth-child(even) td{background:#f9f9f9;}
+    .no-print{text-align:center;margin-top:20px;}
+    .no-print button{padding:10px 28px;margin:0 6px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}
+    @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}.no-print{display:none!important;}}
+    </style></head><body>
+    <h2>📋 REKAP ABSENSI — ${escapeHtml(sesi.nama)}</h2>
+    <div class="sub">${namaInstansi} | ${sesi.tanggal} | Total Hadir: ${sesi.absensi.length} jamaah</div>
+    <table><thead><tr><th>No</th><th>Nama Jamaah</th><th>No Porsi</th><th>Kamar</th><th>Bus</th><th>Rombongan</th><th>Waktu Hadir</th></tr></thead><tbody>`;
+    sesi.absensi.forEach((a, i) => {
+        html += `<tr><td>${i+1}</td><td>${escapeHtml(a.nama)}</td><td>${a.no_porsi}</td><td>${a.kamar||'-'}</td><td>${a.bus||'-'}</td><td>${a.rombongan||'-'}</td><td>${a.waktu}</td></tr>`;
+    });
+    html += `</tbody></table><div class="no-print">
+        <button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button>
+        <button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button>
+    </div><scr` + `ipt>window.onload=function(){setTimeout(function(){window.print();},800);};</scr` + `ipt></body></html>`;
+    const win = window.open('', '_blank');
+    win.document.write(html);
+    win.document.close();
+}
+
+async function startScanner() {
+    const video = document.getElementById('scannerVideo');
+    const statusEl = document.getElementById('scannerStatus');
+    if (!video) return;
+    try {
+        scannerStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+        });
+        video.srcObject = scannerStream;
+        video.play();
+        document.getElementById('btnStartScan').style.display = 'none';
+        document.getElementById('btnStopScan').style.display = 'block';
+        statusEl.textContent = '🔍 Arahkan ke QR Code...';
+        statusEl.style.color = '#0D5C4A';
+        scanFrames();
+    } catch(e) {
+        statusEl.textContent = '❌ Kamera tidak bisa diakses. Izinkan akses kamera!';
+        statusEl.style.color = '#EF4444';
+    }
+}
+
+function stopScanner() {
+    if (scannerStream) {
+        scannerStream.getTracks().forEach(t => t.stop());
+        scannerStream = null;
+    }
+    if (scannerAnimFrame) { cancelAnimationFrame(scannerAnimFrame); scannerAnimFrame = null; }
+    const video = document.getElementById('scannerVideo');
+    if (video) { video.srcObject = null; }
+    document.getElementById('btnStartScan').style.display = 'block';
+    document.getElementById('btnStopScan').style.display = 'none';
+    const statusEl = document.getElementById('scannerStatus');
+    if (statusEl) { statusEl.textContent = 'Scanner dihentikan'; statusEl.style.color = '#888'; }
+}
+
+function scanFrames() {
+    const video = document.getElementById('scannerVideo');
+    const canvas = document.getElementById('scannerCanvas');
+    if (!video || !canvas || !scannerStream) return;
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+        if (code && code.data) {
+            prosesHasilScan(code.data);
+            return; // Stop scanning setelah berhasil
+        }
+    }
+    scannerAnimFrame = requestAnimationFrame(scanFrames);
+}
+
+async function prosesHasilScan(qrData) {
+    stopScanner();
+    const statusEl = document.getElementById('scannerStatus');
+    statusEl.textContent = '✅ QR terbaca! Mencari data...';
+    statusEl.style.color = '#10B981';
+
+    // Cari jamaah berdasarkan No Porsi
+    const noPorsi = qrData.trim();
+    const jamaah = jamaahList.find(j =>
+        (j.additional_fields?.no_porsi || '').trim().toLowerCase() === noPorsi.toLowerCase() ||
+        (j.additional_fields?.no_porsi || '').trim() === noPorsi
+    );
+
+    if (!jamaah) {
+        statusEl.textContent = '❌ Jamaah tidak ditemukan! No Porsi: ' + noPorsi;
+        statusEl.style.color = '#EF4444';
+        document.getElementById('hasilScanCard').style.display = 'none';
+        return;
+    }
+
+    lastScannedResult = jamaah;
+    await tampilHasilScan(jamaah);
+}
+
+async function tampilHasilScan(jamaah) {
+    // Tampil foto profil
+    const fotoEl = document.getElementById('hasilFotoProfil');
+    const foto = await idbGet(STORE_FOTO, 'foto_' + jamaah.id);
+    if (foto) {
+        fotoEl.innerHTML = '<img src="' + foto + '" style="width:100%;height:100%;object-fit:cover;">';
+    } else {
+        fotoEl.innerHTML = '<span style="font-size:32px;">👤</span>';
+    }
+
+    // Tampil nama dan no porsi
+    document.getElementById('hasilNama').textContent = jamaah.nama_lengkap;
+    document.getElementById('hasilNoPorsi').textContent = 'No Porsi: ' + (jamaah.additional_fields?.no_porsi || '-');
+
+    // Cek status absensi
+    const sudahHadir = absensiList.find(a => a.jamaahId === jamaah.id);
+    const statusEl = document.getElementById('hasilStatusAbsen');
+    const btnHadir = document.getElementById('btnTandaiHadir');
+    if (sudahHadir) {
+        statusEl.textContent = '✅ Sudah Hadir — ' + sudahHadir.waktu;
+        statusEl.style.color = '#10B981';
+        btnHadir.textContent = '✅ Sudah Tercatat';
+        btnHadir.style.background = '#6B7280';
+        btnHadir.disabled = true;
+    } else {
+        statusEl.textContent = '⏳ Belum Hadir';
+        statusEl.style.color = '#F59E0B';
+        btnHadir.textContent = '✅ Tandai Hadir';
+        btnHadir.style.background = '#10B981';
+        btnHadir.disabled = false;
+    }
+
+    // Tampil data lengkap
+    const fields = jamaah.additional_fields || {};
+    let dataHtml = '';
+    dynamicFieldsJamaah.forEach(f => {
+        const val = fields[f.name];
+        if (val && f.name !== 'no_porsi') {
+            dataHtml += `<div><span style="color:#888;">${f.icon||'📌'} ${f.label}:</span> <strong>${escapeHtml(val)}</strong></div>`;
+        }
+    });
+    document.getElementById('hasilDataJamaah').innerHTML = dataHtml || '<div style="color:#888;">Tidak ada data tambahan</div>';
+    document.getElementById('hasilScanCard').style.display = 'block';
+    renderRekapAbsensi();
+}
+
+async function tandaiHadir() {
+    if (!lastScannedResult) return;
+    const jamaah = lastScannedResult;
+    const sudah = absensiList.find(a => a.jamaahId === jamaah.id);
+    if (sudah) return showToast('Sudah tercatat hadir!');
+    const waktu = new Date().toLocaleString('id-ID');
+    absensiList.push({
+        jamaahId: jamaah.id,
+        nama: jamaah.nama_lengkap,
+        no_porsi: jamaah.additional_fields?.no_porsi || '-',
+        waktu,
+        kamar: jamaah.additional_fields?.kamar || '-',
+        bus: jamaah.additional_fields?.bus || '-',
+        rombongan: jamaah.additional_fields?.rombongan || '-'
+    });
+    await saveAbsensiData();
+    showToast('✅ ' + jamaah.nama_lengkap + ' ditandai hadir!');
+    await tampilHasilScan(jamaah);
+    renderRekapAbsensi();
+}
+
+function resetScanResult() {
+    lastScannedResult = null;
+    document.getElementById('hasilScanCard').style.display = 'none';
+    document.getElementById('scannerStatus').textContent = 'Tekan tombol untuk mulai scan';
+    document.getElementById('scannerStatus').style.color = '#888';
+    startScanner();
+}
+
+function renderRekapAbsensi() {
+    const el = document.getElementById('rekapAbsensi');
+    if (!el) return;
+    const total = jamaahList.length;
+    const hadir = absensiList.length;
+    const belum = total - hadir;
+    let html = `<div style="display:flex;gap:8px;margin-bottom:12px;">
+        <div style="flex:1;background:#f0fdf4;border-radius:8px;padding:10px;text-align:center;">
+            <div style="font-size:20px;font-weight:bold;color:#10B981;">${hadir}</div>
+            <div style="font-size:11px;color:#888;">Hadir</div>
+        </div>
+        <div style="flex:1;background:#fff7ed;border-radius:8px;padding:10px;text-align:center;">
+            <div style="font-size:20px;font-weight:bold;color:#F59E0B;">${belum}</div>
+            <div style="font-size:11px;color:#888;">Belum</div>
+        </div>
+        <div style="flex:1;background:#f0f7ff;border-radius:8px;padding:10px;text-align:center;">
+            <div style="font-size:20px;font-weight:bold;color:#3B82F6;">${total}</div>
+            <div style="font-size:11px;color:#888;">Total</div>
+        </div>
+    </div>`;
+    if (absensiList.length > 0) {
+        html += '<div style="font-size:12px;font-weight:bold;margin-bottom:8px;">Daftar Hadir:</div>';
+        absensiList.slice().reverse().forEach((a, i) => {
+            html += `<div style="padding:8px;border-bottom:1px solid #eee;font-size:12px;">
+                <div style="font-weight:bold;">✅ ${escapeHtml(a.nama)}</div>
+                <div style="color:#888;">No Porsi: ${a.no_porsi} | ${a.waktu}</div>
+            </div>`;
+        });
+    } else {
+        html += '<div style="text-align:center;color:#888;padding:16px;">Belum ada absensi</div>';
+    }
+    el.innerHTML = html;
+}
+
+function eksporAbsensiExcel() {
+    const sesi = getSesiAktif();
+    if (!sesi) return showToast('Pilih sesi dulu!');
+    if (sesi.absensi.length === 0) return showToast('Belum ada data absensi!');
+    const namaInstansi = getKonfigurasiProData().instansi1.nama || 'Safara';
+    const ws_data = [
+        ['REKAP ABSENSI — ' + sesi.nama],
+        [namaInstansi + ' | ' + sesi.tanggal + ' | Total Hadir: ' + sesi.absensi.length],
+        [],
+        ['No', 'Nama Jamaah', 'No Porsi', 'Kamar', 'Bus', 'Rombongan', 'Waktu Hadir']
+    ];
+    sesi.absensi.forEach((a, i) => {
+        ws_data.push([i+1, a.nama, a.no_porsi, a.kamar||'-', a.bus||'-', a.rombongan||'-', a.waktu]);
+    });
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+    ws['!cols'] = [{wch:5},{wch:30},{wch:15},{wch:10},{wch:10},{wch:15},{wch:20}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Absensi');
+    XLSX.writeFile(wb, 'Absensi_' + sesi.nama.replace(/[^a-zA-Z0-9]/g,'_') + '.xlsx');
+    showToast('📊 File Excel didownload!');
+}
+
+function eksporAbsensiCSV() {
+    const sesi = getSesiAktif();
+    if (!sesi) return showToast('Pilih sesi dulu!');
+    if (sesi.absensi.length === 0) return showToast('Belum ada data absensi!');
+    let csv = 'No,Nama Jamaah,No Porsi,Kamar,Bus,Rombongan,Waktu Hadir\n';
+    sesi.absensi.forEach((a, i) => {
+        csv += [i+1, '"'+(a.nama||'').replace(/"/g,'""')+'"', '"'+(a.no_porsi||'-')+'"',
+            '"'+(a.kamar||'-')+'"', '"'+(a.bus||'-')+'"', '"'+(a.rombongan||'-')+'"',
+            '"'+(a.waktu||'-')+'"'].join(',') + '\n';
+    });
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Absensi_' + sesi.nama.replace(/[^a-zA-Z0-9]/g,'_') + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('📄 File CSV didownload!');
+}
+
 let _fotoPreviewData = null;
 
 function kompresiFoto(file, maxPx, quality, callback) {
@@ -6352,7 +7017,8 @@ const DB_NAME = 'SafaraDB', DB_VERSION = 3,
     STORE_PEMBAYARAN = 'pembayaranData',
     STORE_KONFIGURASI = 'konfigurasiData',
     STORE_MASTER = 'masterData',
-    STORE_FOTO = 'fotoProfil';
+    STORE_FOTO = 'fotoProfil',
+    STORE_ABSENSI = 'absensiData';
 
 function resetIndexedDBDarurat() {
     if (!confirm('Reset database? Data akan direset.')) return;
@@ -6378,7 +7044,7 @@ function openIndexedDB() {
             const d = event.target.result; 
             [STORE_NAME, JENIS_STORE_NAME, STORE_JAMAAH, STORE_JAMAAH_KITA, 
              STORE_FOLDER, STORE_KAS, STORE_PEMBAYARAN, STORE_KONFIGURASI, 
-             STORE_MASTER, STORE_FOTO].forEach(name => {
+             STORE_MASTER, STORE_FOTO, STORE_ABSENSI].forEach(name => {
                 if (!d.objectStoreNames.contains(name)) d.createObjectStore(name, { keyPath: 'id' });
             });
         }; 
@@ -7034,7 +7700,8 @@ async function cetakTiketMulti() {
         if(!jamaah) continue;
         const paket = jamaah.paket || '-';
         const canvas = document.createElement('canvas');
-        const qrText = 'Nama: ' + jamaah.nama_lengkap + '\nID: ' + jamaah.id + '\nPaket: ' + paket + '\nTanggal: ' + new Date().toLocaleDateString('id-ID') + '\nSafara';
+        const noPorsiQR = jamaah.additional_fields?.no_porsi || jamaah.id.toString();
+        const qrText = noPorsiQR;
         await QRCode.toCanvas(canvas, qrText, { width: 120, height: 120 });
         const qrDataUrl = canvas.toDataURL('image/png');
         cardsHtml += '<div class="tiket-card">'
@@ -7465,8 +8132,8 @@ async function generateTiketQR() {
     const qrContainer = document.getElementById('tiketQR');
     qrContainer.innerHTML = '';
     const canvas = document.createElement('canvas');
-    const qrText = `Nama: ${jamaah.nama_lengkap}\nID: ${jamaah.id}\nPaket: ${paket}\nTanggal: ${new Date().toLocaleDateString('id-ID')}\nSafara`;
-    await QRCode.toCanvas(canvas, qrText, { width: 150, height: 150 });
+    const noPorsiQR = jamaah.additional_fields?.no_porsi || jamaah.id.toString();
+    await QRCode.toCanvas(canvas, noPorsiQR, { width: 150, height: 150 });
     qrContainer.appendChild(canvas);
     document.getElementById('tiketPreview').style.display = 'block';
 }
@@ -7474,8 +8141,8 @@ async function generateTiketQR() {
 async function generateAndCetakTiket(jamaah) {
     const paket = jamaah.paket || '-';
     const canvas = document.createElement('canvas');
-    const qrText = 'Nama: ' + jamaah.nama_lengkap + '\nID: ' + jamaah.id + '\nPaket: ' + paket + '\nTanggal: ' + new Date().toLocaleDateString('id-ID') + '\nSafara';
-    await QRCode.toCanvas(canvas, qrText, { width: 150, height: 150 });
+    const noPorsiQR = jamaah.additional_fields?.no_porsi || jamaah.id.toString();
+    await QRCode.toCanvas(canvas, noPorsiQR, { width: 150, height: 150 });
     const qrDataUrl = canvas.toDataURL('image/png');
     const namaInstansi = getKonfigurasiProData().instansi1.nama || 'Safara';
     const win = window.open('', '_blank');
@@ -8509,6 +9176,7 @@ async function initPremium() {
     loadCatatanData();
     await loadDokumenData();
     loadPengingatData();
+    await loadAbsensiData();
     loadSumberHartaList();
     
     document.getElementById('adminModeToggleBtn')?.addEventListener('click', (e) => { e.preventDefault(); toggleAdminMode(); });
@@ -8884,4 +9552,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-    </html>
+        </html>
