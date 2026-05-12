@@ -4247,73 +4247,6 @@ async function prosesHasilScan(qrData) {
     await tampilHasilScan(jamaah);
 }
 
-async function tampilHasilScan(jamaah) {
-    // Tampil foto profil
-    const fotoEl = document.getElementById('hasilFotoProfil');
-    const foto = await idbGet(STORE_FOTO, 'foto_' + jamaah.id);
-    if (foto) {
-        fotoEl.innerHTML = '<img src="' + foto + '" style="width:100%;height:100%;object-fit:cover;">';
-    } else {
-        fotoEl.innerHTML = '<span style="font-size:32px;">👤</span>';
-    }
-
-    // Tampil nama dan no porsi
-    document.getElementById('hasilNama').textContent = jamaah.nama_lengkap;
-    document.getElementById('hasilNoPorsi').textContent = 'No Porsi: ' + (jamaah.additional_fields?.no_porsi || '-');
-
-    // Cek status absensi
-    const sudahHadir = absensiList.find(a => a.jamaahId === jamaah.id);
-    const statusEl = document.getElementById('hasilStatusAbsen');
-    const btnHadir = document.getElementById('btnTandaiHadir');
-    if (sudahHadir) {
-        statusEl.textContent = '✅ Sudah Hadir — ' + sudahHadir.waktu;
-        statusEl.style.color = '#10B981';
-        btnHadir.textContent = '✅ Sudah Tercatat';
-        btnHadir.style.background = '#6B7280';
-        btnHadir.disabled = true;
-    } else {
-        statusEl.textContent = '⏳ Belum Hadir';
-        statusEl.style.color = '#F59E0B';
-        btnHadir.textContent = '✅ Tandai Hadir';
-        btnHadir.style.background = '#10B981';
-        btnHadir.disabled = false;
-    }
-
-    // Tampil data lengkap
-    const fields = jamaah.additional_fields || {};
-    let dataHtml = '';
-    dynamicFieldsJamaah.forEach(f => {
-        const val = fields[f.name];
-        if (val && f.name !== 'no_porsi') {
-            dataHtml += `<div><span style="color:#888;">${f.icon||'📌'} ${f.label}:</span> <strong>${escapeHtml(val)}</strong></div>`;
-        }
-    });
-    document.getElementById('hasilDataJamaah').innerHTML = dataHtml || '<div style="color:#888;">Tidak ada data tambahan</div>';
-    document.getElementById('hasilScanCard').style.display = 'block';
-    renderRekapAbsensi();
-}
-
-async function tandaiHadir() {
-    if (!lastScannedResult) return;
-    const jamaah = lastScannedResult;
-    const sudah = absensiList.find(a => a.jamaahId === jamaah.id);
-    if (sudah) return showToast('Sudah tercatat hadir!');
-    const waktu = new Date().toLocaleString('id-ID');
-    absensiList.push({
-        jamaahId: jamaah.id,
-        nama: jamaah.nama_lengkap,
-        no_porsi: jamaah.additional_fields?.no_porsi || '-',
-        waktu,
-        kamar: jamaah.additional_fields?.kamar || '-',
-        bus: jamaah.additional_fields?.bus || '-',
-        rombongan: jamaah.additional_fields?.rombongan || '-'
-    });
-    await saveAbsensiData();
-    showToast('✅ ' + jamaah.nama_lengkap + ' ditandai hadir!');
-    await tampilHasilScan(jamaah);
-    renderRekapAbsensi();
-}
-
 function resetScanResult() {
     lastScannedResult = null;
     document.getElementById('hasilScanCard').style.display = 'none';
@@ -9552,4 +9485,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-        </html>
+                                                                                                                                                                      </html>
