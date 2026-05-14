@@ -2590,137 +2590,78 @@ async function cetakSemuaDokumenJamaah(jamaahId, jamaahNama) {
     }
     showToast(`📄 Menyiapkan cetak untuk ${jamaahNama}...`);
     const printWindow = window.open('', '_blank');
-    let html = `<!DOCTYPE html>
-    <html>
-    <head>
+    let html = `<!DOCTYPE html><html><head>
         <title>Cetak Dokumen - ${jamaahNama}</title>
         <meta charset="UTF-8">
         <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; background: #f0f0f0; }
-            .no-print { display: block; }
-            .header { text-align: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid #0D5C4A; }
-            .header h1 { color: #0D5C4A; font-size: 24px; }
-            .header p { color: #666; margin-top: 5px; }
-            .dokumen-item { background: white; border-radius: 16px; margin-bottom: 30px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); page-break-inside: avoid; }
-            .dokumen-title { font-size: 18px; font-weight: bold; color: #0D5C4A; border-left: 4px solid #0D5C4A; padding-left: 12px; margin-bottom: 15px; }
-            .dokumen-gambar { text-align: center; }
-            .dokumen-gambar img { max-width: 100%; max-height: 500px; object-fit: contain; }
-            .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #999; }
-            @media print {
-                * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-                html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: white; }
-                .no-print { display: none !important; }
-                .dokumen-item {
-                    width: 210mm;
-                    height: 297mm;
-                    margin: 0;
-                    padding: 8mm;
-                    box-shadow: none;
-                    border-radius: 0;
-                    background: white;
-                    page-break-after: always;
-                    break-after: page;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    overflow: hidden;
-                }
-                .dokumen-item:last-child { page-break-after: avoid; break-after: avoid; }
-                .dokumen-label {
-                    font-size: 13px;
-                    font-weight: bold;
-                    color: #0D5C4A;
-                    margin-bottom: 8px;
-                    text-align: center;
-                }
-                .dokumen-gambar { width: 100%; flex: 1; display: flex; align-items: center; justify-content: center; }
-                .dokumen-gambar img {
-                    max-width: 100%;
-                    max-height: 270mm;
-                    width: auto;
-                    height: auto;
-                    object-fit: contain;
-                    display: block;
-                    margin: 0 auto;
-                }
+            *{margin:0;padding:0;box-sizing:border-box;}
+            body{font-family:Arial,sans-serif;background:white;}
+            .dokumen-item{
+                width:210mm;height:297mm;
+                display:flex;flex-direction:column;
+                align-items:center;justify-content:center;
+                page-break-after:always;break-after:page;
+                overflow:hidden;padding:10mm;
+            }
+            .dokumen-item:last-child{page-break-after:avoid;break-after:avoid;}
+            .dokumen-label{font-size:13px;font-weight:bold;color:#0D5C4A;margin-bottom:8px;text-align:center;}
+            .dokumen-gambar{flex:1;display:flex;align-items:center;justify-content:center;width:100%;}
+            .dokumen-gambar img{max-width:190mm;max-height:270mm;width:auto;height:auto;object-fit:contain;display:block;margin:0 auto;}
+            .no-print{text-align:center;padding:20px;background:#f0f0f0;}
+            .no-print button{padding:10px 28px;margin:0 6px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}
+            @media print{
+                *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+                html,body{margin:0;padding:0;background:white;}
+                .no-print{display:none!important;}
             }
         </style>
-    </head>
-    <body>
-        <div class="header no-print">
-            <h1>📄 DOKUMEN JAMAAH</h1>
-            <p><strong>${escapeHtml(jamaahNama)}</strong></p>
-            <p>Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}</p>
-        </div>`;
+    </head><body>`;
     for (const doc of dokumenYangAda) {
-        html += `
-        <div class="dokumen-item">
+        html += `<div class="dokumen-item">
             <div class="dokumen-label">${doc.icon} ${escapeHtml(doc.nama)} — ${escapeHtml(jamaahNama)}</div>
-            <div class="dokumen-title no-print">${doc.icon} ${escapeHtml(doc.nama)}</div>
             <div class="dokumen-gambar"><img src="${doc.data}" alt="${doc.nama}"></div>
         </div>`;
     }
-    html += `
-        <div class="footer no-print">Dokumen resmi - Safara | ${new Date().toLocaleString('id-ID')}</div>
-        <div class="no-print" style="text-align:center; margin-top:20px; padding-bottom:30px;">
-            <button onclick="window.print()" style="padding:10px 30px; background:#0D5C4A; color:white; border:none; border-radius:8px; margin-right:10px; cursor:pointer;">🖨️ CETAK</button>
-            <button onclick="window.close()" style="padding:10px 30px; background:#ccc; border:none; border-radius:8px; cursor:pointer;">TUTUP</button>
-        </div>
-    </body>
-    </html>`;
+    html += `<div class="no-print">
+        <button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button>
+        <button onclick="window.close()" style="background:#e2e8f0;color:#333;margin-left:8px;">TUTUP</button>
+    </div>
+    <scr` + `ipt>window.onload=function(){setTimeout(function(){window.print();},800);};</scr` + `ipt>
+    </body></html>`;
     printWindow.document.write(html);
     printWindow.document.close();
 }
 
-// CETAK PER JENIS DOKUMEN (misal: cetak KTP saja)
 async function cetakDokumenPerJenis(jamaahId, jenisId, jenisNama, jamaahNama) {
     const data = dokumenData[jamaahId]?.[jenisId];
-    if (!data) {
-        showToast(`❌ Tidak ada dokumen ${jenisNama} untuk ${jamaahNama}`);
-        return;
-    }
+    if (!data) { showToast(`❌ Tidak ada dokumen ${jenisNama} untuk ${jamaahNama}`); return; }
     const printWindow = window.open('', '_blank');
-    let html = `<!DOCTYPE html>
-    <html>
-    <head>
+    const html = `<!DOCTYPE html><html><head>
         <title>Cetak ${jenisNama} - ${jamaahNama}</title>
         <meta charset="UTF-8">
         <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f0f0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
-            .no-print { display: block; }
-            .card { background: white; border-radius: 20px; padding: 20px; width: 100%; max-width: 600px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; }
-            .title { font-size: 18px; font-weight: bold; color: #0D5C4A; margin-bottom: 8px; }
-            .subtitle { color: #666; margin-bottom: 12px; border-bottom: 1px solid #ddd; padding-bottom: 10px; width: 100%; }
-            .doc-label { font-size: 12px; font-weight: bold; color: #0D5C4A; margin-bottom: 8px; }
-            .gambar { width: 100%; }
-            .gambar img { max-width: 100%; height: auto; display: block; margin: 0 auto; object-fit: contain; }
-            @media print {
-                * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-                html, body { margin: 0; padding: 0; width: 210mm; height: 297mm; background: white; display: block; }
-                .no-print { display: none !important; }
-                .card { box-shadow: none; border-radius: 0; padding: 10mm; width: 210mm; height: 297mm; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
-                .gambar { width: 100%; flex: 1; display: flex; align-items: center; justify-content: center; }
-                .gambar img { max-width: 190mm; max-height: 270mm; width: auto; height: auto; object-fit: contain; display: block; margin: 0 auto; }
+            *{margin:0;padding:0;box-sizing:border-box;}
+            html,body{width:210mm;height:297mm;background:white;overflow:hidden;}
+            body{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10mm;}
+            .doc-label{font-size:13px;font-weight:bold;color:#0D5C4A;margin-bottom:8px;text-align:center;}
+            .gambar{flex:1;display:flex;align-items:center;justify-content:center;width:100%;}
+            .gambar img{max-width:190mm;max-height:270mm;width:auto;height:auto;object-fit:contain;display:block;margin:0 auto;}
+            .no-print{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:8px;}
+            .no-print button{padding:10px 28px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}
+            @media print{
+                *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+                .no-print{display:none!important;}
             }
         </style>
-    </head>
-    <body>
-        <div class="card">
-            <div class="doc-label">${jenisNama} — ${escapeHtml(jamaahNama)}</div>
-            <div class="title no-print">📄 ${escapeHtml(jenisNama)}</div>
-            <div class="subtitle no-print">${escapeHtml(jamaahNama)}</div>
-            <div class="gambar"><img src="${data}" alt="${jenisNama}"></div>
-            <div class="no-print" style="margin-top:20px; padding-bottom:20px;">
-                <button onclick="window.print()" style="padding:10px 30px; background:#0D5C4A; color:white; border:none; border-radius:8px; margin-right:10px; cursor:pointer;">🖨️ CETAK</button>
-                <button onclick="window.close()" style="padding:10px 30px; background:#ccc; border:none; border-radius:8px; cursor:pointer;">TUTUP</button>
-            </div>
+    </head><body>
+        <div class="doc-label">${jenisNama} — ${escapeHtml(jamaahNama)}</div>
+        <div class="gambar"><img src="${data}" alt="${jenisNama}"></div>
+        <div class="no-print">
+            <button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button>
+            <button onclick="window.close()" style="background:#e2e8f0;color:#333;">TUTUP</button>
         </div>
-        <script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script>
-    </body>
-    </html>`;
+        <scr` + `ipt>window.onload=function(){setTimeout(function(){window.print();},800);};</scr` + `ipt>
+    </body></html>`;
     printWindow.document.write(html);
     printWindow.document.close();
 }
@@ -5328,21 +5269,21 @@ function cetakLabelJamaahKita() {
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cetak Label</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;}
-        body{font-family:'Segoe UI',Arial,sans-serif;padding:12px;background:#f0f0f0;}
-        .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:780px;margin:0 auto;}
-        .label-card{background:white;border-radius:10px;padding:10px;border:1.5px solid #0D5C4A;page-break-inside:avoid;break-inside:avoid;}
-        .card-header{display:flex;align-items:center;gap:8px;border-bottom:1px dashed #D4AF37;padding-bottom:8px;margin-bottom:6px;}
-        .card-nama{font-size:12px;font-weight:bold;color:#0D5C4A;text-transform:uppercase;line-height:1.3;flex:1;}
-        .card-fields{margin-bottom:4px;}
-        .field-row{font-size:10px;color:#444;margin:2px 0;line-height:1.4;}
-        .card-wa{background:#f0f7f4;padding:4px 8px;border-radius:6px;margin-top:4px;font-size:10px;word-break:break-all;}
-        .card-footer{text-align:center;margin-top:6px;font-size:9px;color:#999;}
+        body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f0f0;padding:10px;}
+        .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-width:190mm;margin:0 auto;}
+        .label-card{background:white;border-radius:8px;padding:8px;border:1.5px solid #0D5C4A;page-break-inside:avoid;break-inside:avoid;}
+        .card-header{display:flex;align-items:center;gap:6px;border-bottom:1px dashed #D4AF37;padding-bottom:6px;margin-bottom:5px;}
+        .card-nama{font-size:11px;font-weight:bold;color:#0D5C4A;text-transform:uppercase;line-height:1.3;flex:1;}
+        .card-fields{margin-bottom:3px;}
+        .field-row{font-size:9.5px;color:#444;margin:1px 0;line-height:1.4;}
+        .card-wa{background:#f0f7f4;padding:3px 6px;border-radius:4px;margin-top:3px;font-size:9.5px;word-break:break-all;}
+        .card-footer{text-align:center;margin-top:5px;font-size:8px;color:#999;}
         .no-print{text-align:center;margin-top:16px;padding:12px;}
         .no-print button{padding:10px 28px;margin:0 6px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}
         @media print{
             *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
-            body{background:white;padding:6px;}
-            .grid{gap:6px;}
+            html,body{margin:0;padding:0;background:white;width:210mm;}
+            .grid{gap:5px;max-width:190mm;padding:5mm;}
             .no-print{display:none!important;}
         }
     </style></head><body>
@@ -7667,19 +7608,24 @@ async function cetakTiketMulti() {
     }
     const win = window.open('', '_blank');
     if(!win) { showToast('Izinkan popup untuk cetak!'); return; }
-    const htmlAll = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cetak Tiket Massal</title>'
+    const htmlAll = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cetak Tiket</title>'
         + '<style>'
         + '*{margin:0;padding:0;box-sizing:border-box;}'
-        + 'body{font-family:Arial,sans-serif;padding:16px;background:#f0f0f0;}'
-        + '.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:780px;margin:0 auto;}'
-        + '.tiket-card{background:white;border:2px solid #0D5C4A;border-radius:12px;padding:16px;text-align:center;page-break-inside:avoid;break-inside:avoid;}'
-        + '.tiket-nama{font-size:13px;font-weight:bold;color:#0D5C4A;text-transform:uppercase;margin-bottom:6px;}'
-        + '.tiket-paket{font-size:11px;color:#888;border-bottom:1px dashed #ccc;padding-bottom:8px;margin-bottom:10px;}'
+        + 'body{font-family:Arial,sans-serif;background:#f0f0f0;padding:10px;}'
+        + '.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-width:190mm;margin:0 auto;}'
+        + '.tiket-card{background:white;border:2px solid #0D5C4A;border-radius:8px;padding:10px;text-align:center;page-break-inside:avoid;break-inside:avoid;}'
+        + '.tiket-nama{font-size:11px;font-weight:bold;color:#0D5C4A;text-transform:uppercase;margin-bottom:4px;}'
+        + '.tiket-paket{font-size:9.5px;color:#888;border-bottom:1px dashed #ccc;padding-bottom:6px;margin-bottom:6px;}'
         + '.tiket-qr img{display:block;margin:0 auto;}'
-        + '.tiket-footer{margin-top:8px;font-size:10px;color:#999;}'
-        + '.no-print{text-align:center;margin-top:20px;padding:12px;}'
+        + '.tiket-footer{margin-top:6px;font-size:8px;color:#999;}'
+        + '.no-print{text-align:center;margin-top:16px;padding:12px;}'
         + '.no-print button{padding:10px 28px;margin:0 6px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}'
-        + '@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}body{background:white;padding:6px;}.no-print{display:none!important;}}'
+        + '@media print{'
+        + '*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}'
+        + 'html,body{margin:0;padding:0;background:white;width:210mm;}'
+        + '.grid{gap:5px;max-width:190mm;padding:5mm;}'
+        + '.no-print{display:none!important;}'
+        + '}'
         + '</style></head><body>'
         + '<div class="grid">' + cardsHtml + '</div>'
         + '<div class="no-print">'
