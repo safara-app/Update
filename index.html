@@ -7688,30 +7688,61 @@ function printLabelPreview() {
         return;
     }
     const printWindow = window.open('', '_blank');
-    const html = `<!DOCTYPE html>
-    <html>
-    <head>
+    const html = `<!DOCTYPE html><html><head>
         <title>Cetak Label - Safara</title>
         <meta charset="UTF-8">
         <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { background: white; font-family: 'Segoe UI', Arial, sans-serif; }
-            .no-print { display: block; }
-            @media print {
-                .no-print { display: none !important; }
-                body { margin: 0; padding: 0; }
+            *{margin:0;padding:0;box-sizing:border-box;}
+            body{background:#f0f0f0;font-family:'Segoe UI',Arial,sans-serif;padding:10px;}
+            /* Grid container dari cetakLabel */
+            div[style*="flex-wrap"]{
+                display:grid!important;
+                grid-template-columns:repeat(2,1fr)!important;
+                gap:8px!important;
+                max-width:190mm!important;
+                margin:0 auto!important;
+                padding:0!important;
+                justify-content:unset!important;
+            }
+            /* Kartu nametag */
+            div[style*="width:220px"]{
+                width:auto!important;
+                padding:8px!important;
+                border-radius:8px!important;
+                page-break-inside:avoid!important;
+                break-inside:avoid!important;
+                font-size:11px!important;
+            }
+            div[style*="width:220px"] div[style*="font-size:18px"]{font-size:12px!important;}
+            div[style*="width:220px"] div[style*="font-size:11px"]{font-size:9.5px!important;}
+            div[style*="width:220px"] div[style*="font-size:10px"]{font-size:9px!important;}
+            /* Kartu koper */
+            div[style*="width:180px"]{
+                width:auto!important;
+                padding:8px!important;
+                border-radius:8px!important;
+                page-break-inside:avoid!important;
+                break-inside:avoid!important;
+            }
+            div[style*="width:180px"] div[style*="font-size:16px"]{font-size:12px!important;}
+            div[style*="width:180px"] div[style*="font-size:10px"]{font-size:9.5px!important;}
+            .no-print{text-align:center;padding:20px;}
+            .no-print button{padding:10px 28px;margin:0 6px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}
+            @media print{
+                *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+                html,body{margin:0;padding:0;background:white;width:210mm;}
+                div[style*="flex-wrap"]{max-width:190mm!important;padding:5mm!important;gap:5px!important;}
+                .no-print{display:none!important;}
             }
         </style>
-    </head>
-    <body>
+    </head><body>
         ${labelContent.innerHTML}
-        <div class="no-print" style="text-align:center; padding:20px;">
-            <button onclick="window.print()" style="padding:10px 30px; background:#0D5C4A; color:white; border:none; border-radius:8px; cursor:pointer; margin-right:10px;">🖨️ CETAK</button>
-            <button onclick="window.close()" style="padding:10px 30px; background:#ccc; border:none; border-radius:8px; cursor:pointer;">TUTUP</button>
+        <div class="no-print">
+            <button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button>
+            <button onclick="window.close()" style="background:#e2e8f0;color:#333;">TUTUP</button>
         </div>
-        <script>window.onload = function() { setTimeout(function() { window.print(); }, 800); };<\/script>
-    </body>
-    </html>`;
+        <scr` + `ipt>window.onload=function(){setTimeout(function(){window.print();},800);};<\/scr` + `ipt>
+    </body></html>`;
     printWindow.document.write(html);
     printWindow.document.close();
 }
