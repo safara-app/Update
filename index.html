@@ -2359,8 +2359,29 @@
 <div id="page-pengingatwa" class="page">
     <div class="header-premium header-premium-small"><div class="back-header"><i class="fas fa-arrow-left" onclick="showPage('fitur')"></i><h2> Pengingat WA</h2><div style="width:30px;"></div></div></div>
     <div class="container">
-        <div class="card-premium"><div class="input-group"><label> Pesan Pengingat</label><textarea id="reminderMessage" rows="4" placeholder="Contoh: Yth. [nama], jadwal pembayaran Anda jatuh tempo pada [tanggal]. Sisa tagihan: [sisa]"></textarea></div><div class="input-group"><label> Pilih Jamaah</label><select id="reminderJamaahSelect" multiple style="height:100px;"><option value="all">-- Semua Jamaah --</option></select></div><div class="input-group"><label> Jadwal Pengingat (opsional)</label><input type="datetime-local" id="reminderSchedule"></div><button class="btn btn-wa" onclick="kirimPengingatWA()"><i class="fab fa-whatsapp"></i> KIRIM SEKARANG</button><button class="btn btn-primary mt-2" onclick="aturPengingatOtomatis()"> ATUR PENGGINGAT OTOMATIS</button></div>
-        <div id="reminderScheduledList" class="card-premium"><h4> Pengingat Terjadwal</h4><p class="text-center">Belum ada pengingat terjadwal</p></div>
+        <div class="card-premium">
+            <div class="input-group">
+                <label>Pesan Pengingat</label>
+                <textarea id="reminderMessage" rows="4" placeholder="Contoh: Yth. [nama], jadwal pembayaran Anda jatuh tempo pada [tanggal]. Sisa tagihan: [sisa]"></textarea>
+            </div>
+            <div class="input-group">
+                <label>Pilih Jamaah</label>
+                <input type="text" id="searchPengingatJamaah" placeholder="🔍 Cari nama jamaah..." oninput="filterPengingatJamaah()" style="margin-bottom:8px;">
+                <div style="display:flex;gap:8px;margin-bottom:8px;">
+                    <button onclick="pilihSemuaPengingat()" style="flex:1;padding:8px;background:#0D5C4A;color:white;border:none;border-radius:8px;font-size:12px;cursor:pointer;">✅ Pilih Semua</button>
+                    <button onclick="hapusPilihanPengingat()" style="flex:1;padding:8px;background:#e2e8f0;color:#333;border:none;border-radius:8px;font-size:12px;cursor:pointer;">❌ Hapus Pilihan</button>
+                </div>
+                <div id="multiPengingatJamaahSelect" style="max-height:200px;overflow-y:auto;border:1px solid #ddd;border-radius:10px;padding:8px;background:var(--card-bg);"></div>
+                <div id="jumlahDipilihPengingat" style="font-size:12px;color:#0D5C4A;margin-top:6px;font-weight:bold;"></div>
+            </div>
+            <div class="input-group">
+                <label>Jadwal Pengingat (opsional)</label>
+                <input type="datetime-local" id="reminderSchedule">
+            </div>
+            <button class="btn btn-wa" onclick="kirimPengingatWA()"><i class="fab fa-whatsapp"></i> KIRIM SEKARANG</button>
+            <button class="btn btn-primary mt-2" onclick="aturPengingatOtomatis()">⏰ ATUR PENGINGAT OTOMATIS</button>
+        </div>
+        <div id="reminderScheduledList" class="card-premium"><h4>⏰ Pengingat Terjadwal</h4><p class="text-center">Belum ada pengingat terjadwal</p></div>
     </div>
 </div>
 
@@ -2442,31 +2463,17 @@
     <div class="container">
         <div class="card-premium">
             <div class="input-group">
-                <label>Pilih Jamaah (Satu - untuk QR Preview)</label>
-                <select id="tiketJamaahSelect" onchange="generateTiketQR()"></select>
-            </div>
-            <div id="tiketPreview" class="tiket-card" style="display:none;">
-                <div class="tiket-header"><div class="tiket-title" id="tiketNama"></div><div id="tiketPaket" style="font-size:12px;"></div></div>
-                <div id="tiketQR" class="tiket-qr"></div>
-                <div class="row" style="margin-top:15px;">
-                    <button class="btn btn-primary btn-small" onclick="downloadTiketAsImage()"><i class="fas fa-download"></i> Simpan sebagai Gambar</button>
-                    <button class="btn btn-wa btn-small" onclick="shareTiketWA()"><i class="fab fa-whatsapp"></i> Kirim ke WA</button>
-                    <button class="btn btn-purple btn-small" onclick="cetakTiketLangsung()"><i class="fas fa-print"></i> CETAK TIKET</button>
-                </div>
-            </div>
-            <hr style="margin:20px 0;border-color:#eee;">
-            <div class="input-group">
-                <label>Pilih Banyak Jamaah (Cetak/WA Massal)</label>
+                <label>Pilih Jamaah</label>
                 <input type="text" id="searchTiketJamaah" placeholder="🔍 Cari nama jamaah..." oninput="filterTiketJamaah()" style="margin-bottom:8px;">
                 <div style="display:flex;gap:8px;margin-bottom:8px;">
                     <button onclick="pilihSemuaTiket()" style="flex:1;padding:8px;background:#0D5C4A;color:white;border:none;border-radius:8px;font-size:12px;cursor:pointer;">✅ Pilih Semua</button>
                     <button onclick="hapusPilihanTiket()" style="flex:1;padding:8px;background:#e2e8f0;color:#333;border:none;border-radius:8px;font-size:12px;cursor:pointer;">❌ Hapus Pilihan</button>
                 </div>
-                <div id="multiTiketJamaahSelect" style="max-height:200px;overflow-y:auto;border:1px solid #ddd;border-radius:10px;padding:8px;background:var(--card-bg);"></div>
+                <div id="multiTiketJamaahSelect" style="max-height:220px;overflow-y:auto;border:1px solid #ddd;border-radius:10px;padding:8px;background:var(--card-bg);"></div>
                 <div id="jumlahDipilihTiket" style="font-size:12px;color:#0D5C4A;margin-top:6px;font-weight:bold;"></div>
             </div>
-            <button class="btn btn-primary mt-2" onclick="cetakTiketMulti()"><i class="fas fa-print"></i> CETAK TIKET MASSAL</button>
-            <button class="btn btn-wa mt-2" onclick="shareTiketWAMulti()"><i class="fab fa-whatsapp"></i> Kirim ke WA Massal</button>
+            <button class="btn btn-primary mt-2" onclick="cetakTiketMulti()"><i class="fas fa-print"></i> CETAK TIKET</button>
+            <button class="btn btn-wa mt-2" onclick="shareTiketWAMulti()"><i class="fab fa-whatsapp"></i> Kirim ke WA</button>
         </div>
     </div>
 </div>
@@ -4253,40 +4260,6 @@ function resetScanResult() {
     document.getElementById('scannerStatus').textContent = 'Tekan tombol untuk mulai scan';
     document.getElementById('scannerStatus').style.color = '#888';
     startScanner();
-}
-
-function renderRekapAbsensi() {
-    const el = document.getElementById('rekapAbsensi');
-    if (!el) return;
-    const total = jamaahList.length;
-    const hadir = absensiList.length;
-    const belum = total - hadir;
-    let html = `<div style="display:flex;gap:8px;margin-bottom:12px;">
-        <div style="flex:1;background:#f0fdf4;border-radius:8px;padding:10px;text-align:center;">
-            <div style="font-size:20px;font-weight:bold;color:#10B981;">${hadir}</div>
-            <div style="font-size:11px;color:#888;">Hadir</div>
-        </div>
-        <div style="flex:1;background:#fff7ed;border-radius:8px;padding:10px;text-align:center;">
-            <div style="font-size:20px;font-weight:bold;color:#F59E0B;">${belum}</div>
-            <div style="font-size:11px;color:#888;">Belum</div>
-        </div>
-        <div style="flex:1;background:#f0f7ff;border-radius:8px;padding:10px;text-align:center;">
-            <div style="font-size:20px;font-weight:bold;color:#3B82F6;">${total}</div>
-            <div style="font-size:11px;color:#888;">Total</div>
-        </div>
-    </div>`;
-    if (absensiList.length > 0) {
-        html += '<div style="font-size:12px;font-weight:bold;margin-bottom:8px;">Daftar Hadir:</div>';
-        absensiList.slice().reverse().forEach((a, i) => {
-            html += `<div style="padding:8px;border-bottom:1px solid #eee;font-size:12px;">
-                <div style="font-weight:bold;">✅ ${escapeHtml(a.nama)}</div>
-                <div style="color:#888;">No Porsi: ${a.no_porsi} | ${a.waktu}</div>
-            </div>`;
-        });
-    } else {
-        html += '<div style="text-align:center;color:#888;padding:16px;">Belum ada absensi</div>';
-    }
-    el.innerHTML = html;
 }
 
 function eksporAbsensiExcel() {
@@ -7597,6 +7570,43 @@ function renderMultiTiketJamaah() {
         </label>`).join('');
 }
 
+// ==================== PENGINGAT WA MULTI-SELECT ====================
+function renderMultiPengingatJamaah() {
+    const container = document.getElementById('multiPengingatJamaahSelect');
+    if (!container) return;
+    container.innerHTML = jamaahList.map(j => `
+        <label style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid #eee;cursor:pointer;">
+            <input type="checkbox" value="${j.id}" onchange="updateJumlahDipilihPengingat()"
+                style="width:18px;height:18px;accent-color:#0D5C4A;cursor:pointer;">
+            <span style="font-size:13px;">${escapeHtml(j.nama_lengkap)}</span>
+        </label>`).join('');
+}
+
+function filterPengingatJamaah() {
+    const q = (document.getElementById('searchPengingatJamaah')?.value || '').toLowerCase();
+    document.querySelectorAll('#multiPengingatJamaahSelect label').forEach(label => {
+        label.style.display = label.querySelector('span')?.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+}
+
+function pilihSemuaPengingat() {
+    document.querySelectorAll('#multiPengingatJamaahSelect input[type=checkbox]').forEach(cb => {
+        if(cb.closest('label')?.style.display !== 'none') cb.checked = true;
+    });
+    updateJumlahDipilihPengingat();
+}
+
+function hapusPilihanPengingat() {
+    document.querySelectorAll('#multiPengingatJamaahSelect input[type=checkbox]').forEach(cb => cb.checked = false);
+    updateJumlahDipilihPengingat();
+}
+
+function updateJumlahDipilihPengingat() {
+    const n = document.querySelectorAll('#multiPengingatJamaahSelect input:checked').length;
+    const el = document.getElementById('jumlahDipilihPengingat');
+    if(el) el.textContent = n > 0 ? `${n} jamaah dipilih` : '';
+}
+
 function filterTiketJamaah() {
     const q = (document.getElementById('searchTiketJamaah')?.value || '').toLowerCase();
     document.querySelectorAll('#multiTiketJamaahSelect label').forEach(label => {
@@ -7756,11 +7766,7 @@ function loadPengingatData() {
     const saved = localStorage.getItem('safara_scheduled_reminders'); 
     scheduledReminders = saved ? JSON.parse(saved) : []; 
     renderScheduledReminders(); 
-    const select = document.getElementById('reminderJamaahSelect'); 
-    if(select) { 
-        select.innerHTML = '<option value="all">-- Semua Jamaah --</option>'; 
-        jamaahList.forEach(j => { select.innerHTML += `<option value="${j.id}">${escapeHtml(j.nama_lengkap)}</option>`; }); 
-    } 
+    renderMultiPengingatJamaah();
 }
 
 function saveScheduledReminders() { 
@@ -7771,15 +7777,12 @@ function saveScheduledReminders() {
 function kirimPengingatWA() { 
     const message = document.getElementById('reminderMessage').value; 
     if(!message) return showToast('Isi pesan pengingat!'); 
-    const select = document.getElementById('reminderJamaahSelect'); 
-    const selectedOptions = Array.from(select.selectedOptions); 
-    let jamaahToSend = []; 
-    if(selectedOptions.some(opt => opt.value === 'all')) jamaahToSend = [...jamaahList]; 
-    else jamaahToSend = selectedOptions.map(opt => jamaahList.find(j => j.id == opt.value)).filter(j => j); 
-    if(jamaahToSend.length === 0) return showToast('Pilih jamaah terlebih dahulu!'); 
-    let finalMessage = message; 
+    const checked = document.querySelectorAll('#multiPengingatJamaahSelect input:checked');
+    if(checked.length === 0) return showToast('Pilih jamaah terlebih dahulu!');
+    const jamaahToSend = Array.from(checked).map(cb => jamaahList.find(j => j.id == cb.value)).filter(j => j);
+    if(jamaahToSend.length === 0) return showToast('Jamaah tidak ditemukan!'); 
     for(const j of jamaahToSend) { 
-        let msg = finalMessage.replace(/\[nama\]/gi, j.nama_lengkap); 
+        let msg = message.replace(/\[nama\]/gi, j.nama_lengkap); 
         const statusPembayaran = getStatusPembayaran(j); 
         if(!statusPembayaran.needInput) msg = msg.replace(/\[sisa\]/gi, formatRupiah(statusPembayaran.sisa)); 
         let waNumber = '628123456789'; 
@@ -9485,4 +9488,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-                                                                                                                                                                      </html>
+        </html>
