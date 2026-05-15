@@ -2000,7 +2000,7 @@
 <div id="page-jamaah" class="page">
     <div class="header-premium header-premium-small"><div class="back-header"><i class="fas fa-arrow-left" onclick="showPage('home')"></i><h2>Database Jamaah</h2><div style="width:30px;"></div></div></div>
     <div class="card-premium">
-        <div id="jamaahAdminPanel" class="setting-card" style="display:none"><h3 style="color:var(--primary);"> Panel Admin Jamaah</h3><button class="btn btn-primary btn-small mt-2" onclick="openTambahJamaahModal()"> + Tambah database</button><button class="btn btn-blue btn-small mt-2" onclick="openManageFieldsModal()"> Kelola Field Dinamis</button><button class="btn btn-teal btn-small mt-2" onclick="exportJamaahToExcel()"> Export ke Excel</button><button class="btn btn-orange btn-small mt-2" onclick="document.getElementById('importExcelFile').click()"> IMPORT EXCEL</button><input type="file" id="importExcelFile" accept=".xlsx,.xls" style="display:none" onchange="importJamaahFromExcel(this)"><button class="btn btn-danger btn-small mt-2" onclick="confirmDeleteAllJamaah()"> HAPUS SEMUA database</button></div>
+        <div id="jamaahAdminPanel" class="setting-card" style="display:none"><h3 style="color:var(--primary);"> Panel Admin Jamaah</h3><button class="btn btn-primary btn-small mt-2" onclick="openTambahJamaahModal()"> + Tambah database</button><button class="btn btn-blue btn-small mt-2" onclick="openManageFieldsModal()"> Kelola Field Dinamis</button><button class="btn btn-teal btn-small mt-2" onclick="downloadTemplateExcel()" style="background:#1D6F42;">⬇️ Download Template Excel</button><button class="btn btn-teal btn-small mt-2" onclick="exportJamaahToExcel()"> Export ke Excel</button><button class="btn btn-orange btn-small mt-2" onclick="document.getElementById('importExcelFile').click()"> IMPORT EXCEL</button><input type="file" id="importExcelFile" accept=".xlsx,.xls" style="display:none" onchange="importJamaahFromExcel(this)"><button class="btn btn-danger btn-small mt-2" onclick="confirmDeleteAllJamaah()"> HAPUS SEMUA database</button></div>
         <div class="section-title"><span>DAFTAR JAMAAH</span></div>
         <div class="search-box"><input type="text" id="searchJamaahInput" placeholder=" Cari nama jamaah..." onkeyup="filterJamaahList()"><select id="sortJamaahSelect" onchange="sortJamaahList()"><option value="urutan_asli">Urutan asli</option><option value="nama_asc">Nama A-Z</option><option value="nama_desc">Nama Z-A</option><option value="tgl_asc">Tanggal lama ke baru</option><option value="tgl_desc">Tanggal baru ke lama</option></select><button onclick="resetJamaahFilter()">Reset</button></div>
         <div class="sort-buttons"><span style="font-size:12px; color:var(--gray);">Jumlah per halaman:</span><select id="perPageJamaah" onchange="changePerPage()"><option value="10">10</option><option value="20">20</option><option value="50">50</option><option value="100">100</option><option value="all">Semua</option></select></div>
@@ -2008,6 +2008,8 @@
         <button class="btn btn-wa" onclick="shareAllJamaahToWA()"><i class="fab fa-whatsapp"></i> SHARE SEMUA JAMAAH KE WA</button>
         <div class="section-title" style="margin-top:20px;"><span>Backup & Restore database</span></div>
         <div class="row"><button class="btn btn-blue btn-small" onclick="backupJamaahData()" style="flex:1"><i class="fas fa-download"></i> BACKUP JAMAAH</button><button class="btn btn-orange btn-small" onclick="document.getElementById('restoreJamaahFile').click()" style="flex:1"><i class="fas fa-upload"></i> RESTORE JAMAAH</button></div>
+        <div class="row" style="margin-top:8px;"><button class="btn btn-small mt-2" onclick="downloadTemplateExcel()" style="flex:1;background:#1D6F42;color:white;">⬇️ Download Template Excel</button><button class="btn btn-small mt-2" onclick="document.getElementById('importExcelFile2').click()" style="flex:1;background:#F59E0B;color:white;">⬆️ Import Excel</button></div>
+        <input type="file" id="importExcelFile2" accept=".xlsx,.xls" style="display:none" onchange="importJamaahFromExcel(this)">
         <input type="file" id="restoreJamaahFile" accept=".json" style="display:none" onchange="restoreJamaahData(this)">
     </div>
 </div>
@@ -4540,6 +4542,62 @@ function shareAllJamaahToWA(){
     }); 
     text+=`\n#Safara`; 
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`); 
+}
+
+function downloadTemplateExcel() {
+    // Header = Nama Lengkap + semua field dinamis
+    const headers = ['Nama Lengkap'];
+    const fieldKeys = ['nama_lengkap'];
+    dynamicFieldsJamaah.forEach(f => {
+        headers.push(f.label);
+        fieldKeys.push(f.name);
+    });
+
+    // Baris contoh agar user tahu format isian
+    const contohRow = ['MOHAMMAD SUPRIYADI'];
+    dynamicFieldsJamaah.forEach(f => {
+        if (f.name === 'tgl_lahir') contohRow.push('1980-10-08');
+        else if (f.name === 'jenis_kelamin') contohRow.push('L / P');
+        else if (f.name === 'whatsapp') contohRow.push('08123456789');
+        else if (f.name === 'no_porsi') contohRow.push('1234567890');
+        else contohRow.push('');
+    });
+
+    // Baris kosong untuk diisi user
+    const emptyRows = Array(9).fill(null).map(() => Array(headers.length).fill(''));
+
+    const ws_data = [headers, contohRow, ...emptyRows];
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+    // Style lebar kolom
+    ws['!cols'] = headers.map((h, i) => ({
+        wch: i === 0 ? 30 : h.length < 10 ? 15 : 22
+    }));
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Data Jamaah');
+
+    // Sheet petunjuk
+    const petunjuk = [
+        ['PETUNJUK PENGISIAN TEMPLATE IMPORT JAMAAH'],
+        [''],
+        ['1. Isi data jamaah mulai dari baris ke-3 (baris 2 adalah contoh, boleh dihapus)'],
+        ['2. Kolom "Nama Lengkap" wajib diisi'],
+        ['3. Format Tanggal Lahir: YYYY-MM-DD (contoh: 1980-10-08)'],
+        ['4. Jenis Kelamin: isi L atau P'],
+        ['5. WhatsApp: awali dengan 08 atau 628'],
+        ['6. Jangan ubah nama kolom di baris pertama'],
+        ['7. Simpan dalam format .xlsx sebelum diupload'],
+        [''],
+        ['Kolom yang tersedia:'],
+        ...headers.map((h, i) => [i + 1 + '. ' + h])
+    ];
+    const wsPetunjuk = XLSX.utils.aoa_to_sheet(petunjuk);
+    wsPetunjuk['!cols'] = [{wch: 60}];
+    XLSX.utils.book_append_sheet(wb, wsPetunjuk, 'Petunjuk');
+
+    XLSX.writeFile(wb, 'Template_Import_Jamaah_Safara.xlsx');
+    showToast('⬇️ Template Excel berhasil didownload!');
 }
 
 function exportJamaahToExcel(){ 
@@ -9479,4 +9537,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-        </html>
+    </html>
