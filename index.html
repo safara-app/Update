@@ -5300,8 +5300,8 @@ function cetakLabelJamaahKita() {
         : `<div style="font-size:18px;">🕌</div>`;
 
     let cardsHtml = '';
-    jamaahKitaList.forEach(j => {
-        const f = j.additional_fields || {};
+    jamaahKitaList.forEach(jk => {
+        const f = getMergedJamaahKitaFields(jk); // Pakai data terbaru dari Database
         let fieldsHtml = '';
         printFields.forEach(field => {
             const val = f[field.name] || '';
@@ -5319,7 +5319,7 @@ function cetakLabelJamaahKita() {
         cardsHtml += `<div class="label-card">
             <div class="card-header">
                 ${logoHtml}
-                <div class="card-nama">${escapeHtml(j.nama_lengkap)}</div>
+                <div class="card-nama">${escapeHtml(jk.nama_lengkap)}</div>
             </div>
             <div class="card-fields">${fieldsHtml}</div>
             ${wa ? `<div class="card-wa">📞 ${escapeHtml(wa)}</div>` : ''}
@@ -9537,4 +9537,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-    </html>
+            </html>
