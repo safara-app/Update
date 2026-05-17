@@ -4774,16 +4774,36 @@ function confirmDeleteDynamicField(idx){
     } 
 }
 
-function confirmDeleteAllJamaah(){ 
+async function confirmDeleteAllJamaah(){ 
     if(jamaahList.length===0){ 
         showToast('Tidak ada data!'); 
         return; 
     } 
-    if(confirm(`⚠️ PERINGATAN: Semua ${jamaahList.length} data akan dihapus PERMANEN! Lanjutkan?`)){ 
-        jamaahList=[]; 
-        saveJamaahData(); 
-        showToast('✅ Semua database telah dihapus'); 
-        renderJamaahListWithPagination(); 
+    if(confirm(`⚠️ PERINGATAN!\n\nSemua ${jamaahList.length} data jamaah akan dihapus PERMANEN termasuk:\n- Data jamaah\n- Foto profil\n- Dokumen jamaah\n- On Proses\n- Folder Virtual\n\nField dinamis & konfigurasi TIDAK dihapus.\nLanjutkan?`)){ 
+        // Reset data jamaah saja, field tetap
+        jamaahList = [];
+        jamaahKitaList = [];
+        folderList = [];
+        dokumenData = {};
+
+        // Hapus dari IndexedDB - data saja
+        await idbSet(STORE_JAMAAH, 'jamaah_list', []);
+        await idbSet(STORE_JAMAAH_KITA, 'kita_list', []);
+        await idbSet(STORE_FOLDER, 'folder_list', []);
+
+        // Hapus semua foto profil dan dokumen dari IndexedDB
+        const database = await openIndexedDB();
+        const tx = database.transaction([STORE_FOTO, STORE_NAME], 'readwrite');
+        tx.objectStore(STORE_FOTO).clear();
+        tx.objectStore(STORE_NAME).clear();
+
+        // Hapus dari localStorage (fallback lama)
+        ['safara_jamaah_list','safara_jamaah_kita_list','safara_folder_list'].forEach(k => localStorage.removeItem(k));
+
+        showToast('✅ Semua data jamaah telah dihapus');
+        renderJamaahListWithPagination();
+        renderJamaahKitaList();
+        renderFolderList();
     } 
 }
 
@@ -6973,11 +6993,14 @@ const DB_NAME = 'SafaraDB', DB_VERSION = 3,
     STORE_ABSENSI = 'absensiData';
 
 function resetIndexedDBDarurat() {
-    if (!confirm('Reset database? Data akan direset.')) return;
+    if (!confirm('Reset SEMUA database? Semua data akan dihapus permanen!')) return;
+    // Hapus semua localStorage keys Safara
+    Object.keys(localStorage).filter(k => k.startsWith('safara_')).forEach(k => localStorage.removeItem(k));
+    // Hapus IndexedDB
     const req = indexedDB.deleteDatabase('SafaraDB');
     const req2 = indexedDB.deleteDatabase('SafaraDokumenDB');
-    req.onsuccess = req2.onsuccess = () => {
-        db = null;
+    db = null;
+    req.onsuccess = () => {
         showToast('✅ Database direset! Memuat ulang...');
         setTimeout(() => window.location.reload(), 1000);
     };
@@ -7922,12 +7945,32 @@ function hapusPengingat(id) {
 }
 
 // ==================== RESET ALL DATA ====================
-function confirmResetAllData() { 
-    if(confirm('⚠️ RESET SEMUA DATA? Semua akan hilang!')) { 
-        localStorage.clear(); 
-        showToast('Data direset, reload halaman'); 
-        setTimeout(()=>location.reload(),1500); 
-    } 
+async function confirmResetAllData() { 
+    if(!confirm('⚠️ RESET SEMUA DATA?\n\nSEMUA data akan dihapus permanen:\n- Jamaah & dokumen\n- Kas & pembayaran\n- On Proses & Folder\n- Konfigurasi instansi\n- Absensi\n- Foto profil\n\nAplikasi kembali seperti pertama kali diinstall!\n\nLanjutkan?')) return;
+    if(!confirm('Yakin? Tindakan ini TIDAK BISA dibatalkan!')) return;
+
+    try {
+        // Hapus semua localStorage keys Safara
+        Object.keys(localStorage)
+            .filter(k => k.startsWith('safara_') || k.startsWith('Safara'))
+            .forEach(k => localStorage.removeItem(k));
+
+        // Hapus IndexedDB
+        db = null;
+        await new Promise((resolve) => {
+            const r1 = indexedDB.deleteDatabase('SafaraDB');
+            const r2 = indexedDB.deleteDatabase('SafaraDokumenDB');
+            r1.onsuccess = r2.onsuccess = resolve;
+            r1.onerror = r2.onerror = resolve;
+        });
+
+        showToast('✅ Semua data dihapus! Memuat ulang...');
+        setTimeout(() => location.reload(), 1200);
+    } catch(e) {
+        // Fallback
+        localStorage.clear();
+        location.reload();
+    }
 }
 
 // ==================== FUNGSI PDF DENGAN KONFIGURASI ====================
