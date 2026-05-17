@@ -7569,6 +7569,15 @@ async function downloadFullZip() {
                     jamaahFolder.file(`${jenis.id}.${ext}`, data.split(',')[1], { base64: true }); 
                 } 
             } 
+        }
+        // Foto profil
+        const fotoFolder = zip.folder('foto_profil');
+        for (const j of jamaahList) {
+            const foto = await idbGet(STORE_FOTO, 'foto_' + j.id);
+            if (foto) {
+                const ext = foto.startsWith('data:image/png') ? 'png' : 'jpg';
+                fotoFolder.file(`${j.id}.${ext}`, foto.split(',')[1], { base64: true });
+            }
         } 
         const content = await zip.generateAsync({ type: 'blob' }); 
         const date = new Date().toISOString().slice(0,10); 
@@ -7726,6 +7735,22 @@ function restoreFromZip(input) {
                     storeDok.put({ id: `jamaah_${jamaahId}`, jamaahId, data: dokumenData[jamaahId] });
                 }
                 await new Promise((res, rej) => { txDok.oncomplete = res; txDok.onerror = rej; });
+
+                // Restore foto profil
+                const fotoFolder = zip.folder('foto_profil');
+                if (fotoFolder) {
+                    for (const j of jamaahList) {
+                        const fotoJpg = zip.file(`foto_profil/${j.id}.jpg`);
+                        const fotoPng = zip.file(`foto_profil/${j.id}.png`);
+                        const fotoFile = fotoJpg || fotoPng;
+                        if (fotoFile) {
+                            const base64 = await fotoFile.async('base64');
+                            const isJpg = fotoFile.name.endsWith('.jpg');
+                            const dataUrl = `data:image/${isJpg?'jpeg':'png'};base64,${base64}`;
+                            await idbSet(STORE_FOTO, 'foto_' + j.id, dataUrl);
+                        }
+                    }
+                }
             } 
 
             showToast('✅ Restore berhasil! Memuat ulang...'); 
