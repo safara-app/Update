@@ -2535,15 +2535,17 @@
         
         <div class="card-premium">
             <div class="section-title"><span> BACKUP LOKAL</span></div>
-            <div class="row" style="margin-bottom: 8px;">
-                <button class="btn btn-primary btn-small" onclick="downloadFullZip()" style="flex:1"><i class="fas fa-download"></i> DOWNLOAD ZIP</button>
-                <button class="btn btn-small" onclick="bagikanFullZip()" style="flex:1;background:#3B82F6;color:white;"><i class="fas fa-share-alt"></i> BAGIKAN JSON</button>
-                <button class="btn btn-orange btn-small" onclick="document.getElementById('restoreZipFileInput').click()" style="flex:1"><i class="fas fa-upload"></i> RESTORE ZIP</button>
-                <button class="btn btn-small" onclick="document.getElementById('restoreJsonFileInput').click()" style="flex:1;background:#8B5CF6;color:white;"><i class="fas fa-upload"></i> RESTORE JSON</button>
-                <input type="file" id="restoreJsonFileInput" accept=".json" style="display:none" onchange="restoreFromJson(this)">
+            <div style="font-size:11px;color:#888;margin-bottom:8px;">⬇️ ZIP = lengkap termasuk foto &amp; dokumen | 📤 JSON = data teks saja, bisa dibagikan</div>
+            <div class="row" style="margin-bottom:6px;">
+                <button class="btn btn-primary btn-small" onclick="downloadFullZip()" style="flex:1;font-size:12px;"><i class="fas fa-download"></i> Download ZIP</button>
+                <button class="btn btn-small" onclick="bagikanFullZip()" style="flex:1;background:#3B82F6;color:white;font-size:12px;"><i class="fas fa-share-alt"></i> Bagikan JSON</button>
+            </div>
+            <div class="row">
+                <button class="btn btn-orange btn-small" onclick="document.getElementById('restoreZipFileInput').click()" style="flex:1;font-size:12px;"><i class="fas fa-upload"></i> Restore ZIP</button>
+                <button class="btn btn-small" onclick="document.getElementById('restoreJsonFileInput').click()" style="flex:1;background:#8B5CF6;color:white;font-size:12px;"><i class="fas fa-upload"></i> Restore JSON</button>
             </div>
             <input type="file" id="restoreZipFileInput" accept=".zip" style="display:none" onchange="restoreFromZip(this)">
-            <div class="text-muted text-center mt-2" style="font-size: 11px;"> Backup semua data (Jamaah, Kas, Pembayaran, Dokumen) ke file ZIP</div>
+            <input type="file" id="restoreJsonFileInput" accept=".json" style="display:none" onchange="restoreFromJson(this)">
         </div>
         
         <div class="card-premium">
