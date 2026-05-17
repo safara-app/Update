@@ -2270,6 +2270,25 @@
             <div class="row"><div class="config-row"><label>Header PDF</label><select id="cfg_header_mode"><option value="both">Keduanya</option><option value="instansi1">Instansi 1 saja</option><option value="instansi2">Instansi 2 saja</option><option value="none">Tidak ada</option></select></div><div class="config-row"><label>Tanda Tangan</label><select id="cfg_ttd_mode"><option value="both">Dua Pihak</option><option value="single">Satu Pihak</option></select></div></div>
             <div class="config-row"><label>Prefix Invoice / No. Dokumen</label><input type="text" id="cfg_invoice_prefix" value="INV/SAFARA"></div>
             <div class="config-row"><label>🧓 Batas Usia Lansia (tahun)</label><input type="number" id="cfg_batas_lansia" placeholder="60" min="50" max="80" style="width:120px;"></div>
+            <div style="background:var(--bg);border-radius:12px;padding:14px;margin-top:10px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                    <div>
+                        <div style="font-weight:bold;font-size:14px;">💰 Harga Paket Seragam</div>
+                        <div style="font-size:11px;color:#888;margin-top:2px;">ON = semua jamaah pakai harga ini<br>OFF = harga per jamaah dari field Database</div>
+                    </div>
+                    <label style="position:relative;display:inline-block;width:50px;height:26px;">
+                        <input type="checkbox" id="cfg_harga_seragam_aktif" style="opacity:0;width:0;height:0;" onchange="toggleHargaSeragamInput()">
+                        <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#ccc;border-radius:26px;transition:.3s;" id="sliderHargaSeragam"></span>
+                    </label>
+                </div>
+                <div id="inputHargaSeragamWrap" style="display:none;">
+                    <label style="font-size:12px;color:#888;">Harga Paket (Rp)</label>
+                    <input type="text" id="cfg_harga_seragam_nominal" placeholder="Contoh: 45000000"
+                        oninput="formatHargaInput(this)"
+                        style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;font-size:14px;font-weight:bold;color:#0D5C4A;background:var(--input-bg);margin-top:4px;">
+                    <div id="previewHargaSeragam" style="font-size:12px;color:#0D5C4A;margin-top:4px;"></div>
+                </div>
+            </div>
             <div class="config-row"><label style="font-weight:bold;color:var(--primary);margin-bottom:10px;display:block;">🖨️ Tampilkan di Header Cetak</label>
                 <div style="display:flex;flex-direction:column;gap:10px;">
                     <label style="display:flex;justify-content:space-between;align-items:center;font-weight:normal;"><span>Logo Instansi</span><label class="switch"><input type="checkbox" id="cfg_show_logo" checked><span class="slider"></span></label></label>
@@ -5891,7 +5910,30 @@ async function savePaymentData() {
     await idbSet(STORE_PEMBAYARAN, 'pembayaran_list', paymentTransaksiList);
 }
 
+function toggleHargaSeragamInput() {
+    const cb = document.getElementById('cfg_harga_seragam_aktif');
+    const wrap = document.getElementById('inputHargaSeragamWrap');
+    const slider = document.getElementById('sliderHargaSeragam');
+    if (cb && wrap && slider) {
+        wrap.style.display = cb.checked ? 'block' : 'none';
+        slider.style.background = cb.checked ? '#0D5C4A' : '#ccc';
+    }
+}
+
+function formatHargaInput(el) {
+    const raw = el.value.replace(/\./g,'').replace(/[^0-9]/g,'');
+    const num = parseInt(raw) || 0;
+    el.value = num > 0 ? num.toLocaleString('id-ID') : '';
+    const preview = document.getElementById('previewHargaSeragam');
+    if (preview) preview.textContent = num > 0 ? 'Rp ' + num.toLocaleString('id-ID') : '';
+}
+
 function getTotalHargaPaket(jamaah) { 
+    // Cek dulu apakah harga seragam aktif di konfigurasi
+    const hp = getKonfigurasiProData().harga_paket || { seragam: false, nominal: 0 };
+    if (hp.seragam && hp.nominal > 0) return hp.nominal;
+
+    // Kalau tidak seragam, baca dari field jamaah
     const fields = jamaah.additional_fields || {}; 
     const possibleNames = ['total_harga_paket', 'total_harga', 'harga_paket', 'paket', 'total harga', 'harga total', 'tagihan', 'nominal']; 
     for (const name of possibleNames) { 
@@ -8835,6 +8877,7 @@ let konfigurasiPro = {
     watermark: { enabled: true, text: getKonfigurasiProData().instansi1?.nama || 'Safara', opacity: 0.15, fontsize: 60, position: 'diagonal' },
     qr: { enabled: true, text: 'Dokumen Resmi - Divalidasi oleh Sistem Safara', size: 80 },
     settings: { header_mode: 'both', ttd_mode: 'both', invoice_prefix: 'INV/SAFARA' },
+    harga_paket: { seragam: false, nominal: 0 },
     wa_template: { laporan: '📊 *LAPORAN KAS KANTOR*\n\n💰 Saldo: [saldo]\n📈 Pemasukan: [masuk]\n📉 Pengeluaran: [keluar]\n\nTerima kasih.' }
 };
 
@@ -8885,6 +8928,21 @@ async function loadKonfigurasiPro() {
     document.getElementById('cfg_show_izin').checked = s.show_izin === true;
     document.getElementById('cfg_show_pimpinan').checked = s.show_pimpinan === true;
     document.getElementById('cfg_batas_lansia').value = s.batas_lansia || 60;
+    // Load harga seragam
+    const hp = konfigurasiPro.harga_paket || { seragam: false, nominal: 0 };
+    const cbHarga = document.getElementById('cfg_harga_seragam_aktif');
+    if (cbHarga) {
+        cbHarga.checked = hp.seragam || false;
+        document.getElementById('sliderHargaSeragam').style.background = hp.seragam ? '#0D5C4A' : '#ccc';
+        document.getElementById('inputHargaSeragamWrap').style.display = hp.seragam ? 'block' : 'none';
+        if (hp.nominal) {
+            const el = document.getElementById('cfg_harga_seragam_nominal');
+            if (el) {
+                el.value = hp.nominal.toLocaleString('id-ID');
+                document.getElementById('previewHargaSeragam').textContent = 'Rp ' + hp.nominal.toLocaleString('id-ID');
+            }
+        }
+    }
     document.getElementById('cfg_wa_laporan').value = konfigurasiPro.wa_template.laporan || '';
     updateHeaderFromConfig();
 }
@@ -8940,6 +8998,12 @@ async function saveKonfigurasiPro() {
         show_izin: document.getElementById('cfg_show_izin').checked,
         show_pimpinan: document.getElementById('cfg_show_pimpinan').checked,
         batas_lansia: parseInt(document.getElementById('cfg_batas_lansia').value) || 60
+    };
+    // Simpan harga paket
+    const nominalRaw = (document.getElementById('cfg_harga_seragam_nominal')?.value || '0').replace(/\./g,'').replace(/[^0-9]/g,'');
+    konfigurasiPro.harga_paket = {
+        seragam: document.getElementById('cfg_harga_seragam_aktif')?.checked || false,
+        nominal: parseInt(nominalRaw) || 0
     };
     konfigurasiPro.wa_template = { laporan: document.getElementById('cfg_wa_laporan').value };
     localStorage.setItem('safara_konfigurasi_pro', JSON.stringify(konfigurasiPro)); // keep for compat
@@ -9537,4 +9601,4 @@ function cetakDariPreview() {
     </div>
 </div>
 </body>
-            </html>
+    </html>
