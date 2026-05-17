@@ -2536,7 +2536,8 @@
         <div class="card-premium">
             <div class="section-title"><span> BACKUP LOKAL</span></div>
             <div class="row" style="margin-bottom: 8px;">
-                <button class="btn btn-primary btn-small" onclick="downloadFullZip()" style="flex:1"><i class="fas fa-download"></i> DOWNLOAD FULL ZIP</button>
+                <button class="btn btn-primary btn-small" onclick="downloadFullZip()" style="flex:1"><i class="fas fa-download"></i> DOWNLOAD ZIP</button>
+                <button class="btn btn-small" onclick="bagikanFullZip()" style="flex:1;background:#3B82F6;color:white;"><i class="fas fa-share-alt"></i> BAGIKAN ZIP</button>
                 <button class="btn btn-orange btn-small" onclick="document.getElementById('restoreZipFileInput').click()" style="flex:1"><i class="fas fa-upload"></i> RESTORE DARI ZIP</button>
             </div>
             <input type="file" id="restoreZipFileInput" accept=".zip" style="display:none" onchange="restoreFromZip(this)">
@@ -7497,79 +7498,190 @@ function updateStorageInfo() {
     document.getElementById('storageFill').style.width = Math.min(percent, 100) + '%'; 
 }
 
+async function bagikanFullZip() {
+    try {
+        showToast('⏳ Menyiapkan file...');
+        const zip = new JSZip();
+        zip.file('jamaah.json', JSON.stringify({ data: jamaahList, fields: dynamicFieldsJamaah }, null, 2));
+        zip.file('kas.json', JSON.stringify(dataKas, null, 2));
+        zip.file('pembayaran.json', JSON.stringify(paymentTransaksiList, null, 2));
+        zip.file('multi_event.json', JSON.stringify(masterDataList, null, 2));
+        zip.file('catatan.json', JSON.stringify(JSON.parse(localStorage.getItem('safara_catatan_list') || '[]'), null, 2));
+        zip.file('jamaah_kita.json', JSON.stringify({ data: jamaahKitaList, fields: dynamicFieldsJamaahKita }, null, 2));
+        zip.file('folder.json', JSON.stringify(folderList, null, 2));
+        zip.file('dokumen_jenis.json', JSON.stringify(dokumenJenisList, null, 2));
+        zip.file('konfigurasi.json', JSON.stringify(konfigurasiPro, null, 2));
+        const dokumenFolder = zip.folder('dokumen');
+        for (const j of jamaahList) {
+            const docs = dokumenData[j.id] || {};
+            const jamaahFolder = dokumenFolder.folder(j.id + '_' + j.nama_lengkap.replace(/[^a-z0-9]/gi, '_'));
+            for (const jenis of dokumenJenisList) {
+                const data = docs[jenis.id];
+                if (data && data !== '') {
+                    const ext = data.startsWith('data:image/png') ? 'png' : 'jpg';
+                    jamaahFolder.file(`${jenis.id}.${ext}`, data.split(',')[1], { base64: true });
+                }
+            }
+        }
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const date = new Date().toISOString().slice(0, 10);
+        const fileName = `Safara_Full_Backup_${date}.zip`;
+        const file = new File([blob], fileName, { type: 'application/zip' });
+
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                files: [file],
+                title: 'Backup Safara',
+                text: 'Backup data Safara - ' + date
+            });
+        } else {
+            // Fallback ke download kalau share tidak didukung
+            saveAs(blob, fileName);
+            showToast('Share tidak didukung, file didownload');
+        }
+    } catch(err) {
+        if (err.name !== 'AbortError') showToast('❌ Gagal bagikan: ' + err.message);
+    }
+}
+
 async function downloadFullZip() { 
     showToast('Mempersiapkan data...'); 
     try { 
         const zip = new JSZip(); 
-        const jamaahData = jamaahList; 
-        const kasData = dataKas; 
-        const paymentData = paymentTransaksiList; 
-        const masterData = masterDataList; 
-        const catatanData = JSON.parse(localStorage.getItem('safara_catatan_list') || '[]'); 
-        zip.file('jamaah.json', JSON.stringify(jamaahData, null, 2)); 
-        zip.file('kas.json', JSON.stringify(kasData, null, 2)); 
-        zip.file('pembayaran.json', JSON.stringify(paymentData, null, 2)); 
-        zip.file('multi_event.json', JSON.stringify(masterData, null, 2)); 
-        zip.file('catatan.json', JSON.stringify(catatanData, null, 2)); 
+        // Data utama
+        zip.file('jamaah.json', JSON.stringify({ data: jamaahList, fields: dynamicFieldsJamaah }, null, 2)); 
+        zip.file('kas.json', JSON.stringify(dataKas, null, 2)); 
+        zip.file('pembayaran.json', JSON.stringify(paymentTransaksiList, null, 2)); 
+        zip.file('multi_event.json', JSON.stringify(masterDataList, null, 2)); 
+        zip.file('catatan.json', JSON.stringify(JSON.parse(localStorage.getItem('safara_catatan_list') || '[]'), null, 2)); 
+        zip.file('jamaah_kita.json', JSON.stringify({ data: jamaahKitaList, fields: dynamicFieldsJamaahKita }, null, 2));
+        zip.file('folder.json', JSON.stringify(folderList, null, 2));
+        zip.file('dokumen_jenis.json', JSON.stringify(dokumenJenisList, null, 2));
+        zip.file('konfigurasi.json', JSON.stringify(konfigurasiPro, null, 2));
+        // Dokumen
         const dokumenFolder = zip.folder('dokumen'); 
-        for (const j of jamaahData) { 
+        for (const j of jamaahList) { 
             const docs = dokumenData[j.id] || {}; 
-            const jamaahFolder = dokumenFolder.folder(j.nama_lengkap.replace(/[^a-z0-9]/gi, '_')); 
+            const jamaahFolder = dokumenFolder.folder(j.id + '_' + j.nama_lengkap.replace(/[^a-z0-9]/gi, '_')); 
             for (const jenis of dokumenJenisList) { 
                 const data = docs[jenis.id]; 
                 if (data && data !== '') { 
-                    const ext = data.startsWith('data:image/png') ? 'png' : (data.startsWith('data:image/jpeg') ? 'jpg' : 'png'); 
-                    const base64Data = data.split(',')[1]; 
-                    jamaahFolder.file(`${jenis.nama}.${ext}`, base64Data, { base64: true }); 
+                    const ext = data.startsWith('data:image/png') ? 'png' : 'jpg'; 
+                    jamaahFolder.file(`${jenis.id}.${ext}`, data.split(',')[1], { base64: true }); 
                 } 
             } 
         } 
         const content = await zip.generateAsync({ type: 'blob' }); 
-        const date = new Date().toISOString().slice(0,19).replace(/:/g, '-'); 
+        const date = new Date().toISOString().slice(0,10); 
         saveAs(content, `Safara_Full_Backup_${date}.zip`); 
-        showToast('✅ Download ZIP berhasil!'); 
+        showToast('✅ Backup ZIP berhasil! Termasuk semua data.'); 
     } catch(e) { showToast('❌ Gagal membuat ZIP: ' + e.message); } 
 }
 
 function restoreFromZip(input) { 
     const file = input.files[0]; 
     if (!file) return; 
+    if (!confirm('Restore akan menimpa semua data yang ada. Lanjutkan?')) { input.value = ''; return; }
     showToast('Memulihkan data...'); 
     const reader = new FileReader(); 
     reader.onload = async function(e) { 
         try { 
             const zip = await JSZip.loadAsync(e.target.result); 
+
+            // Restore jamaah
             const jamaahFile = zip.file('jamaah.json'); 
+            if (jamaahFile) { 
+                const parsed = JSON.parse(await jamaahFile.async('string'));
+                // Support format lama (array) dan baru (object dengan data & fields)
+                if (Array.isArray(parsed)) {
+                    jamaahList = parsed;
+                } else {
+                    jamaahList = parsed.data || [];
+                    if (parsed.fields) dynamicFieldsJamaah = parsed.fields;
+                }
+                await idbSet(STORE_JAMAAH, 'jamaah_list', jamaahList);
+                if (dynamicFieldsJamaah.length > 0) await idbSet(STORE_JAMAAH, 'jamaah_fields', dynamicFieldsJamaah);
+            }
+
+            // Restore kas
             const kasFile = zip.file('kas.json'); 
+            if (kasFile) { dataKas = JSON.parse(await kasFile.async('string')); await idbSet(STORE_KAS, 'kas_data', dataKas); }
+
+            // Restore pembayaran
             const paymentFile = zip.file('pembayaran.json'); 
+            if (paymentFile) { paymentTransaksiList = JSON.parse(await paymentFile.async('string')); await idbSet(STORE_PEMBAYARAN, 'pembayaran_list', paymentTransaksiList); }
+
+            // Restore multi event
             const masterFile = zip.file('multi_event.json'); 
+            if (masterFile) { masterDataList = JSON.parse(await masterFile.async('string')); await idbSet(STORE_MASTER, 'master_data', masterDataList); }
+
+            // Restore catatan
             const catatanFile = zip.file('catatan.json'); 
-            if (jamaahFile) { const data = JSON.parse(await jamaahFile.async('string')); localStorage.setItem('safara_jamaah_list', JSON.stringify(data)); jamaahList = data; } 
-            if (kasFile) { const data = JSON.parse(await kasFile.async('string')); localStorage.setItem('safara_kas_data', JSON.stringify(data)); dataKas = data; } 
-            if (paymentFile) { const data = JSON.parse(await paymentFile.async('string')); localStorage.setItem('safara_pembayaran_transaksi', JSON.stringify(data)); paymentTransaksiList = data; } 
-            if (masterFile) { const data = JSON.parse(await masterFile.async('string')); localStorage.setItem('safara_master_data', JSON.stringify(data)); masterDataList = data; } 
-            if (catatanFile) { const data = JSON.parse(await catatanFile.async('string')); localStorage.setItem('safara_catatan_list', JSON.stringify(data)); catatanList = data; } 
+            if (catatanFile) { const d = JSON.parse(await catatanFile.async('string')); localStorage.setItem('safara_catatan_list', JSON.stringify(d)); }
+
+            // Restore on proses
+            const kitaFile = zip.file('jamaah_kita.json');
+            if (kitaFile) {
+                const parsed = JSON.parse(await kitaFile.async('string'));
+                jamaahKitaList = parsed.data || [];
+                if (parsed.fields) dynamicFieldsJamaahKita = parsed.fields;
+                await idbSet(STORE_JAMAAH_KITA, 'kita_list', jamaahKitaList);
+                await idbSet(STORE_JAMAAH_KITA, 'kita_fields', dynamicFieldsJamaahKita);
+            }
+
+            // Restore folder virtual
+            const folderFile = zip.file('folder.json');
+            if (folderFile) { folderList = JSON.parse(await folderFile.async('string')); await idbSet(STORE_FOLDER, 'folder_list', folderList); }
+
+            // Restore jenis dokumen
+            const jenisFile = zip.file('dokumen_jenis.json');
+            if (jenisFile) { dokumenJenisList = JSON.parse(await jenisFile.async('string')); await saveDokumenJenisToIndexedDB(); }
+
+            // Restore konfigurasi
+            const cfgFile = zip.file('konfigurasi.json');
+            if (cfgFile) { 
+                const cfg = JSON.parse(await cfgFile.async('string'));
+                konfigurasiPro = { ...konfigurasiPro, ...cfg };
+                await idbSet(STORE_KONFIGURASI, 'konfigurasi_pro', konfigurasiPro);
+            }
+
+            // Restore dokumen per jamaah ke IndexedDB
             dokumenData = {}; 
             const dokumenFolder = zip.folder('dokumen'); 
             if (dokumenFolder) { 
-                const jamaahFolders = Object.keys(dokumenFolder.files).filter(f => f.endsWith('/')).map(f => f.slice(0, -1)); 
-                for (const jamaahName of jamaahFolders) { 
-                    const jamaah = jamaahList.find(j => j.nama_lengkap.replace(/[^a-z0-9]/gi, '_') === jamaahName); 
-                    if (jamaah) { 
-                        const folder = dokumenFolder.folder(jamaahName); 
-                        for (const jenis of dokumenJenisList) { 
-                            const fileInZip = folder.file(`${jenis.nama}.jpg`) || folder.file(`${jenis.nama}.png`); 
-                            if (fileInZip) { 
-                                const base64 = await fileInZip.async('base64'); 
-                                const mime = jenis.nama === 'Foto' ? 'image/jpeg' : 'image/png'; 
-                                dokumenData[jamaah.id] = dokumenData[jamaah.id] || {}; 
-                                dokumenData[jamaah.id][jenis.id] = `data:${mime};base64,${base64}`; 
-                            } 
+                const allFiles = Object.keys(zip.files);
+                for (const j of jamaahList) {
+                    // Coba format baru (id_nama) atau format lama (nama saja)
+                    const prefixBaru = `dokumen/${j.id}_`;
+                    const prefixLama = `dokumen/${j.nama_lengkap.replace(/[^a-z0-9]/gi, '_')}/`;
+                    for (const jenis of dokumenJenisList) {
+                        // Cari file di format baru
+                        const pathBaru = `dokumen/${j.id}_${j.nama_lengkap.replace(/[^a-z0-9]/gi, '_')}/${jenis.id}.jpg`;
+                        const pathBaruPng = `dokumen/${j.id}_${j.nama_lengkap.replace(/[^a-z0-9]/gi, '_')}/${jenis.id}.png`;
+                        // Format lama
+                        const pathLama = `dokumen/${j.nama_lengkap.replace(/[^a-z0-9]/gi, '_')}/${jenis.nama}.jpg`;
+                        const pathLamaPng = `dokumen/${j.nama_lengkap.replace(/[^a-z0-9]/gi, '_')}/${jenis.nama}.png`;
+                        
+                        const fileInZip = zip.file(pathBaru) || zip.file(pathBaruPng) || zip.file(pathLama) || zip.file(pathLamaPng);
+                        if (fileInZip) { 
+                            const base64 = await fileInZip.async('base64'); 
+                            const isJpg = fileInZip.name.endsWith('.jpg');
+                            dokumenData[j.id] = dokumenData[j.id] || {}; 
+                            dokumenData[j.id][jenis.id] = `data:image/${isJpg?'jpeg':'png'};base64,${base64}`; 
                         } 
-                    } 
-                } 
+                    }
+                }
+                // Simpan dokumen ke IndexedDB (bulk)
+                const database2 = await openIndexedDB();
+                const txDok = database2.transaction([STORE_NAME], 'readwrite');
+                const storeDok = txDok.objectStore(STORE_NAME);
+                for (const jamaahId of Object.keys(dokumenData)) {
+                    storeDok.put({ id: `jamaah_${jamaahId}`, jamaahId, data: dokumenData[jamaahId] });
+                }
+                await new Promise((res, rej) => { txDok.oncomplete = res; txDok.onerror = rej; });
             } 
-            showToast('✅ Restore berhasil! Reload halaman...'); 
+
+            showToast('✅ Restore berhasil! Memuat ulang...'); 
             setTimeout(() => location.reload(), 2000); 
         } catch(err) { showToast('❌ Gagal restore: ' + err.message); } 
     }; 
