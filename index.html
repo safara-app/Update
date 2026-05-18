@@ -2351,6 +2351,7 @@
             <div class="fitur-card" onclick="showPage('pengingatwa')"><div class="fitur-icon">📲</div><div class="fitur-title">Pengingat WA</div><div class="fitur-desc">Kirim pengingat otomatis</div></div>
             <div class="fitur-card" onclick="showPage('etikettiket')"><div class="fitur-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="48" height="48"><rect x="4" y="14" width="56" height="36" rx="6" fill="#f5a623"/><rect x="4" y="14" width="56" height="10" rx="4" fill="#e08000"/><circle cx="20" cy="38" r="4" fill="white"/><rect x="28" y="30" width="20" height="3" rx="2" fill="white"/><rect x="28" y="36" width="14" height="3" rx="2" fill="white"/><rect x="28" y="42" width="17" height="3" rx="2" fill="white"/></svg></div><div class="fitur-title">E-Tiket & QR</div><div class="fitur-desc">Tiket digital dengan QR</div></div>
             <div class="fitur-card" onclick="showPage('scanqr')"><div class="fitur-icon" style="font-size:40px;">📷</div><div class="fitur-title">Scan QR</div><div class="fitur-desc">Absensi & cek data jamaah</div></div>
+            <div class="fitur-card" onclick="showPage('suratresmi')"><div class="fitur-icon" style="font-size:40px;">📄</div><div class="fitur-title">Surat Resmi</div><div class="fitur-desc">Buat surat otomatis dari data jamaah</div></div>
             <div class="fitur-card" onclick="showPage('cetaklabel')"><div class="fitur-icon">🏷️</div><div class="fitur-title">Cetak Label</div><div class="fitur-desc">Name tag / stiker koper</div></div>
             <div class="fitur-card" onclick="showPage('cloudstorage')"><div class="fitur-icon">☁️</div><div class="fitur-title">Cloud Storage</div><div class="fitur-desc">Backup & Restore data</div></div>
             <div class="fitur-card" onclick="showPage('dashboard')"><div class="fitur-icon">📈</div><div class="fitur-title">Dashboard</div><div class="fitur-desc">Grafik statistik data</div></div>
@@ -2407,6 +2408,62 @@
 </div>
 
 <!-- E-TIKET & QR PAGE -->
+<div id="page-suratresmi" class="page">
+    <div class="header-premium header-premium-small"><div class="back-header"><i class="fas fa-arrow-left" onclick="showPage('fitur')"></i><h2>📄 Surat Resmi</h2><div style="width:30px;"></div></div></div>
+    <div class="container">
+        <!-- Pilih Template & Jamaah -->
+        <div class="card-premium">
+            <div style="font-weight:bold;color:var(--primary);margin-bottom:10px;">📋 Buat Surat Baru</div>
+            <div class="input-group" style="margin-bottom:10px;">
+                <label style="font-size:12px;">Pilih Template Surat</label>
+                <select id="suratTemplateSelect" onchange="previewSurat()" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;background:var(--input-bg);color:var(--text);font-size:13px;">
+                    <option value="">-- Pilih Template --</option>
+                    <option value="rekomendasi_paspor">📘 Rekomendasi Pembuatan Paspor</option>
+                    <option value="keterangan_jamaah">📄 Surat Keterangan Jamaah</option>
+                    <option value="permohonan_cuti">📅 Permohonan Izin Cuti</option>
+                    <option value="pengantar_umum">✉️ Surat Pengantar Umum</option>
+                    <option value="custom">✏️ Surat Kustom</option>
+                </select>
+            </div>
+            <div class="input-group" style="margin-bottom:10px;">
+                <label style="font-size:12px;">Pilih Jamaah</label>
+                <input type="text" id="searchSuratJamaah" placeholder="🔍 Cari nama jamaah..." oninput="filterSuratJamaah()" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;background:var(--input-bg);color:var(--text);font-size:13px;margin-bottom:6px;">
+                <select id="suratJamaahSelect" onchange="previewSurat()" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;background:var(--input-bg);color:var(--text);font-size:13px;max-height:160px;" size="5"></select>
+            </div>
+            <div class="input-group" style="margin-bottom:10px;">
+                <label style="font-size:12px;">Nomor Surat</label>
+                <input type="text" id="suratNomor" placeholder="Contoh: 001/KBIHU-AU/V/2026" oninput="previewSurat()" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;background:var(--input-bg);color:var(--text);font-size:13px;">
+            </div>
+            <div class="input-group" style="margin-bottom:10px;">
+                <label style="font-size:12px;">Keperluan Tambahan (opsional)</label>
+                <textarea id="suratKeperluan" rows="2" placeholder="Tambahan keterangan jika diperlukan..." oninput="previewSurat()" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;background:var(--input-bg);color:var(--text);font-size:13px;resize:none;"></textarea>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button onclick="cetakSurat()" style="flex:1;padding:12px;background:#0D5C4A;color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;">🖨️ Cetak</button>
+                <button onclick="bagikanSurat()" style="flex:1;padding:12px;background:#3B82F6;color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;">📤 Bagikan</button>
+            </div>
+        </div>
+
+        <!-- Preview Surat -->
+        <div id="suratPreviewCard" class="card-premium" style="display:none;">
+            <div style="font-weight:bold;color:var(--primary);margin-bottom:10px;">👁️ Preview Surat</div>
+            <div id="suratPreviewContent" style="background:white;border:1px solid #ddd;border-radius:8px;padding:16px;font-size:12px;color:#333;line-height:1.8;max-height:400px;overflow-y:auto;"></div>
+        </div>
+
+        <!-- Kelola Template -->
+        <div class="card-premium">
+            <div style="font-weight:bold;color:var(--primary);margin-bottom:10px;">⚙️ Template Kustom</div>
+            <div style="font-size:12px;color:#888;margin-bottom:10px;">Buat template surat sendiri dengan variabel otomatis dari data jamaah.</div>
+            <div style="background:var(--bg);border-radius:8px;padding:10px;font-size:11px;color:#666;margin-bottom:10px;">
+                <b>Variabel yang bisa dipakai:</b><br>
+                {nama} {nik} {alamat} {no_paspor} {no_porsi} {tgl_lahir} {tempat_lahir} {jenis_kelamin} {whatsapp} {kamar} {bus} {rombongan} {hotel_makkah} {hotel_madinah} {warna} {nomor_surat} {tanggal} {nama_instansi} {keperluan}
+            </div>
+            <textarea id="suratKustomTemplate" rows="6" placeholder="Tulis template surat Anda di sini menggunakan variabel di atas..." style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;background:var(--input-bg);color:var(--text);font-size:12px;resize:vertical;"></textarea>
+            <button onclick="simpanTemplateSuratKustom()" style="width:100%;padding:10px;background:#10B981;color:white;border:none;border-radius:8px;margin-top:8px;cursor:pointer;font-weight:bold;">💾 Simpan Template Kustom</button>
+        </div>
+    </div>
+</div>
+
 <div id="page-scanqr" class="page">
     <div class="header-premium header-premium-small"><div class="back-header"><i class="fas fa-arrow-left" onclick="showPage('fitur');stopScanner();"></i><h2>📷 Scan QR Absensi</h2><div style="width:30px;"></div></div></div>
     <div class="container">
@@ -2734,6 +2791,7 @@ function internalShowPage(pageId) {
     }
     if (pageId === 'foldervirtual') { if(window.renderFolderList) window.renderFolderList(); }
     if (pageId === 'pengingatwa') { if(window.loadPengingatData) window.loadPengingatData(); }
+    if (pageId === 'suratresmi') { initSuratPage(); }
     if (pageId === 'scanqr') { renderSesiAktifInfo(); renderRekapAbsensi(); }
     if (pageId === 'etikettiket') { renderMultiTiketJamaah(); }
     if (pageId === 'pengingatwa') { loadPengingatData(); }
@@ -2748,7 +2806,7 @@ window.addEventListener('popstate', function(event) {
     let pageId = 'home';
     if (event.state && event.state.page) pageId = event.state.page;
     else { const hash = window.location.hash; if (hash && hash.startsWith('#page-')) pageId = hash.replace('#page-', ''); }
-    const validPages = ['home', 'estimasi', 'kas', 'jamaah', 'jamaahkita', 'catatan', 'zakat', 'pembayaran', 'datamaster', 'konfigurasi', 'setting', 'fitur', 'uploaddokumen', 'foldervirtual', 'pengingatwa', 'etikettiket', 'cetaklabel', 'cloudstorage', 'dashboard', 'scanqr'];
+    const validPages = ['home', 'estimasi', 'kas', 'jamaah', 'jamaahkita', 'catatan', 'zakat', 'pembayaran', 'datamaster', 'konfigurasi', 'setting', 'fitur', 'uploaddokumen', 'foldervirtual', 'pengingatwa', 'etikettiket', 'cetaklabel', 'cloudstorage', 'dashboard', 'scanqr', 'suratresmi'];
     if (!validPages.includes(pageId)) pageId = 'home';
     internalShowPage(pageId);
     document.querySelectorAll('.nav-item-premium').forEach(nav => { nav.classList.remove('active'); if (nav.getAttribute('data-page') === pageId) nav.classList.add('active'); });
@@ -3786,7 +3844,310 @@ function filterJamaahList(){
     applyJamaahFilterAndSort(); 
 }
 
-// ==================== SCAN QR ABSENSI ====================
+// ==================== SURAT RESMI ====================
+const TEMPLATE_SURAT = {
+    rekomendasi_paspor: {
+        judul: 'SURAT REKOMENDASI PEMBUATAN PASPOR',
+        isi: `Yang bertanda tangan di bawah ini:
+
+Nama        : {nama_instansi}
+Alamat      : {alamat_instansi}
+
+Dengan ini menerangkan bahwa:
+
+Nama Lengkap    : {nama}
+NIK             : {nik}
+Tempat/Tgl Lahir: {tempat_lahir}, {tgl_lahir}
+Jenis Kelamin   : {jenis_kelamin}
+Alamat          : {alamat}
+No. Porsi       : {no_porsi}
+
+Adalah benar jamaah kami yang akan melaksanakan ibadah Haji/Umroh pada tahun ini. Oleh karena itu, kami merekomendasikan kepada instansi terkait untuk membantu proses pembuatan paspor yang bersangkutan.
+
+{keperluan}
+
+Demikian surat rekomendasi ini kami buat dengan sebenarnya untuk dapat digunakan sebagaimana mestinya.`
+    },
+    keterangan_jamaah: {
+        judul: 'SURAT KETERANGAN JAMAAH HAJI/UMROH',
+        isi: `Yang bertanda tangan di bawah ini menerangkan bahwa:
+
+Nama Lengkap    : {nama}
+NIK             : {nik}
+Tempat/Tgl Lahir: {tempat_lahir}, {tgl_lahir}
+Jenis Kelamin   : {jenis_kelamin}
+Alamat          : {alamat}
+No. Porsi       : {no_porsi}
+No. Paspor      : {no_paspor}
+Rombongan       : {rombongan}
+Kamar           : {kamar}
+Hotel Makkah    : {hotel_makkah}
+Hotel Madinah   : {hotel_madinah}
+
+Adalah benar terdaftar sebagai jamaah Haji/Umroh pada:
+
+{nama_instansi}
+
+{keperluan}
+
+Demikian surat keterangan ini dibuat untuk digunakan sebagaimana mestinya.`
+    },
+    permohonan_cuti: {
+        judul: 'SURAT PERMOHONAN IZIN CUTI',
+        isi: `Kepada Yth.
+Pimpinan/Atasan
+Di tempat
+
+Dengan hormat,
+
+Yang bertanda tangan di bawah ini:
+
+Nama        : {nama}
+NIK         : {nik}
+Alamat      : {alamat}
+No. HP      : {whatsapp}
+
+Dengan ini mengajukan permohonan izin cuti untuk keperluan ibadah Haji/Umroh yang diselenggarakan oleh:
+
+{nama_instansi}
+
+{keperluan}
+
+Demikian permohonan ini saya sampaikan. Atas perhatian dan kebijaksanaannya, saya ucapkan terima kasih.`
+    },
+    pengantar_umum: {
+        judul: 'SURAT PENGANTAR',
+        isi: `Yang bertanda tangan di bawah ini:
+
+{nama_instansi}
+
+Dengan ini mengantarkan/merekomendasikan:
+
+Nama        : {nama}
+NIK         : {nik}
+Alamat      : {alamat}
+No. Paspor  : {no_paspor}
+No. Porsi   : {no_porsi}
+
+Untuk keperluan:
+{keperluan}
+
+Atas perhatian dan kerjasamanya, kami ucapkan terima kasih.`
+    }
+};
+
+let templateSuratKustom = '';
+
+function initSuratPage() {
+    // Isi dropdown jamaah
+    const select = document.getElementById('suratJamaahSelect');
+    if (!select) return;
+    select.innerHTML = jamaahList.map(j =>
+        `<option value="${j.id}">${escapeHtml(j.nama_lengkap)}</option>`
+    ).join('');
+    // Load template kustom
+    const saved = localStorage.getItem('safara_template_surat_kustom');
+    if (saved && document.getElementById('suratKustomTemplate')) {
+        document.getElementById('suratKustomTemplate').value = saved;
+        templateSuratKustom = saved;
+    }
+}
+
+function filterSuratJamaah() {
+    const q = (document.getElementById('searchSuratJamaah')?.value || '').toLowerCase();
+    const select = document.getElementById('suratJamaahSelect');
+    if (!select) return;
+    select.innerHTML = jamaahList
+        .filter(j => j.nama_lengkap.toLowerCase().includes(q))
+        .map(j => `<option value="${j.id}">${escapeHtml(j.nama_lengkap)}</option>`)
+        .join('');
+}
+
+function getSuratVariables(jamaah, nomorSurat, keperluan) {
+    const cfg = getKonfigurasiProData();
+    const f = jamaah.additional_fields || {};
+    return {
+        nama: jamaah.nama_lengkap || '-',
+        nik: f.nik || '-',
+        alamat: f.alamat || f.alamat_kec || '-',
+        no_paspor: f.no_paspor || '-',
+        no_porsi: f.no_porsi || '-',
+        tgl_lahir: f.tgl_lahir || '-',
+        tempat_lahir: f.tempat_lahir || '-',
+        jenis_kelamin: f.jenis_kelamin || '-',
+        whatsapp: f.whatsapp || '-',
+        kamar: f.kamar || '-',
+        bus: f.bus || '-',
+        rombongan: f.rombongan || '-',
+        hotel_makkah: f.hotel_makkah || '-',
+        hotel_madinah: f.hotel_madinah || '-',
+        warna: f.warna || '-',
+        nomor_surat: nomorSurat || '___/KBIHU/___/2026',
+        tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+        nama_instansi: cfg.instansi1?.nama || 'KBIHU',
+        alamat_instansi: cfg.instansi1?.alamat || '-',
+        keperluan: keperluan || ''
+    };
+}
+
+function isiVariabel(template, vars) {
+    return template.replace(/\{(\w+)\}/g, (_, key) => vars[key] || '-');
+}
+
+function previewSurat() {
+    const templateKey = document.getElementById('suratTemplateSelect')?.value;
+    const jamaahId = document.getElementById('suratJamaahSelect')?.value;
+    const nomorSurat = document.getElementById('suratNomor')?.value;
+    const keperluan = document.getElementById('suratKeperluan')?.value;
+    const previewCard = document.getElementById('suratPreviewCard');
+    const previewContent = document.getElementById('suratPreviewContent');
+    if (!templateKey || !jamaahId || !previewCard || !previewContent) {
+        if (previewCard) previewCard.style.display = 'none';
+        return;
+    }
+    const jamaah = jamaahList.find(j => j.id == jamaahId);
+    if (!jamaah) return;
+    const vars = getSuratVariables(jamaah, nomorSurat, keperluan);
+    let judul = '', isi = '';
+    if (templateKey === 'custom') {
+        judul = 'SURAT KUSTOM';
+        isi = isiVariabel(templateSuratKustom || document.getElementById('suratKustomTemplate')?.value || '', vars);
+    } else {
+        const tmpl = TEMPLATE_SURAT[templateKey];
+        if (!tmpl) return;
+        judul = tmpl.judul;
+        isi = isiVariabel(tmpl.isi, vars);
+    }
+    const cfg = getKonfigurasiProData();
+    previewContent.innerHTML = `
+        <div style="text-align:center;border-bottom:2px solid #0D5C4A;padding-bottom:10px;margin-bottom:14px;">
+            <div style="font-weight:bold;font-size:14px;color:#0D5C4A;">${escapeHtml(cfg.instansi1?.nama || 'KBIHU')}</div>
+            <div style="font-size:11px;color:#666;">${escapeHtml(cfg.instansi1?.alamat || '')}</div>
+        </div>
+        <div style="text-align:right;font-size:11px;margin-bottom:12px;">
+            Nomor: ${escapeHtml(nomorSurat || '___/KBIHU/___/2026')}<br>
+            ${vars.tanggal}
+        </div>
+        <div style="text-align:center;font-weight:bold;text-decoration:underline;margin-bottom:14px;font-size:13px;">${judul}</div>
+        <div style="white-space:pre-line;font-size:12px;">${escapeHtml(isi)}</div>
+        <div style="margin-top:30px;text-align:right;font-size:12px;">
+            <div>Hormat kami,</div>
+            <br><br><br>
+            <div style="font-weight:bold;text-decoration:underline;">${escapeHtml(cfg.instansi1?.nama || 'KBIHU')}</div>
+        </div>`;
+    previewCard.style.display = 'block';
+}
+
+function buildSuratHTML(jamaah) {
+    const templateKey = document.getElementById('suratTemplateSelect')?.value;
+    const nomorSurat = document.getElementById('suratNomor')?.value;
+    const keperluan = document.getElementById('suratKeperluan')?.value;
+    const vars = getSuratVariables(jamaah, nomorSurat, keperluan);
+    const cfg = getKonfigurasiProData();
+    let judul = '', isi = '';
+    if (templateKey === 'custom') {
+        judul = 'SURAT KUSTOM';
+        isi = isiVariabel(templateSuratKustom || '', vars);
+    } else {
+        const tmpl = TEMPLATE_SURAT[templateKey];
+        judul = tmpl?.judul || '';
+        isi = isiVariabel(tmpl?.isi || '', vars);
+    }
+    const logoSrc = cfg.instansi1?.logo || '';
+    const logoHtml = logoSrc ? `<img src="${logoSrc}" style="height:60px;object-fit:contain;display:block;margin:0 auto 6px;">` : '';
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${judul}</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Times New Roman',serif;background:white;padding:20px;}
+        .surat{max-width:700px;margin:0 auto;padding:20px;}
+        .kop{text-align:center;border-bottom:3px double #000;padding-bottom:10px;margin-bottom:16px;}
+        .kop-nama{font-size:18px;font-weight:bold;text-transform:uppercase;}
+        .kop-alamat{font-size:12px;margin-top:4px;}
+        .nomor{text-align:right;font-size:13px;margin-bottom:16px;}
+        .judul{text-align:center;font-size:15px;font-weight:bold;text-decoration:underline;margin-bottom:20px;}
+        .isi{font-size:13px;line-height:2;white-space:pre-line;}
+        .ttd{margin-top:40px;text-align:right;font-size:13px;}
+        .ttd-nama{margin-top:60px;font-weight:bold;text-decoration:underline;}
+        .no-print{text-align:center;margin-top:20px;}
+        .no-print button{padding:10px 28px;margin:0 6px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}
+        @media print{
+            *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+            html,body{margin:0;padding:0;background:white;}
+            .surat{padding:15mm 20mm;}
+            .no-print{display:none!important;}
+        }
+    </style></head><body>
+    <div class="surat">
+        <div class="kop">
+            ${logoHtml}
+            <div class="kop-nama">${escapeHtml(cfg.instansi1?.nama || 'KBIHU')}</div>
+            <div class="kop-alamat">${escapeHtml(cfg.instansi1?.alamat || '')}</div>
+        </div>
+        <div class="nomor">
+            Nomor: ${escapeHtml(nomorSurat || '___/KBIHU/___/2026')}<br>
+            ${vars.tanggal}
+        </div>
+        <div class="judul">${judul}</div>
+        <div class="isi">${escapeHtml(isi)}</div>
+        <div class="ttd">
+            <div>Hormat kami,</div>
+            <div class="ttd-nama">${escapeHtml(cfg.instansi1?.nama || 'KBIHU')}</div>
+        </div>
+    </div>
+    <div class="no-print">
+        <button onclick="window.print()" style="background:#0D5C4A;color:white;">🖨️ CETAK</button>
+        <button onclick="window.close()" style="background:#e2e8f0;color:#333;">✕ TUTUP</button>
+    </div>
+    <scr` + `ipt>window.onload=function(){setTimeout(function(){window.print();},800);};</scr` + `ipt>
+    </body></html>`;
+}
+
+function cetakSurat() {
+    const templateKey = document.getElementById('suratTemplateSelect')?.value;
+    const jamaahId = document.getElementById('suratJamaahSelect')?.value;
+    if (!templateKey) return showToast('Pilih template surat dulu!');
+    if (!jamaahId) return showToast('Pilih jamaah dulu!');
+    const jamaah = jamaahList.find(j => j.id == jamaahId);
+    if (!jamaah) return;
+    const win = window.open('', '_blank');
+    if (!win) return showToast('Izinkan popup untuk cetak!');
+    win.document.write(buildSuratHTML(jamaah));
+    win.document.close();
+}
+
+async function bagikanSurat() {
+    const templateKey = document.getElementById('suratTemplateSelect')?.value;
+    const jamaahId = document.getElementById('suratJamaahSelect')?.value;
+    if (!templateKey) return showToast('Pilih template surat dulu!');
+    if (!jamaahId) return showToast('Pilih jamaah dulu!');
+    const jamaah = jamaahList.find(j => j.id == jamaahId);
+    if (!jamaah) return;
+    const html = buildSuratHTML(jamaah);
+    const blob = new Blob([html], { type: 'text/html' });
+    const file = new File([blob], 'Surat_' + jamaah.nama_lengkap.replace(/ /g,'_') + '.html', { type: 'text/html' });
+    try {
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: 'Surat Resmi - ' + jamaah.nama_lengkap });
+        } else {
+            // Fallback: download
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = file.name;
+            a.click();
+            showToast('⬇️ File surat didownload');
+        }
+    } catch(e) {
+        if (e.name !== 'AbortError') showToast('Gagal bagikan: ' + e.message);
+    }
+}
+
+function simpanTemplateSuratKustom() {
+    const val = document.getElementById('suratKustomTemplate')?.value;
+    if (!val) return showToast('Template kosong!');
+    templateSuratKustom = val;
+    localStorage.setItem('safara_template_surat_kustom', val);
+    showToast('✅ Template kustom disimpan!');
+}
 let scannerStream = null;
 let scannerAnimFrame = null;
 let lastScannedResult = null;
