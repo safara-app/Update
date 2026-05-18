@@ -2438,22 +2438,32 @@
                 <label style="font-size:12px;">Keperluan Tambahan (opsional)</label>
                 <textarea id="suratKeperluan" rows="2" placeholder="Tambahan keterangan jika diperlukan..." oninput="previewSurat()" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;background:var(--input-bg);color:var(--text);font-size:13px;resize:none;"></textarea>
             </div>
-            <div style="display:flex;gap:8px;">
+            <button onclick="previewSurat()" style="width:100%;padding:12px;background:#0D5C4A;color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;margin-top:4px;">👁️ Buat & Edit Surat</button>
+        </div>
+
+        <!-- Preview & Edit Surat -->
+        <div id="suratPreviewCard" class="card-premium" style="display:none;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <div style="font-weight:bold;color:var(--primary);">✏️ Edit Surat</div>
+                <button onclick="resetIsiSurat()" style="padding:4px 10px;background:#e2e8f0;color:#333;border:none;border-radius:6px;font-size:11px;cursor:pointer;">🔄 Reset</button>
+            </div>
+            <div style="font-size:11px;color:#888;margin-bottom:8px;">Isi surat bisa diedit sebelum cetak/bagikan</div>
+            <input type="text" id="suratJudulEdit" placeholder="Judul Surat" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;background:var(--input-bg);color:var(--text);font-size:13px;font-weight:bold;text-align:center;margin-bottom:8px;">
+            <textarea id="suratIsiEdit" rows="14" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;background:var(--input-bg);color:var(--text);font-size:13px;line-height:1.8;resize:vertical;font-family:'Times New Roman',serif;"></textarea>
+            <div style="display:flex;gap:8px;margin-top:10px;">
                 <button onclick="cetakSurat()" style="flex:1;padding:12px;background:#0D5C4A;color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;">🖨️ Cetak</button>
                 <button onclick="bagikanSurat()" style="flex:1;padding:12px;background:#3B82F6;color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;">📤 Bagikan</button>
             </div>
-        </div>
-
-        <!-- Preview Surat -->
-        <div id="suratPreviewCard" class="card-premium" style="display:none;">
-            <div style="font-weight:bold;color:var(--primary);margin-bottom:10px;">👁️ Preview Surat</div>
-            <div id="suratPreviewContent" style="background:white;border:1px solid #ddd;border-radius:8px;padding:16px;font-size:12px;color:#333;line-height:1.8;max-height:400px;overflow-y:auto;"></div>
         </div>
 
         <!-- Kelola Template -->
         <div class="card-premium">
             <div style="font-weight:bold;color:var(--primary);margin-bottom:10px;">⚙️ Template Kustom</div>
             <div style="font-size:12px;color:#888;margin-bottom:10px;">Buat template surat sendiri dengan variabel otomatis dari data jamaah.</div>
+            <div class="input-group" style="margin-bottom:8px;">
+                <label style="font-size:12px;">Judul Surat Kustom</label>
+                <input type="text" id="suratKustomJudul" placeholder="Contoh: SURAT PERNYATAAN KESANGGUPAN" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;background:var(--input-bg);color:var(--text);font-size:13px;">
+            </div>
             <div style="background:var(--bg);border-radius:8px;padding:10px;font-size:11px;color:#666;margin-bottom:10px;">
                 <b>Variabel yang bisa dipakai:</b><br>
                 {nama} {nik} {alamat} {no_paspor} {no_porsi} {tgl_lahir} {tempat_lahir} {jenis_kelamin} {whatsapp} {kamar} {bus} {rombongan} {hotel_makkah} {hotel_madinah} {warna} {nomor_surat} {tanggal} {nama_instansi} {keperluan}
@@ -3951,6 +3961,10 @@ function initSuratPage() {
         document.getElementById('suratKustomTemplate').value = saved;
         templateSuratKustom = saved;
     }
+    const savedJudul = localStorage.getItem('safara_template_surat_kustom_judul');
+    if (savedJudul && document.getElementById('suratKustomJudul')) {
+        document.getElementById('suratKustomJudul').value = savedJudul;
+    }
 }
 
 function filterSuratJamaah() {
@@ -3994,65 +4008,54 @@ function isiVariabel(template, vars) {
     return template.replace(/\{(\w+)\}/g, (_, key) => vars[key] || '-');
 }
 
+let _suratJudulAsli = '';
+let _suratIsiAsli = '';
+
 function previewSurat() {
     const templateKey = document.getElementById('suratTemplateSelect')?.value;
     const jamaahId = document.getElementById('suratJamaahSelect')?.value;
     const nomorSurat = document.getElementById('suratNomor')?.value;
     const keperluan = document.getElementById('suratKeperluan')?.value;
     const previewCard = document.getElementById('suratPreviewCard');
-    const previewContent = document.getElementById('suratPreviewContent');
-    if (!templateKey || !jamaahId || !previewCard || !previewContent) {
-        if (previewCard) previewCard.style.display = 'none';
-        return;
-    }
+    if (!templateKey) return showToast('Pilih template surat dulu!');
+    if (!jamaahId) return showToast('Pilih jamaah dulu!');
     const jamaah = jamaahList.find(j => j.id == jamaahId);
-    if (!jamaah) return;
+    if (!jamaah) { showToast('Jamaah tidak ditemukan!'); return; }
     const vars = getSuratVariables(jamaah, nomorSurat, keperluan);
     let judul = '', isi = '';
     if (templateKey === 'custom') {
-        judul = 'SURAT KUSTOM';
+        judul = document.getElementById('suratKustomJudul')?.value || 'SURAT KUSTOM';
         isi = isiVariabel(templateSuratKustom || document.getElementById('suratKustomTemplate')?.value || '', vars);
     } else {
         const tmpl = TEMPLATE_SURAT[templateKey];
-        if (!tmpl) return;
+        if (!tmpl) return showToast('Template tidak ditemukan!');
         judul = tmpl.judul;
         isi = isiVariabel(tmpl.isi, vars);
     }
-    const cfg = getKonfigurasiProData();
-    previewContent.innerHTML = `
-        <div style="text-align:center;border-bottom:2px solid #0D5C4A;padding-bottom:10px;margin-bottom:14px;">
-            <div style="font-weight:bold;font-size:14px;color:#0D5C4A;">${escapeHtml(cfg.instansi1?.nama || 'KBIHU')}</div>
-            <div style="font-size:11px;color:#666;">${escapeHtml(cfg.instansi1?.alamat || '')}</div>
-        </div>
-        <div style="text-align:left;font-size:11px;margin-bottom:12px;">
-            Nomor: ${escapeHtml(nomorSurat || '___/KBIHU/___/2026')}<br>
-            ${vars.tanggal}
-        </div>
-        <div style="text-align:center;font-weight:bold;text-decoration:underline;margin-bottom:14px;font-size:13px;">${judul}</div>
-        <div style="white-space:pre-line;font-size:12px;">${escapeHtml(isi)}</div>
-        <div style="margin-top:30px;text-align:right;font-size:12px;">
-            <div>Hormat kami,</div>
-            <br><br><br>
-            <div style="font-weight:bold;text-decoration:underline;">${escapeHtml(cfg.instansi1?.nama || 'KBIHU')}</div>
-        </div>`;
+    // Simpan asli untuk reset
+    _suratJudulAsli = judul;
+    _suratIsiAsli = isi;
+    // Isi textarea yang bisa diedit
+    document.getElementById('suratJudulEdit').value = judul;
+    document.getElementById('suratIsiEdit').value = isi;
     previewCard.style.display = 'block';
+    // Scroll ke preview
+    previewCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetIsiSurat() {
+    document.getElementById('suratJudulEdit').value = _suratJudulAsli;
+    document.getElementById('suratIsiEdit').value = _suratIsiAsli;
+    showToast('Surat direset ke template awal');
 }
 
 function buildSuratHTML(jamaah) {
-    const templateKey = document.getElementById('suratTemplateSelect')?.value;
+    // Baca dari textarea yang sudah diedit user
+    const judul = document.getElementById('suratJudulEdit')?.value || '';
+    const isi = document.getElementById('suratIsiEdit')?.value || '';
     const nomorSurat = document.getElementById('suratNomor')?.value;
-    const keperluan = document.getElementById('suratKeperluan')?.value;
-    const vars = getSuratVariables(jamaah, nomorSurat, keperluan);
+    const vars = getSuratVariables(jamaah, nomorSurat, '');
     const cfg = getKonfigurasiProData();
-    let judul = '', isi = '';
-    if (templateKey === 'custom') {
-        judul = 'SURAT KUSTOM';
-        isi = isiVariabel(templateSuratKustom || '', vars);
-    } else {
-        const tmpl = TEMPLATE_SURAT[templateKey];
-        judul = tmpl?.judul || '';
-        isi = isiVariabel(tmpl?.isi || '', vars);
-    }
     const logoSrc = cfg.instansi1?.logo || '';
     const logoHtml = logoSrc ? `<img src="${logoSrc}" style="height:60px;object-fit:contain;display:block;margin:0 auto 6px;">` : '';
     return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${judul}</title>
@@ -4083,10 +4086,7 @@ function buildSuratHTML(jamaah) {
             <div class="kop-nama">${escapeHtml(cfg.instansi1?.nama || 'KBIHU')}</div>
             <div class="kop-alamat">${escapeHtml(cfg.instansi1?.alamat || '')}</div>
         </div>
-        <div class="nomor">
-            Nomor: ${escapeHtml(nomorSurat || '___/KBIHU/___/2026')}<br>
-            ${vars.tanggal}
-        </div>
+        <div class="nomor">Nomor: ${escapeHtml(nomorSurat || '___/KBIHU/___/2026')}<br>${vars.tanggal}</div>
         <div class="judul">${judul}</div>
         <div class="isi">${escapeHtml(isi)}</div>
         <div class="ttd">
@@ -4103,9 +4103,9 @@ function buildSuratHTML(jamaah) {
 }
 
 function cetakSurat() {
-    const templateKey = document.getElementById('suratTemplateSelect')?.value;
     const jamaahId = document.getElementById('suratJamaahSelect')?.value;
-    if (!templateKey) return showToast('Pilih template surat dulu!');
+    const isi = document.getElementById('suratIsiEdit')?.value;
+    if (!isi) return showToast('Buat surat dulu!');
     if (!jamaahId) return showToast('Pilih jamaah dulu!');
     const jamaah = jamaahList.find(j => j.id == jamaahId);
     if (!jamaah) return;
@@ -4116,36 +4116,61 @@ function cetakSurat() {
 }
 
 async function bagikanSurat() {
-    const templateKey = document.getElementById('suratTemplateSelect')?.value;
     const jamaahId = document.getElementById('suratJamaahSelect')?.value;
-    if (!templateKey) return showToast('Pilih template surat dulu!');
+    const isi = document.getElementById('suratIsiEdit')?.value;
+    const judul = document.getElementById('suratJudulEdit')?.value || 'SURAT';
+    if (!isi) return showToast('Buat surat dulu!');
     if (!jamaahId) return showToast('Pilih jamaah dulu!');
     const jamaah = jamaahList.find(j => j.id == jamaahId);
     if (!jamaah) return;
-    const html = buildSuratHTML(jamaah);
-    const blob = new Blob([html], { type: 'text/html' });
-    const file = new File([blob], 'Surat_' + jamaah.nama_lengkap.replace(/ /g,'_') + '.html', { type: 'text/html' });
+    showToast('⏳ Menyiapkan gambar surat...');
+    const nomorSurat = document.getElementById('suratNomor')?.value;
+    const vars = getSuratVariables(jamaah, nomorSurat, '');
+    const cfg = getKonfigurasiProData();
+    const div = document.createElement('div');
+    div.style.cssText = 'position:fixed;left:-9999px;top:0;width:700px;background:white;padding:40px;font-family:Times New Roman,serif;font-size:13px;line-height:2;color:#000;';
+    div.innerHTML = `
+        <div style="text-align:center;border-bottom:3px double #000;padding-bottom:10px;margin-bottom:16px;">
+            <div style="font-size:18px;font-weight:bold;text-transform:uppercase;">${escapeHtml(cfg.instansi1?.nama || 'KBIHU')}</div>
+            <div style="font-size:12px;">${escapeHtml(cfg.instansi1?.alamat || '')}</div>
+        </div>
+        <div style="text-align:left;margin-bottom:16px;">Nomor: ${escapeHtml(vars.nomor_surat)}<br>${vars.tanggal}</div>
+        <div style="text-align:center;font-weight:bold;text-decoration:underline;margin-bottom:20px;">${judul}</div>
+        <div style="white-space:pre-line;">${escapeHtml(isi)}</div>
+        <div style="margin-top:40px;text-align:right;">
+            Hormat kami,<br><br><br><br>
+            <span style="font-weight:bold;text-decoration:underline;">${escapeHtml(cfg.instansi1?.nama || 'KBIHU')}</span>
+        </div>`;
+    document.body.appendChild(div);
     try {
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: 'Surat Resmi - ' + jamaah.nama_lengkap });
-        } else {
-            // Fallback: download
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = file.name;
-            a.click();
-            showToast('⬇️ File surat didownload');
-        }
+        const canvas = await html2canvas(div, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+        document.body.removeChild(div);
+        canvas.toBlob(async (blob) => {
+            const file = new File([blob], 'Surat_' + jamaah.nama_lengkap.replace(/ /g, '_') + '.png', { type: 'image/png' });
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({ files: [file], title: 'Surat - ' + jamaah.nama_lengkap });
+            } else {
+                // Fallback download gambar
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = file.name;
+                a.click();
+                showToast('⬇️ Surat didownload sebagai gambar');
+            }
+        }, 'image/png');
     } catch(e) {
-        if (e.name !== 'AbortError') showToast('Gagal bagikan: ' + e.message);
+        if (document.body.contains(div)) document.body.removeChild(div);
+        showToast('❌ Gagal: ' + e.message);
     }
 }
 
 function simpanTemplateSuratKustom() {
     const val = document.getElementById('suratKustomTemplate')?.value;
+    const judul = document.getElementById('suratKustomJudul')?.value;
     if (!val) return showToast('Template kosong!');
     templateSuratKustom = val;
     localStorage.setItem('safara_template_surat_kustom', val);
+    if (judul) localStorage.setItem('safara_template_surat_kustom_judul', judul);
     showToast('✅ Template kustom disimpan!');
 }
 let scannerStream = null;
