@@ -55,7 +55,7 @@
             background: var(--bg);
             color: var(--dark);
             padding-bottom: 80px;
-            transition: background 0.15s ease, color 0.3s ease;
+            transition: background 0.3s ease, color 0.3s ease;
         }
         
         /* Dark Mode */
@@ -107,14 +107,14 @@
         /* Page Transitions */
         .page {
             display: none;
-            animation: fadeIn 0.1s ease;
+            animation: fadeIn 0.25s ease;
         }
         .page.active {
             display: block;
         }
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         /* Header Premium */
@@ -125,7 +125,7 @@
             margin-bottom: -20px;
             position: relative;
             overflow: hidden;
-            transition: background 0.15s ease;
+            transition: background 0.3s ease;
         }
         .header-premium::before {
             content: "";
@@ -430,7 +430,7 @@
             margin: 16px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.04);
             border: 1px solid rgba(0,0,0,0.03);
-            transition: background 0.15s ease;
+            transition: background 0.3s ease;
         }
         
         input, select, textarea {
@@ -517,11 +517,11 @@
             padding: 20px;
             border-radius: 24px;
             margin: 16px;
-            animation: slideUp 0.1s ease;
+            animation: slideUp 0.3s ease;
         }
         @keyframes slideUp {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .res-item {
             display: flex;
@@ -556,7 +556,7 @@
             border-radius: 40px;
             font-size: 13px;
             opacity: 0;
-            transition: all 0.15s;
+            transition: all 0.3s;
             z-index: 1000;
             white-space: nowrap;
         }
@@ -571,7 +571,7 @@
             padding: 20px;
             margin-bottom: 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            transition: background 0.15s ease;
+            transition: background 0.3s ease;
         }
         .setting-card h4 {
             font-size: 0.9rem;
@@ -611,7 +611,7 @@
             right: 0;
             bottom: 0;
             background-color: #CBD5E1;
-            transition: 0.1s ease;
+            transition: 0.25s ease;
             border-radius: 34px;
         }
         .slider:before {
@@ -622,7 +622,7 @@
             left: 3px;
             bottom: 3px;
             background-color: white;
-            transition: 0.1s ease;
+            transition: 0.25s ease;
             border-radius: 50%;
             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
@@ -694,7 +694,7 @@
             max-height: 85vh;
             overflow-y: auto;
             padding: 24px;
-            transition: background 0.15s ease;
+            transition: background 0.3s ease;
         }
         
         .jamaah-card {
@@ -1164,7 +1164,7 @@
             padding: 20px;
             margin-bottom: 20px;
             border-left: 4px solid var(--primary);
-            transition: background 0.15s ease;
+            transition: background 0.3s ease;
         }
         .config-section h3 {
             color: var(--primary);
@@ -1291,7 +1291,7 @@
             padding: 16px;
             margin-bottom: 12px;
             border-left: 4px solid var(--primary);
-            transition: background 0.15s ease;
+            transition: background 0.3s ease;
         }
         .dokumen-header {
             display: flex;
@@ -1531,7 +1531,7 @@
             padding: 20px;
             margin: 16px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-            transition: background 0.15s ease;
+            transition: background 0.3s ease;
         }
         .dashboard-stats {
             display: grid;
@@ -1654,7 +1654,7 @@
     align-items: center;
     border: 2px solid #0D5C4A;
     opacity: 0;
-    transition: 0.1s ease;
+    transition: 0.25s ease;
 }
 .batch-action-bar.show {
     opacity: 1;
@@ -1739,7 +1739,7 @@
 }
 .export-dropdown-menu.show {
     display: block;
-    animation: fadeInUp 0.1s ease;
+    animation: fadeInUp 0.2s ease;
 }
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(10px); }
@@ -2790,7 +2790,7 @@ function internalShowPage(pageId) {
     if (pageId === 'jamaah') { if(window.loadJamaahData) window.loadJamaahData(); if(window.renderJamaahListWithPagination) window.renderJamaahListWithPagination(); }
     if (pageId === 'jamaahkita') { selectedJamaahKitaIds = []; updateJamaahKitaBatchBar(); renderPilihJamaahKita(); renderJamaahKitaList(); renderJamaahKitaDynamicFieldsForm(); if(isAdminModePremium) renderJamaahKitaFieldsList(); }
     if (pageId === 'zakat') { if(window.renderSumberHartaList) window.renderSumberHartaList(); }
-    if (pageId === 'pembayaran') { setTimeout(() => { if(window.renderPaymentDashboard) window.renderPaymentDashboard(); if(window.renderPaymentJamaahList) window.renderPaymentJamaahList(); if(window.populatePaymentJamaahDropdown) window.populatePaymentJamaahDropdown(); }, 30); }
+    if (pageId === 'pembayaran') { if(window.renderPaymentDashboard) window.renderPaymentDashboard(); if(window.renderPaymentJamaahList) window.renderPaymentJamaahList(); if(window.populatePaymentJamaahDropdown) window.populatePaymentJamaahDropdown(); }
     if (pageId === 'datamaster') { if(window.loadMasterData) window.loadMasterData(); if(window.renderDynamicModeSwitcher) window.renderDynamicModeSwitcher(); }
     if (pageId === 'konfigurasi') { if(window.loadKonfigurasiPro) window.loadKonfigurasiPro(); }
     if (pageId === 'catatan') { if(window.renderCatatanList) window.renderCatatanList(); }
@@ -4058,31 +4058,29 @@ function buildSuratHTML(jamaah) {
     const cfg = getKonfigurasiProData();
     const logoSrc = cfg.instansi1?.logo || '';
     const logoHtml = logoSrc ? `<img src="${logoSrc}" style="height:60px;object-fit:contain;display:block;margin:0 auto 6px;">` : '';
-    const watermarkHtml = buildPrintWatermark(cfg);
     return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${judul}</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;}
-        body{font-family:'Times New Roman',serif;background:#f0f0f0;display:flex;justify-content:center;padding:20px;}
-        .surat{background:white;width:210mm;min-height:297mm;padding:20mm 25mm;box-shadow:0 2px 8px rgba(0,0,0,0.15);position:relative;overflow:hidden;}
+        body{font-family:'Times New Roman',serif;background:white;padding:20px;}
+        .surat{max-width:700px;margin:0 auto;padding:20px;}
         .kop{text-align:center;border-bottom:3px double #000;padding-bottom:10px;margin-bottom:16px;}
-        .kop-nama{font-size:16px;font-weight:bold;text-transform:uppercase;}
-        .kop-alamat{font-size:11px;margin-top:4px;}
-        .nomor{text-align:left;font-size:12px;margin-bottom:16px;line-height:1.8;}
-        .judul{text-align:center;font-size:14px;font-weight:bold;text-decoration:underline;margin-bottom:20px;}
-        .isi{font-size:12px;line-height:2;white-space:pre-line;text-align:justify;position:relative;z-index:1;}
-        .ttd{margin-top:40px;text-align:right;font-size:12px;position:relative;z-index:1;}
+        .kop-nama{font-size:18px;font-weight:bold;text-transform:uppercase;}
+        .kop-alamat{font-size:12px;margin-top:4px;}
+        .nomor{text-align:left;font-size:13px;margin-bottom:16px;}
+        .judul{text-align:center;font-size:15px;font-weight:bold;text-decoration:underline;margin-bottom:20px;}
+        .isi{font-size:13px;line-height:2;white-space:pre-line;}
+        .ttd{margin-top:40px;text-align:right;font-size:13px;}
         .ttd-nama{margin-top:60px;font-weight:bold;text-decoration:underline;}
-        .no-print{text-align:center;margin-top:24px;padding-bottom:20px;}
+        .no-print{text-align:center;margin-top:20px;}
         .no-print button{padding:10px 28px;margin:0 6px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;}
         @media print{
             *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
-            html,body{margin:0;padding:0;background:white;display:block;}
-            .surat{width:210mm;min-height:297mm;padding:20mm 25mm;box-shadow:none;}
+            html,body{margin:0;padding:0;background:white;}
+            .surat{padding:15mm 20mm;}
             .no-print{display:none!important;}
         }
     </style></head><body>
     <div class="surat">
-        ${watermarkHtml}
         <div class="kop">
             ${logoHtml}
             <div class="kop-nama">${escapeHtml(cfg.instansi1?.nama || 'KBIHU')}</div>
@@ -4125,151 +4123,47 @@ async function bagikanSurat() {
     if (!jamaahId) return showToast('Pilih jamaah dulu!');
     const jamaah = jamaahList.find(j => j.id == jamaahId);
     if (!jamaah) return;
-    const nomorSurat = document.getElementById('suratNomor')?.value || '___/KBIHU/___/2026';
+    showToast('⏳ Menyiapkan gambar surat...');
+    const nomorSurat = document.getElementById('suratNomor')?.value;
     const vars = getSuratVariables(jamaah, nomorSurat, '');
     const cfg = getKonfigurasiProData();
-    const namaInstansi = cfg.instansi1?.nama || 'KBIHU';
-    const alamatInstansi = cfg.instansi1?.alamat || '';
-
-    // Render teks ke canvas langsung — cepat!
-    const W = 794; // A4 lebar px (96dpi)
-    const marginX = 60;
-    const lineH = 22;
-    const fontSize = 13;
-    const fontFamily = 'Times New Roman, serif';
-
-    // Load logo dulu kalau ada
-    let logoImg = null;
-    const logoSrc = cfg.instansi1?.logo || '';
-    if (logoSrc) {
-        try {
-            logoImg = await new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = () => resolve(img);
-                img.onerror = () => resolve(null);
-                img.src = logoSrc;
-            });
-        } catch(e) { logoImg = null; }
-    }
-
-    // Hitung tinggi canvas dulu
-    const tmpCanvas = document.createElement('canvas');
-    tmpCanvas.width = W;
-    const tmpCtx = tmpCanvas.getContext('2d');
-    tmpCtx.font = fontSize + 'px ' + fontFamily;
-
-    function wrapText(ctx, text, maxW) {
-        const words = text.split(' ');
-        const lines = [];
-        let line = '';
-        for (const w of words) {
-            const test = line ? line + ' ' + w : w;
-            if (ctx.measureText(test).width > maxW && line) {
-                lines.push(line);
-                line = w;
-            } else {
-                line = test;
-            }
-        }
-        if (line) lines.push(line);
-        return lines;
-    }
-
-    // Hitung semua baris
-    const isiLines = isi.split('\n');
-    let totalLines = 0;
-    for (const l of isiLines) {
-        if (l.trim() === '') { totalLines++; continue; }
-        totalLines += wrapText(tmpCtx, l, W - marginX * 2).length;
-    }
-
-    const H = 120 + 80 + 30 + (totalLines * lineH) + 120; // kop + nomor + judul + isi + ttd
-
-    const canvas = document.createElement('canvas');
-    canvas.width = W;
-    canvas.height = Math.max(H, 1000);
-    const ctx = canvas.getContext('2d');
-
-    // Background putih
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, W, canvas.height);
-
-    let y = 40;
-
-    // KOP
-    ctx.fillStyle = '#000000';
-    ctx.textAlign = 'center';
-    // Logo
-    if (logoImg) {
-        const logoH = 60;
-        const logoW = logoImg.width * (logoH / logoImg.height);
-        ctx.drawImage(logoImg, W/2 - logoW/2, y, logoW, logoH);
-        y += logoH + 8;
-    }
-    ctx.font = 'bold 16px ' + fontFamily;
-    ctx.fillText(namaInstansi.toUpperCase(), W / 2, y); y += 24;
-    ctx.font = '12px ' + fontFamily;
-    ctx.fillText(alamatInstansi, W / 2, y); y += 20;
-    // Garis kop
-    ctx.beginPath(); ctx.moveTo(marginX, y); ctx.lineTo(W - marginX, y); ctx.lineWidth = 2; ctx.stroke(); y += 4;
-    ctx.beginPath(); ctx.moveTo(marginX, y); ctx.lineTo(W - marginX, y); ctx.lineWidth = 1; ctx.stroke(); y += 20;
-
-    // Nomor & tanggal
-    ctx.textAlign = 'left';
-    ctx.font = fontSize + 'px ' + fontFamily;
-    ctx.fillText('Nomor : ' + nomorSurat, marginX, y); y += lineH;
-    ctx.fillText(vars.tanggal, marginX, y); y += lineH + 10;
-
-    // Judul
-    ctx.textAlign = 'center';
-    ctx.font = 'bold ' + (fontSize + 1) + 'px ' + fontFamily;
-    ctx.fillText(judul, W / 2, y);
-    // Underline judul
-    const judulW = ctx.measureText(judul).width;
-    ctx.beginPath(); ctx.moveTo(W/2 - judulW/2, y+2); ctx.lineTo(W/2 + judulW/2, y+2); ctx.lineWidth=1; ctx.stroke();
-    y += lineH + 14;
-
-    // Isi surat
-    ctx.textAlign = 'left';
-    ctx.font = fontSize + 'px ' + fontFamily;
-    for (const line of isiLines) {
-        if (line.trim() === '') { y += lineH * 0.6; continue; }
-        const wrapped = wrapText(ctx, line, W - marginX * 2);
-        for (const wl of wrapped) {
-            ctx.fillText(wl, marginX, y);
-            y += lineH;
-        }
-    }
-
-    // TTD
-    y += 30;
-    ctx.textAlign = 'right';
-    ctx.font = fontSize + 'px ' + fontFamily;
-    ctx.fillText('Hormat kami,', W - marginX, y); y += lineH * 4;
-    ctx.font = 'bold ' + fontSize + 'px ' + fontFamily;
-    ctx.fillText(namaInstansi, W - marginX, y);
-    // Underline TTD
-    const ttdW = ctx.measureText(namaInstansi).width;
-    ctx.beginPath(); ctx.moveTo(W - marginX - ttdW, y+2); ctx.lineTo(W - marginX, y+2); ctx.lineWidth=1; ctx.stroke();
-
-    // Convert ke blob dan share
-    canvas.toBlob(async (blob) => {
-        const file = new File([blob], 'Surat_' + jamaah.nama_lengkap.replace(/ /g,'_') + '.png', { type: 'image/png' });
-        try {
+    const div = document.createElement('div');
+    div.style.cssText = 'position:fixed;left:-9999px;top:0;width:700px;background:white;padding:40px;font-family:Times New Roman,serif;font-size:13px;line-height:2;color:#000;';
+    div.innerHTML = `
+        <div style="text-align:center;border-bottom:3px double #000;padding-bottom:10px;margin-bottom:16px;">
+            <div style="font-size:18px;font-weight:bold;text-transform:uppercase;">${escapeHtml(cfg.instansi1?.nama || 'KBIHU')}</div>
+            <div style="font-size:12px;">${escapeHtml(cfg.instansi1?.alamat || '')}</div>
+        </div>
+        <div style="text-align:left;margin-bottom:16px;">Nomor: ${escapeHtml(vars.nomor_surat)}<br>${vars.tanggal}</div>
+        <div style="text-align:center;font-weight:bold;text-decoration:underline;margin-bottom:20px;">${judul}</div>
+        <div style="white-space:pre-line;">${escapeHtml(isi)}</div>
+        <div style="margin-top:40px;text-align:right;">
+            Hormat kami,<br><br><br><br>
+            <span style="font-weight:bold;text-decoration:underline;">${escapeHtml(cfg.instansi1?.nama || 'KBIHU')}</span>
+        </div>`;
+    document.body.appendChild(div);
+    try {
+        const canvas = await html2canvas(div, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+        document.body.removeChild(div);
+        canvas.toBlob(async (blob) => {
+            const file = new File([blob], 'Surat_' + jamaah.nama_lengkap.replace(/ /g, '_') + '.png', { type: 'image/png' });
             if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({ files: [file], title: 'Surat - ' + jamaah.nama_lengkap });
             } else {
+                // Fallback download gambar
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
                 a.download = file.name;
                 a.click();
                 showToast('⬇️ Surat didownload sebagai gambar');
             }
-        } catch(e) {
-            if (e.name !== 'AbortError') showToast('❌ Gagal: ' + e.message);
-        }
-    }, 'image/png');
+        }, 'image/png');
+    } catch(e) {
+        if (document.body.contains(div)) document.body.removeChild(div);
+        showToast('❌ Gagal: ' + e.message);
+    }
 }
+
 function simpanTemplateSuratKustom() {
     const val = document.getElementById('suratKustomTemplate')?.value;
     const judul = document.getElementById('suratKustomJudul')?.value;
@@ -5457,7 +5351,7 @@ function filterPilihJamaahKita() {
         container.innerHTML = '<div style="padding:10px;color:#999;text-align:center;font-size:13px;">Tidak ada jamaah ditemukan</div>';
         return;
     }
-    container.innerHTML = filtered.map((j) => {
+    container.innerHTML = filtered.map((j, idx) => {
         const sudahAda = jamaahKitaList.some(jk => jk.jamaahId === j.id);
         return `<label style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid #eee;cursor:${sudahAda?'default':'pointer'};">
             <input type="checkbox" value="${j.id}" ${sudahAda?'disabled checked':''}
