@@ -2788,9 +2788,9 @@ function internalShowPage(pageId) {
     });
     if (pageId === 'kas') { if(window.renderKasTable) window.renderKasTable(); if(window.updateSaldoKas) window.updateSaldoKas(); }
     if (pageId === 'jamaah') { if(window.loadJamaahData) window.loadJamaahData(); if(window.renderJamaahListWithPagination) window.renderJamaahListWithPagination(); }
-    if (pageId === 'jamaahkita') { selectedJamaahKitaIds = []; updateJamaahKitaBatchBar(); renderPilihJamaahKita(); renderJamaahKitaList(); renderJamaahKitaDynamicFieldsForm(); if(isAdminModePremium) renderJamaahKitaFieldsList(); }
+    if (pageId === 'jamaahkita') { selectedJamaahKitaIds = []; updateJamaahKitaBatchBar(); renderJamaahKitaList(); setTimeout(() => { renderPilihJamaahKita(); renderJamaahKitaDynamicFieldsForm(); if(isAdminModePremium) renderJamaahKitaFieldsList(); }, 50); }
     if (pageId === 'zakat') { if(window.renderSumberHartaList) window.renderSumberHartaList(); }
-    if (pageId === 'pembayaran') { if(window.renderPaymentDashboard) window.renderPaymentDashboard(); if(window.renderPaymentJamaahList) window.renderPaymentJamaahList(); if(window.populatePaymentJamaahDropdown) window.populatePaymentJamaahDropdown(); }
+    if (pageId === 'pembayaran') { if(window.renderPaymentDashboard) window.renderPaymentDashboard(); setTimeout(() => { if(window.renderPaymentJamaahList) window.renderPaymentJamaahList(); if(window.populatePaymentJamaahDropdown) window.populatePaymentJamaahDropdown(); }, 50); }
     if (pageId === 'datamaster') { if(window.loadMasterData) window.loadMasterData(); if(window.renderDynamicModeSwitcher) window.renderDynamicModeSwitcher(); }
     if (pageId === 'konfigurasi') { if(window.loadKonfigurasiPro) window.loadKonfigurasiPro(); }
     if (pageId === 'catatan') { if(window.renderCatatanList) window.renderCatatanList(); }
@@ -5445,19 +5445,29 @@ async function saveDynamicFieldsJamaahKita() {
 }
 
 function renderPilihJamaahKita() {
-    filterPilihJamaahKita();
+    const container = document.getElementById('multiSelectJamaahKita');
+    if (!container) return;
+    // Tampilkan placeholder dulu, render saat user mulai cari
+    container.innerHTML = '<div style="padding:12px;color:#888;text-align:center;font-size:13px;">🔍 Ketik nama jamaah untuk mencari</div>';
 }
 
 function filterPilihJamaahKita() {
     const q = (document.getElementById('searchJamaahKitaAdd')?.value || '').toLowerCase();
     const container = document.getElementById('multiSelectJamaahKita');
     if (!container) return;
+    // Kalau belum ketik, tampil placeholder
+    if (!q) {
+        container.innerHTML = '<div style="padding:12px;color:#888;text-align:center;font-size:13px;">🔍 Ketik nama jamaah untuk mencari</div>';
+        return;
+    }
     const filtered = jamaahList.filter(j => j.nama_lengkap.toLowerCase().includes(q));
     if (filtered.length === 0) {
         container.innerHTML = '<div style="padding:10px;color:#999;text-align:center;font-size:13px;">Tidak ada jamaah ditemukan</div>';
         return;
     }
-    container.innerHTML = filtered.map((j, idx) => {
+    // Batasi 30 hasil untuk performa
+    const shown = filtered.slice(0, 30);
+    container.innerHTML = shown.map((j) => {
         const sudahAda = jamaahKitaList.some(jk => jk.jamaahId === j.id);
         return `<label style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid #eee;cursor:${sudahAda?'default':'pointer'};">
             <input type="checkbox" value="${j.id}" ${sudahAda?'disabled checked':''}
@@ -5468,7 +5478,7 @@ function filterPilihJamaahKita() {
                 ${sudahAda?'<span style="color:#10B981;font-size:11px;margin-left:4px;">✅ Sudah ada</span>':''}
             </span>
         </label>`;
-    }).join('');
+    }).join('') + (filtered.length > 30 ? `<div style="padding:8px;text-align:center;color:#888;font-size:11px;">...dan ${filtered.length-30} lainnya, perjelas pencarian</div>` : '');
     updateJumlahDipilihKita();
 }
 
@@ -6565,14 +6575,20 @@ function renderPaymentJamaahList() {
 function populatePaymentJamaahDropdown() { 
     const select = document.getElementById('paymentJamaahSelect'); 
     if (!select) return; 
-    select.innerHTML = '<option value="">-- Pilih Jamaah --</option>'; 
+    // Gunakan fragment untuk performa
+    const fragment = document.createDocumentFragment();
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = '-- Pilih Jamaah --';
+    fragment.appendChild(defaultOpt);
     jamaahList.forEach(j => { 
         const option = document.createElement('option'); 
         option.value = j.id; 
-        let totalHarga = getTotalHargaPaket(j); 
-        option.textContent = `${j.nama_lengkap} (Paket: ${totalHarga ? formatRupiah(totalHarga) : 'belum diisi'})`; 
-        select.appendChild(option); 
+        option.textContent = j.nama_lengkap;
+        fragment.appendChild(option); 
     }); 
+    select.innerHTML = '';
+    select.appendChild(fragment);
 }
 
 function openPaymentModal() { 
