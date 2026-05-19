@@ -2871,6 +2871,77 @@ function parseRupiah(str) {
     return isNaN(num)?0:num; 
 }
 
+// ==================== VALIDATION FUNCTIONS (FASE 1) ====================
+function validateRequired(value, fieldName) {
+    if (!value || value.toString().trim() === '') {
+        return { valid: false, message: `${fieldName} tidak boleh kosong` };
+    }
+    return { valid: true };
+}
+
+function validateNominal(value, fieldName = 'Nominal') {
+    const nominal = typeof value === 'string' ? parseRupiah(value) : value;
+    if (isNaN(nominal) || nominal <= 0) {
+        return { valid: false, message: `${fieldName} harus lebih dari 0` };
+    }
+    if (nominal > 999999999999) {
+        return { valid: false, message: `${fieldName} terlalu besar (max 999 Miliar)` };
+    }
+    return { valid: true, value: nominal };
+}
+
+function validateEmail(email) {
+    if (!email) return { valid: true }; // Optional field
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return { valid: false, message: 'Format email tidak valid' };
+    }
+    return { valid: true };
+}
+
+function validatePhone(phone) {
+    if (!phone) return { valid: true }; // Optional field
+    const cleaned = phone.replace(/[\s\-\(\)]/g, '');
+    if (cleaned.length < 10 || cleaned.length > 15) {
+        return { valid: false, message: 'Nomor HP harus 10-15 digit' };
+    }
+    if (!/^[0-9+]/.test(cleaned)) {
+        return { valid: false, message: 'Nomor HP hanya boleh angka' };
+    }
+    return { valid: true };
+}
+
+function validateDate(dateStr, fieldName = 'Tanggal') {
+    if (!dateStr) {
+        return { valid: false, message: `${fieldName} tidak boleh kosong` };
+    }
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+        return { valid: false, message: `${fieldName} tidak valid` };
+    }
+    return { valid: true };
+}
+
+function validateLength(value, min, max, fieldName) {
+    const length = value ? value.toString().trim().length : 0;
+    if (length < min) {
+        return { valid: false, message: `${fieldName} minimal ${min} karakter` };
+    }
+    if (max && length > max) {
+        return { valid: false, message: `${fieldName} maksimal ${max} karakter` };
+    }
+    return { valid: true };
+}
+
+// Helper function to show validation errors
+function showValidationError(result) {
+    if (!result.valid) {
+        showToast('❌ ' + result.message);
+        return true;
+    }
+    return false;
+}
+
 // Dark Mode
 function initDarkMode() {
     const darkMode = localStorage.getItem('safara_dark_mode') === 'true';
@@ -3501,20 +3572,29 @@ function resetEstimasiToDefault() {
 // ==================== KAS ====================
 let dataKas=[], lastWAText='';
 
-async function loadKasData() { 
-    let saved = await idbGet(STORE_KAS, 'kas_data');
-    if (!saved) saved = dataKas;
-    dataKas = saved || [];
-    renderKasTable(); 
-    updateSaldoKas(); 
-    const savedKegiatan = await idbGet(STORE_KAS, 'kegiatan') || localStorage.getItem('safara_kegiatan') || '';
-    if(savedKegiatan && document.getElementById('kegiatan')) document.getElementById('kegiatan').value = savedKegiatan;
+async function loadKasData() {
+    try {
+        let saved = await idbGet(STORE_KAS, 'kas_data');
+        if (!saved) saved = dataKas;
+        dataKas = saved || [];
+        renderKasTable();
+        updateSaldoKas();
+        const savedKegiatan = await idbGet(STORE_KAS, 'kegiatan') || localStorage.getItem('safara_kegiatan') || '';
+        if (savedKegiatan && document.getElementById('kegiatan')) {
+            document.getElementById('kegiatan').value = savedKegiatan;
+        }
+    } catch (error) {
+        console.error('Error loadKasData:', error);
+        showToast('⚠️ Gagal memuat data kas, menggunakan data kosong');
+        dataKas = [];
+    }
 }
 
 async function saveKasData() { 
     await idbSet(STORE_KAS, 'kas_data', dataKas);
     renderKasTable(); 
-    updateSaldoKas(); 
+    updateSaldoKas();
+    updateHomeStats(); // Update statistik di halaman home
 }
 
 function renderKasTable() { 
@@ -3536,32 +3616,90 @@ function updateSaldoKas() {
     if(summary) summary.innerHTML=`<b>Saldo Akhir: Rp ${total.toLocaleString('id-ID')}</b>`; 
 }
 
-function tambahTransaksi() { 
-    const kegiatan=document.getElementById('kegiatan').value.trim()||"-"; 
-    const ket=document.getElementById('ketReal').value.trim(); 
-    const nom=parseRupiah(document.getElementById('nomReal').value); 
-    const tipe=document.getElementById('tipeReal').value; 
-    if(!ket||nom<=0) return showToast("Isi keterangan dan nominal!"); 
-    dataKas.unshift({id:Date.now(), tgl:new Date().toLocaleDateString('id-ID'), kegiatan, ket, nom, tipe}); 
-    saveKasData(); 
-    document.getElementById('ketReal').value=""; 
-    document.getElementById('nomReal').value=""; 
-    localStorage.setItem('safara_kegiatan',kegiatan); 
-    showToast('Transaksi ditambahkan'); 
+function tambahTransaksi() {
+    try {
+        const kegiatan = document.getElementById('kegiatan')?.value.trim() || "-";
+        const ketInput = document.getElementById('ketReal');
+        const nomInput = document.getElementById('nomReal');
+        const tipeInput = document.getElementById('tipeReal');
+        
+        // Defensive check
+        if (!ketInput || !nomInput || !tipeInput) {
+            console.error('Kas form elements not found');
+            return showToast('❌ Error: Form tidak ditemukan');
+        }
+        
+        const ket = ketInput.value.trim();
+        const nom = parseRupiah(nomInput.value);
+        const tipe = tipeInput.value;
+        
+        // Validation
+        const ketValidation = validateRequired(ket, 'Keterangan');
+        if (showValidationError(ketValidation)) return;
+        
+        const nomValidation = validateNominal(nom, 'Nominal');
+        if (showValidationError(nomValidation)) return;
+        
+        // Save data
+        dataKas.unshift({
+            id: Date.now(), 
+            tgl: new Date().toLocaleDateString('id-ID'), 
+            kegiatan, 
+            ket: escapeHtml(ket), 
+            nom: nomValidation.value, 
+            tipe
+        });
+        
+        saveKasData();
+        
+        // Clear form
+        ketInput.value = "";
+        nomInput.value = "";
+        localStorage.setItem('safara_kegiatan', kegiatan);
+        
+        showToast('✅ Transaksi berhasil ditambahkan');
+    } catch (error) {
+        console.error('Error tambahTransaksi:', error);
+        showToast('❌ Gagal menambah transaksi: ' + error.message);
+    }
 }
 
 function editTransaksi(id) {
-    const item = dataKas.find(x => x.id === id);
-    if(!item) return;
-    const ket = prompt('Keterangan:', item.ket);
-    if(ket === null) return;
-    const nom = prompt('Nominal:', item.nom);
-    if(nom === null) return;
-    item.ket = ket;
-    item.nom = parseInt(nom) || 0;
-    saveKasData();
-    renderKasTable();
-    showToast('Transaksi diperbarui');
+    try {
+        const item = dataKas.find(x => x.id === id);
+        if (!item) {
+            showToast('❌ Transaksi tidak ditemukan');
+            return;
+        }
+        
+        const ket = prompt('Keterangan:', item.ket);
+        if (ket === null) return; // User cancelled
+        
+        const ketValidation = validateRequired(ket, 'Keterangan');
+        if (!ketValidation.valid) {
+            alert(ketValidation.message);
+            return;
+        }
+        
+        const nomStr = prompt('Nominal:', item.nom);
+        if (nomStr === null) return; // User cancelled
+        
+        const nomValidation = validateNominal(nomStr, 'Nominal');
+        if (!nomValidation.valid) {
+            alert(nomValidation.message);
+            return;
+        }
+        
+        item.ket = escapeHtml(ket);
+        item.nom = nomValidation.value;
+        
+        saveKasData();
+        renderKasTable();
+        showToast('✅ Transaksi berhasil diperbarui');
+    } catch (error) {
+        console.error('Error editTransaksi:', error);
+        showToast('❌ Gagal edit transaksi: ' + error.message);
+    }
 }
 
 function confirmHapusTransaksi(id) {
@@ -3736,16 +3874,23 @@ function confirmResetKas() {
 // ==================== DATABASE JAMAAH ====================
 let jamaahList=[], dynamicFieldsJamaah=[], ingJamaahId=null, currentJamaahPage=1, perPageJamaah=10, jamaahFilteredList=[], currentSort='urutan_asli', currentSearch='';
 
-async function loadJamaahData() { 
-    let saved = await idbGet(STORE_JAMAAH, 'jamaah_list');
-    if (!saved) saved = jamaahList;
-    jamaahList = saved || [];
-    applyJamaahFilterAndSort(); 
+async function loadJamaahData() {
+    try {
+        let saved = await idbGet(STORE_JAMAAH, 'jamaah_list');
+        if (!saved) saved = jamaahList;
+        jamaahList = saved || [];
+        applyJamaahFilterAndSort();
+    } catch (error) {
+        console.error('Error loadJamaahData:', error);
+        showToast('⚠️ Gagal memuat data jamaah, menggunakan data kosong');
+        jamaahList = [];
+    }
 }
 
 async function saveJamaahData() { 
     await idbSet(STORE_JAMAAH, 'jamaah_list', jamaahList);
-    applyJamaahFilterAndSort(); 
+    applyJamaahFilterAndSort();
+    updateHomeStats(); // Update statistik di halaman home
 }
 
 async function loadDynamicFieldsJamaah() { 
@@ -4914,24 +5059,75 @@ function editJamaah(index){
     document.getElementById('jamaahModal').classList.add('show'); 
 }
 
-function saveJamaah(){ 
-    const nama=document.getElementById('jamaahNamaLengkap').value.trim(); 
-    if(!nama) return showToast('Nama lengkap wajib diisi!'); 
-    const additional={}; 
-    for(const field of dynamicFieldsJamaah){ 
-        const input=document.getElementById(`jamaahField_${field.name}`); 
-        if(input) additional[field.name]=input.value.trim(); 
-    } 
-    const now=new Date().toLocaleDateString('id-ID')+' '+new Date().toLocaleTimeString('id-ID'); 
-    if(editingJamaahId!==null){ 
-        jamaahList[editingJamaahId]={...jamaahList[editingJamaahId], nama_lengkap:nama, additional_fields:additional, updated_at:now}; 
-        showToast('Data diupdate'); 
-    } else { 
-        jamaahList.push({id:Date.now(), nama_lengkap:nama, additional_fields:additional, created_at:now}); 
-        showToast('Data ditambahkan'); 
-    } 
-    saveJamaahData(); 
-    closeJamaahModal(); 
+function saveJamaah() {
+    try {
+        const namaInput = document.getElementById('jamaahNamaLengkap');
+        if (!namaInput) {
+            console.error('Jamaah form element not found');
+            return showToast('❌ Error: Form tidak ditemukan');
+        }
+        
+        const nama = namaInput.value.trim();
+        
+        // Validation
+        const namaValidation = validateRequired(nama, 'Nama lengkap');
+        if (showValidationError(namaValidation)) return;
+        
+        const lengthValidation = validateLength(nama, 3, 100, 'Nama lengkap');
+        if (showValidationError(lengthValidation)) return;
+        
+        // Process additional fields with validation
+        const additional = {};
+        for (const field of dynamicFieldsJamaah) {
+            const input = document.getElementById(`jamaahField_${field.name}`);
+            if (input) {
+                const value = input.value.trim();
+                
+                // Validate email fields
+                if (field.name.toLowerCase().includes('email') && value) {
+                    const emailValidation = validateEmail(value);
+                    if (showValidationError(emailValidation)) return;
+                }
+                
+                // Validate phone fields
+                if ((field.name.toLowerCase().includes('whatsapp') || 
+                     field.name.toLowerCase().includes('hp') || 
+                     field.name.toLowerCase().includes('telp')) && value) {
+                    const phoneValidation = validatePhone(value);
+                    if (showValidationError(phoneValidation)) return;
+                }
+                
+                // Escape HTML to prevent XSS
+                additional[field.name] = escapeHtml(value);
+            }
+        }
+        
+        const now = new Date().toLocaleDateString('id-ID') + ' ' + new Date().toLocaleTimeString('id-ID');
+        
+        if (editingJamaahId !== null) {
+            jamaahList[editingJamaahId] = {
+                ...jamaahList[editingJamaahId], 
+                nama_lengkap: escapeHtml(nama), 
+                additional_fields: additional, 
+                updated_at: now
+            };
+            showToast('✅ Data jamaah berhasil diupdate');
+        } else {
+            jamaahList.push({
+                id: Date.now(), 
+                nama_lengkap: escapeHtml(nama), 
+                additional_fields: additional, 
+                created_at: now
+            });
+            showToast('✅ Data jamaah berhasil ditambahkan');
+        }
+        
+        saveJamaahData();
+        closeJamaahModal();
+    } catch (error) {
+        console.error('Error saveJamaah:', error);
+        showToast('❌ Gagal menyimpan data jamaah: ' + error.message);
+    }
 }
 
 function closeJamaahModal(){ 
@@ -6207,6 +6403,7 @@ function hitungZakat(){
     hasil.style.display='block'; 
     hasil.scrollIntoView({behavior:"smooth"}); 
     localStorage.setItem('safara_last_zakat_total', totalZakat); 
+    updateHomeStats(); // Update statistik di halaman home
 }
 
 function salinRingkasanZakat(){ 
@@ -9821,7 +10018,6 @@ async function initPremium() {
     loadThemePremium();
     initDarkMode();
     
-    updateHomeStats();
     loadEstimasiData();
     // Load semua data dari IndexedDB secara berurutan
     await openIndexedDB(); // Pastikan DB terbuka dulu
@@ -9840,6 +10036,9 @@ async function initPremium() {
     loadPengingatData();
     await loadAbsensiData();
     loadSumberHartaList();
+    
+    // Update home stats SETELAH semua data dimuat
+    updateHomeStats();
     
     document.getElementById('adminModeToggleBtn')?.addEventListener('click', (e) => { e.preventDefault(); toggleAdminMode(); });
     document.getElementById('paymentFabOpen')?.addEventListener('click', () => openPaymentModal());
